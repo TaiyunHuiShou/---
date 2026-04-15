@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>二手手机回收清单 - 华为/小米/OPPO/vivo</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 30px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .brand-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            max-width: 1800px;
+            width: 100%;
+        }
+        .container {
+            flex: 1;
+            min-width: 550px;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            padding: 18px 20px 24px 20px;
+        }
+        h2 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .brand-badge {
+            font-size: 0.7rem;
+            background: #eef2ff;
+            padding: 4px 12px;
+            border-radius: 40px;
+            color: #1e40af;
+            font-weight: normal;
+        }
+        .sub {
+            color: #475569;
+            margin-bottom: 16px;
+            border-left: 3px solid #3b82f6;
+            padding-left: 10px;
+            font-size: 0.7rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+        }
+        th {
+            background-color: #f8fafc;
+            border: 1px solid #cbd5e1;
+            padding: 8px 4px;
+            text-align: center;
+            font-weight: 600;
+        }
+        td {
+            border: 1px solid #cbd5e1;
+            padding: 5px 3px;
+            vertical-align: middle;
+        }
+        .model-cell input, .config-cell input {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            padding: 5px 5px;
+            font-size: 0.7rem;
+        }
+        .qty-cell input, .price-cell input, .ref-cell input {
+            width: 70px;
+            text-align: center;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            padding: 5px 3px;
+            font-size: 0.7rem;
+        }
+        .subtotal-cell, .ref-subtotal-cell {
+            font-weight: 600;
+            background-color: #fef9e3;
+            text-align: center;
+            color: #b45309;
+        }
+        .ref-subtotal-cell {
+            background-color: #e6f7ec;
+            color: #2d6a4f;
+        }
+        .total-row {
+            background-color: #eef2ff;
+            font-weight: bold;
+        }
+        .total-row td {
+            border-top: 2px solid #3b82f6;
+            padding: 6px;
+        }
+        .toolbar {
+            margin-top: 16px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 14px;
+        }
+        button {
+            background: white;
+            border: 1px solid #cbd5e1;
+            padding: 5px 12px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        button:hover { background-color: #f1f5f9; }
+        .btn-primary { background: #1e293b; color: white; border: none; }
+        .btn-primary:hover { background: #0f172a; }
+        .btn-save { background: #10b981; color: white; border: none; }
+        .btn-save:hover { background: #059669; }
+        .footer-note {
+            font-size: 0.65rem;
+            color: #6c757d;
+            text-align: center;
+            margin-top: 20px;
+            max-width: 1000px;
+        }
+        @media (max-width: 1200px) {
+            .brand-grid { flex-direction: column; align-items: center; }
+            .container { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="brand-grid" id="all-brands-container"></div>
+
+<div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+    <button id="export-all-excel" class="btn-primary" style="padding: 8px 24px;">📎 导出全部表格到 Excel</button>
+</div>
+<div class="footer-note">
+    💡 使用说明：<br>
+    • <strong>保存方法</strong>：复制全部代码 → 粘贴到记事本 → 另存为 <strong>手机清单.html</strong>（后缀必须是.html）→ 双击打开<br>
+    • 四个品牌完全独立，可分别保存/加载数据<br>
+    • <strong>高低配</strong>：需要时手动填写“高/中/低”，不需要就留空<br>
+    • <strong>老板填金额</strong> = 实际成交价，<strong>参考价</strong> 给你自己看，两者都有小计和总计<br>
+    • 数量 × 老板填金额 = 小计（黄色），数量 × 参考价 = 参考小计（绿色），底部自动汇总
+</div>
+
+<script>
+    const brands = [
+        { id: 'huawei', name: '华为 HUAWEI' },
+        { id: 'xiaomi', name: '小米 Xiaomi' },
+        { id: 'oppo', name: 'OPPO' },
+        { id: 'vivo', name: 'vivo' }
+    ];
+
+    function createRow() {
+        return `
+            <tr class="data-row">
+                <td class="model-cell"><input type="text" placeholder="例: Mate 60 Pro" value="" style="width:100%;"></td>
+                <td class="config-cell"><input type="text" placeholder="高/中/低" style="width:60px; text-align:center;"></td>
+                <td class="qty-cell"><input type="number" min="0" step="1" value="1" class="qty-input" style="width:65px; text-align:center;"></td>
+                <td class="price-cell"><input type="number" min="0" step="10" value="" class="unit-price" placeholder="老板填" style="width:75px; text-align:center;"></td>
+                <td class="subtotal-cell">0</td>
+                <td class="ref-cell"><input type="number" min="0" step="10" value="" class="ref-price" placeholder="参考价" style="width:75px; text-align:center;"></td>
+                <td class="ref-subtotal-cell">0</td>
+            </tr>
+        `;
+    }
+
+    function updateRowSubtotal(row) {
+        const qty = parseFloat(row.querySelector('.qty-input')?.value) || 0;
+        const price = parseFloat(row.querySelector('.unit-price')?.value) || 0;
+        const subtotal = qty * price;
+        row.querySelector('.subtotal-cell').innerText = subtotal.toFixed(0);
+        return subtotal;
+    }
+
+    function updateRowRefSubtotal(row) {
+        const qty = parseFloat(row.querySelector('.qty-input')?.value) || 0;
+        const ref = parseFloat(row.querySelector('.ref-price')?.value) || 0;
+        const refSubtotal = qty * ref;
+        row.querySelector('.ref-subtotal-cell').innerText = refSubtotal.toFixed(0);
+        return refSubtotal;
+    }
+
+    function updateTotal(tableId) {
+        const table = document.getElementById(tableId);
+        if (!table) return;
+        let totalActual = 0, totalRef = 0;
+        table.querySelectorAll('tbody tr.data-row').forEach(row => {
+            totalActual += parseFloat(row.querySelector('.subtotal-cell')?.innerText) || 0;
+            totalRef += parseFloat(row.querySelector('.ref-subtotal-cell')?.innerText) || 0;
+        });
+        const totalActualSpan = document.getElementById(tableId + '-total-actual');
+        const totalRefSpan = document.getElementById(tableId + '-total-ref');
+        if (totalActualSpan) totalActualSpan.innerText = totalActual.toFixed(0);
+        if (totalRefSpan) totalRefSpan.innerText = totalRef.toFixed(0);
+    }
+
+    function bindEventsForTable(tableId) {
+        const table = document.getElementById(tableId);
+        if (!table) return;
+        table.querySelectorAll('tbody tr.data-row').forEach(row => {
+            const qty = row.querySelector('.qty-input');
+            const price = row.querySelector('.unit-price');
+            const ref = row.querySelector('.ref-price');
+            const handler = () => {
+                updateRowSubtotal(row);
+                updateRowRefSubtotal(row);
+                updateTotal(tableId);
+            };
+            if (qty) { qty.removeEventListener('input', row._handler); qty.addEventListener('input', handler); row._handler = handler; }
+            if (price) { price.removeEventListener('input', row._handler); price.addEventListener('input', handler); row._handler = handler; }
+            if (ref) { ref.removeEventListener('input', row._handler); ref.addEventListener('input', handler); row._handler = handler; }
+            updateRowSubtotal(row);
+            updateRowRefSubtotal(row);
+        });
+        updateTotal(tableId);
+    }
+
+    function resetTable(tableId, rowsCount = 8) {
+        const table = document.getElementById(tableId);
+        if (!table) return;
+        const tbody = table.tBodies[0];
+        tbody.innerHTML = '';
+        for (let i = 0; i < rowsCount; i++) tbody.insertAdjacentHTML('beforeend', createRow());
+        bindEventsForTable(tableId);
+    }
+
+    function addRowToTable(tableId) {
+        const tbody = document.getElementById(tableId).tBodies[0];
+        tbody.insertAdjacentHTML('beforeend', createRow());
+        bindEventsForTable(tableId);
+    }
+
+    function saveBrandData(brandId, brandName) {
+        const tableId = brandId + '-table';
+        const rows = document.querySelectorAll(`#${tableId} tbody tr.data-row`);
+        const data = [];
+        rows.forEach(row => {
+            data.push({
+                model: row.querySelector('.model-cell input')?.value || '',
+                config: row.querySelector('.config-cell input')?.value || '',
+                qty: row.querySelector('.qty-input')?.value || '1',
+                price: row.querySelector('.unit-price')?.value || '',
+                ref: row.querySelector('.ref-price')?.value || ''
+            });
+        });
+        const jsonStr = JSON.stringify({ brand: brandName, data }, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${brandName}_手机清单_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+        alert(`${brandName} 数据已保存！`);
+    }
+
+    function loadBrandData(brandId, brandName) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = ev => {
+                try {
+                    const json = JSON.parse(ev.target.result);
+                    restoreTableData(brandId + '-table', json.data);
+                    alert(`${brandName} 数据加载成功！`);
+                } catch (err) { alert('文件格式错误'); }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+
+    function restoreTableData(tableId, rowsData) {
+        const tbody = document.getElementById(tableId).tBodies[0];
+        tbody.innerHTML = '';
+        rowsData.forEach(() => tbody.insertAdjacentHTML('beforeend', createRow()));
+        const rows = tbody.querySelectorAll('tr.data-row');
+        rows.forEach((row, idx) => {
+            const d = rowsData[idx];
+            if (!d) return;
+            if (row.querySelector('.model-cell input')) row.querySelector('.model-cell input').value = d.model || '';
+            if (row.querySelector('.config-cell input')) row.querySelector('.config-cell input').value = d.config || '';
+            if (row.querySelector('.qty-input')) row.querySelector('.qty-input').value = d.qty || '1';
+            if (row.querySelector('.unit-price')) row.querySelector('.unit-price').value = d.price || '';
+            if (row.querySelector('.ref-price')) row.querySelector('.ref-price').value = d.ref || '';
+            updateRowSubtotal(row);
+            updateRowRefSubtotal(row);
+        });
+        bindEventsForTable(tableId);
+    }
+
+    function exportAllToExcel() {
+        let htmlContent = `<html><head><meta charset="UTF-8"><title>二手手机清单_华为_小米_OPPO_vivo</title>
+        <style>th,td{border:1px solid #888;padding:6px;text-align:center;} table{margin-bottom:40px;border-collapse:collapse;width:100%;}</style></head><body>`;
+        
+        brands.forEach(brand => {
+            const cloneTable = document.getElementById(brand.id + '-table').cloneNode(true);
+            cloneTable.querySelectorAll('tbody tr.data-row').forEach(row => {
+                if (row.querySelector('.model-cell input')) row.querySelector('.model-cell').innerText = row.querySelector('.model-cell input').value;
+                if (row.querySelector('.config-cell input')) row.querySelector('.config-cell').innerText = row.querySelector('.config-cell input').value;
+                if (row.querySelector('.qty-input')) row.querySelector('.qty-cell').innerText = row.querySelector('.qty-input').value;
+                if (row.querySelector('.unit-price')) row.querySelector('.price-cell').innerText = row.querySelector('.unit-price').value ? '¥' + row.querySelector('.unit-price').value : '';
+                if (row.querySelector('.subtotal-cell')) row.querySelector('.subtotal-cell').innerText = row.querySelector('.subtotal-cell').innerText;
+                if (row.querySelector('.ref-price')) row.querySelector('.ref-cell').innerText = row.querySelector('.ref-price').value ? '¥' + row.querySelector('.ref-price').value : '';
+                if (row.querySelector('.ref-subtotal-cell')) row.querySelector('.ref-subtotal-cell').innerText = row.querySelector('.ref-subtotal-cell').innerText;
+            });
+            htmlContent += `<h2>📱 ${brand.name}</h2>${cloneTable.outerHTML}<br><br>`;
+        });
+        htmlContent += `<p>导出时间: ${new Date().toLocaleString()}  | 数量×老板填金额=实际小计，数量×参考价=参考小计</p></body></html>`;
+        
+        const blob = new Blob([htmlContent], { type: 'application/vnd.ms-excel' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = '二手手机_四个品牌_清单.xls';
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
+
+    function buildAllTables() {
+        const container = document.getElementById('all-brands-container');
+        container.innerHTML = '';
+        brands.forEach(brand => {
+            const brandDiv = document.createElement('div');
+            brandDiv.className = 'container';
+            brandDiv.innerHTML = `
+                <h2>📱 ${brand.name} <span class="brand-badge">数量×老板价=实际小计 | 数量×参考价=参考小计</span></h2>
+                <div class="sub">✔ 高低配手动填写（需要就写高/中/低，不需要留空）</div>
+                <table id="${brand.id}-table">
+                    <thead><tr>
+                        <th style="width:22%">型号</th><th style="width:10%">高低配</th><th style="width:9%">数量</th>
+                        <th style="width:14%">老板填金额(元)</th><th style="width:12%">实际小计</th>
+                        <th style="width:14%">参考价(元)</th><th style="width:12%">参考小计</th>
+                    </tr></thead>
+                    <tbody></tbody>
+                    <tfoot>
+                        <tr class="total-row">
+                            <td colspan="4" style="text-align:right; font-weight:bold;">${brand.name} 实际总金额：</td>
+                            <td id="${brand.id}-table-total-actual" style="font-weight:bold; background:#eef2ff; text-align:center;">0</td>
+                            <td style="text-align:right; font-weight:bold;">参考总金额：</td>
+                            <td id="${brand.id}-table-total-ref" style="font-weight:bold; background:#e6f7ec; text-align:center;">0</td>
+                        </tr>
+                    </tfoot>
+                </table>
+                <div class="toolbar">
+                    <button class="add-row-btn" data-table="${brand.id}-table">➕ 增加一行</button>
+                    <button class="reset-btn" data-table="${brand.id}-table">重置为8行</button>
+                    <button class="save-brand-btn" data-brand-id="${brand.id}" data-brand-name="${brand.name}" style="background:#10b981;color:white;">💾 保存数据</button>
+                    <button class="load-brand-btn" data-brand-id="${brand.id}" data-brand-name="${brand.name}" style="background:#3b82f6;color:white;">📂 加载数据</button>
+                </div>
+            `;
+            container.appendChild(brandDiv);
+            
+            const tableId = brand.id + '-table';
+            resetTable(tableId, 8);
+            
+            brandDiv.querySelector('.add-row-btn').addEventListener('click', () => addRowToTable(tableId));
+            brandDiv.querySelector('.reset-btn').addEventListener('click', () => resetTable(tableId, 8));
+            brandDiv.querySelector('.save-brand-btn').addEventListener('click', () => saveBrandData(brand.id, brand.name));
+            brandDiv.querySelector('.load-brand-btn').addEventListener('click', () => loadBrandData(brand.id, brand.name));
+        });
+    }
+
+    buildAllTables();
+    document.getElementById('export-all-excel').addEventListener('click', exportAllToExcel);
+</script>
+</body>
+</html>
