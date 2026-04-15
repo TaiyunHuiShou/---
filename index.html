@@ -159,7 +159,8 @@
     const FORMSPREE_URL = 'https://formspree.io/f/xvzdzoej';
     const MY_CONTACT = '微信: Egg77Egg88';
     
-    let fixedBrands = [
+    // 所有品牌（现在都可以删除）
+    let brands = [
         { id: 'oppo', name: 'OPPO' },
         { id: 'vivo', name: 'vivo' },
         { id: 'huawei', name: '华为' },
@@ -169,14 +170,13 @@
         { id: 'oneplus', name: '一加' }
     ];
     
-    let customBrands = [];
     let nextId = 100;
     
     function getBrands() {
-        return [...fixedBrands, ...customBrands];
+        return brands;
     }
     
-    function genId() { return 'custom_' + (nextId++); }
+    function genId() { return 'brand_' + (nextId++); }
     
     function createRowHtml() {
         return `<tr class="data-row">
@@ -213,7 +213,6 @@
     }
     
     function updateGrandTotal() {
-        let brands = getBrands();
         let totalMoney = 0, totalQty = 0;
         brands.forEach(b => {
             let m = parseFloat(document.getElementById(`money-${b.id}`)?.innerText) || 0;
@@ -253,12 +252,8 @@
     }
     
     function deleteBrand(brandId) {
-        if (confirm('确定删除该品牌？')) {
-            if (fixedBrands.some(b => b.id === brandId)) {
-                alert('固定品牌不能删除');
-                return;
-            }
-            customBrands = customBrands.filter(b => b.id !== brandId);
+        if (confirm('确定删除该品牌？删除后该品牌的所有数据都会丢失！')) {
+            brands = brands.filter(b => b.id !== brandId);
             renderAllBrands();
             autoSave();
         }
@@ -267,16 +262,14 @@
     function addNewBrand() {
         let name = document.getElementById('newBrandName').value.trim();
         if (!name) return alert('请输入品牌名');
-        let existingBrands = getBrands();
-        if (existingBrands.some(b => b.name === name)) return alert('品牌已存在');
-        customBrands.push({ id: genId(), name });
+        if (brands.some(b => b.name === name)) return alert('品牌已存在');
+        brands.push({ id: genId(), name });
         renderAllBrands();
         document.getElementById('newBrandName').value = '';
         autoSave();
     }
     
     function collectAllData() {
-        let brands = getBrands();
         let result = { brands: [], data: {} };
         brands.forEach(b => {
             result.brands.push({ id: b.id, name: b.name });
@@ -297,7 +290,6 @@
     
     function exportToExcel() {
         let data = collectAllData();
-        let brands = getBrands();
         let html = `<!DOCTYPE html>
         <html><head><meta charset="UTF-8"><title>批量废旧手机回收清单</title>
         <style>th,td{border:1px solid #888;padding:8px;text-align:center;} table{margin-bottom:30px;}</style>
@@ -310,7 +302,7 @@
         for (let brand of brands) {
             let rows = data.data[brand.id] || [];
             html += `<h3>${brand.name}</h3>`;
-            html += `<td><thead><tr><th>型号</th><th>高低配</th><th>数量</th><th>成交单价(元)</th><th>小计(元)</th><th>参考价(元)</th></tr></thead><tbody>`;
+            html += `<table><thead><tr><th>型号</th><th>高低配</th><th>数量</th><th>成交单价(元)</th><th>小计(元)</th><th>参考价(元)</th></tr></thead><tbody>`;
             rows.forEach(r => {
                 let qty = parseFloat(r.qty) || 0;
                 let price = parseFloat(r.price) || 0;
@@ -331,7 +323,6 @@
     }
     
     async function sendToFormspree(data) {
-        let brands = getBrands();
         try {
             let totalRows = 0;
             for (let brand of brands) {
@@ -360,7 +351,6 @@
     async function oneKeyExport() {
         let data = collectAllData();
         let hasData = false;
-        let brands = getBrands();
         for (let brand of brands) {
             if ((data.data[brand.id] || []).length > 0) { hasData = true; break; }
         }
@@ -397,14 +387,7 @@
                 try {
                     let data = JSON.parse(ev.target.result);
                     if (data.brands && data.brands.length) {
-                        let loadedBrands = data.brands;
-                        let newCustom = [];
-                        for (let b of loadedBrands) {
-                            if (!fixedBrands.some(fb => fb.id === b.id)) {
-                                newCustom.push(b);
-                            }
-                        }
-                        customBrands = newCustom;
+                        brands = data.brands;
                         renderAllBrands();
                         if (data.data) {
                             for (let [bid, rows] of Object.entries(data.data)) {
@@ -438,7 +421,6 @@
     
     function clearAllTables() {
         if (confirm('⚠️ 确定清空所有数据？不可撤销！')) {
-            let brands = getBrands();
             brands.forEach(b => initTable(b.id, 5));
             autoSave();
         }
@@ -457,14 +439,7 @@
             try {
                 let data = JSON.parse(saved);
                 if (data.brands && data.brands.length) {
-                    let loadedBrands = data.brands;
-                    let newCustom = [];
-                    for (let b of loadedBrands) {
-                        if (!fixedBrands.some(fb => fb.id === b.id)) {
-                            newCustom.push(b);
-                        }
-                    }
-                    customBrands = newCustom;
+                    brands = data.brands;
                     renderAllBrands();
                     if (data.data) {
                         for (let [bid, rows] of Object.entries(data.data)) {
@@ -495,7 +470,6 @@
         let clearBtn = document.getElementById('clearSearch');
         function filter() {
             let kw = searchInput.value.trim().toLowerCase();
-            let brands = getBrands();
             brands.forEach(b => {
                 let card = document.getElementById(`card-${b.id}`);
                 let rows = document.querySelectorAll(`#table-${b.id} .data-row`);
@@ -532,19 +506,16 @@
     function renderAllBrands() {
         let grid = document.getElementById('brandsGrid');
         grid.innerHTML = '';
-        let brands = getBrands();
         brands.forEach(b => {
             let card = document.createElement('div');
             card.className = 'brand-card';
             card.id = `card-${b.id}`;
-            let isFixed = fixedBrands.some(fb => fb.id === b.id);
-            let deleteBtnHtml = isFixed ? '' : `<button class="small-btn delete-brand-local" data-brand="${b.id}" style="color:#ef4444;">🗑️ 删品牌</button>`;
             card.innerHTML = `
                 <div class="brand-header">
                     <span class="brand-name">${b.name}</span>
                     <div>
                         <button class="small-btn add-row-local" data-brand="${b.id}">➕ 加行</button>
-                        ${deleteBtnHtml}
+                        <button class="small-btn delete-brand-local" data-brand="${b.id}" style="color:#ef4444;">🗑️ 删品牌</button>
                     </div>
                 </div>
                 <table id="table-${b.id}">
@@ -559,9 +530,7 @@
             grid.appendChild(card);
             initTable(b.id, 5);
             card.querySelector('.add-row-local').addEventListener('click', () => addRow(b.id));
-            if (!isFixed) {
-                card.querySelector('.delete-brand-local').addEventListener('click', () => deleteBrand(b.id));
-            }
+            card.querySelector('.delete-brand-local').addEventListener('click', () => deleteBrand(b.id));
         });
     }
     
