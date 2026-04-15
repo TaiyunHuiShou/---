@@ -19,11 +19,37 @@
             background: white;
             padding: 10px 20px;
             border-radius: 60px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             gap: 8px;
+        }
+        
+        /* 填表人行 */
+        .row-user {
+            background: white;
+            padding: 12px 20px;
+            border-radius: 60px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .row-user label {
+            font-weight: bold;
+        }
+        .row-user input {
+            padding: 8px 16px;
+            border-radius: 40px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            width: 220px;
+        }
+        .row-user .required {
+            color: #ef4444;
         }
         
         .contact-bar { 
@@ -41,7 +67,7 @@
             background: white;
             padding: 10px 20px;
             border-radius: 60px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -102,8 +128,10 @@
         .qty-input, .unit-price, .ref-price { width: 70px; text-align: center; }
         .subtotal-cell { background: #fef9e3; font-weight: bold; }
         .delete-row-btn { background: #ef4444; color: white; border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-size: 12px; }
-        .brand-stats { margin-top: 12px; padding: 8px 12px; background: #f1f5f9; border-radius: 16px; display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; }
-        .grand-total { background: #1e293b; color: white; padding: 16px; border-radius: 60px; text-align: center; margin-top: 24px; font-weight: bold; font-size: 16px; }
+        .brand-stats { margin-top: 12px; padding: 8px 12px; background: #f1f5f9; border-radius: 16px; display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; flex-wrap: wrap; gap: 8px; }
+        .grand-total { background: #1e293b; color: white; padding: 16px; border-radius: 60px; text-align: center; margin-top: 24px; font-weight: bold; font-size: 16px; display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; }
+        .grand-total span { display: inline-block; }
+        .ratio-badge { background: #fbbf24; color: #1e293b; padding: 4px 12px; border-radius: 40px; font-size: 13px; margin-left: 10px; }
         .small-btn { background: none; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 30px; cursor: pointer; font-size: 11px; }
         .small-btn:hover { background: #f1f5f9; }
         
@@ -112,6 +140,7 @@
         body.dark { background: #0f172a; }
         body.dark .brand-card { background: #1e293b; color: #f1f5f9; }
         body.dark .row-buttons { background: #1e293b; border: 1px solid #475569; }
+        body.dark .row-user { background: #1e293b; border: 1px solid #475569; }
         body.dark .row-search { background: #1e293b; border: 1px solid #475569; }
         body.dark .row-add-brand { background: #1e293b; border: 1px solid #475569; }
         body.dark input, body.dark select { background: #334155; color: white; border-color: #475569; }
@@ -130,6 +159,13 @@
         <button id="clearAllBtn" class="btn btn-red">🗑️ 清空</button>
         <button id="printBtn" class="btn btn-gray">🖨️ 打印</button>
         <button id="themeBtn" class="btn btn-gray">🌙 暗色</button>
+    </div>
+
+    <!-- 填表人信息 -->
+    <div class="row-user">
+        <label><span class="required">*</span> 您的称呼/微信：</label>
+        <input type="text" id="userName" placeholder="例：张三 或 微信号" value="">
+        <span style="font-size: 12px; color: #ef4444;" id="userNameWarning"></span>
     </div>
 
     <div class="contact-bar">
@@ -152,14 +188,17 @@
 
     <div id="brandsGrid" class="brand-grid"></div>
 
-    <div id="grandTotal" class="grand-total">📊 总计金额：0 元 | 📱 总台数：0 台</div>
+    <div id="grandTotal" class="grand-total">
+        <span>💰 实际总金额：<span id="totalActualMoney">0</span> 元</span>
+        <span>📊 参考总金额：<span id="totalRefMoney">0</span> 元</span>
+        <span id="totalRatioSpan">📈 整体比例：--</span>
+    </div>
 </div>
 
 <script>
     const FORMSPREE_URL = 'https://formspree.io/f/xvzdzoej';
     const MY_CONTACT = '微信: Egg77Egg88';
     
-    // 所有品牌（现在都可以删除）
     let brands = [
         { id: 'oppo', name: 'OPPO' },
         { id: 'vivo', name: 'vivo' },
@@ -172,10 +211,7 @@
     
     let nextId = 100;
     
-    function getBrands() {
-        return brands;
-    }
-    
+    function getBrands() { return brands; }
     function genId() { return 'brand_' + (nextId++); }
     
     function createRowHtml() {
@@ -199,34 +235,53 @@
     function updateBrandStats(brandId) {
         let tbody = document.querySelector(`#table-${brandId} tbody`);
         if (!tbody) return;
-        let totalMoney = 0, totalQty = 0;
+        let totalMoney = 0, totalQty = 0, totalRef = 0;
         tbody.querySelectorAll('.data-row').forEach(row => {
             totalMoney += parseFloat(row.querySelector('.subtotal-cell')?.innerText) || 0;
             totalQty += parseFloat(row.querySelector('.qty-input')?.value) || 0;
+            let qty = parseFloat(row.querySelector('.qty-input')?.value) || 0;
+            let ref = parseFloat(row.querySelector('.ref-price')?.value) || 0;
+            totalRef += qty * ref;
         });
         let moneySpan = document.getElementById(`money-${brandId}`);
         let qtySpan = document.getElementById(`qty-${brandId}`);
+        let refSpan = document.getElementById(`ref-${brandId}`);
         if (moneySpan) moneySpan.innerText = totalMoney.toFixed(0);
         if (qtySpan) qtySpan.innerText = totalQty;
+        if (refSpan) refSpan.innerText = totalRef.toFixed(0);
         updateGrandTotal();
         autoSave();
     }
     
     function updateGrandTotal() {
-        let totalMoney = 0, totalQty = 0;
+        let totalMoney = 0, totalRef = 0;
         brands.forEach(b => {
             let m = parseFloat(document.getElementById(`money-${b.id}`)?.innerText) || 0;
-            let q = parseFloat(document.getElementById(`qty-${b.id}`)?.innerText) || 0;
+            let r = parseFloat(document.getElementById(`ref-${b.id}`)?.innerText) || 0;
             totalMoney += m;
-            totalQty += q;
+            totalRef += r;
         });
-        document.getElementById('grandTotal').innerHTML = `📊 总计金额：${totalMoney.toFixed(0)} 元 | 📱 总台数：${totalQty} 台`;
+        document.getElementById('totalActualMoney').innerText = totalMoney.toFixed(0);
+        document.getElementById('totalRefMoney').innerText = totalRef.toFixed(0);
+        
+        // 计算整体比例
+        let ratioText = '--';
+        if (totalRef > 0) {
+            let ratio = ((totalMoney - totalRef) / totalRef * 100).toFixed(1);
+            if (ratio >= 0) {
+                ratioText = `📈 比参考价高 ${ratio}%`;
+            } else {
+                ratioText = `📉 比参考价低 ${Math.abs(ratio)}%`;
+            }
+        }
+        document.getElementById('totalRatioSpan').innerHTML = `📊 整体比例：${ratioText}`;
     }
     
     function bindRowEvents(row, brandId) {
         let handler = () => { updateRowSubtotal(row); updateBrandStats(brandId); };
         row.querySelector('.qty-input').addEventListener('input', handler);
         row.querySelector('.unit-price').addEventListener('input', handler);
+        row.querySelector('.ref-price').addEventListener('input', () => updateBrandStats(brandId));
         row.querySelector('.delete-row-btn').addEventListener('click', () => {
             if (document.querySelector(`#table-${brandId} tbody`).children.length > 1) {
                 row.remove(); updateBrandStats(brandId);
@@ -270,7 +325,8 @@
     }
     
     function collectAllData() {
-        let result = { brands: [], data: {} };
+        let result = { brands: [], data: {}, userName: '', submitTime: new Date().toLocaleString() };
+        result.userName = document.getElementById('userName').value.trim() || '未填写';
         brands.forEach(b => {
             result.brands.push({ id: b.id, name: b.name });
             let rows = [];
@@ -295,28 +351,44 @@
         <style>th,td{border:1px solid #888;padding:8px;text-align:center;} table{margin-bottom:30px;}</style>
         </head><body>
         <h2>📱 批量废旧手机回收清单</h2>
-        <p>导出时间: ${new Date().toLocaleString()}</p>
+        <p>填表人：${data.userName}</p>
+        <p>导出时间: ${data.submitTime}</p>
         <p>回收联系：${MY_CONTACT}</p>
         <hr>`;
         
         for (let brand of brands) {
             let rows = data.data[brand.id] || [];
             html += `<h3>${brand.name}</h3>`;
-            html += `<table><thead><tr><th>型号</th><th>高低配</th><th>数量</th><th>成交单价(元)</th><th>小计(元)</th><th>参考价(元)</th></tr></thead><tbody>`;
+            html += `<tr><thead>运转<th>型号</th><th>高低配</th><th>数量</th><th>成交单价(元)</th><th>小计(元)</th><th>参考价(元)</th><th>参考小计(元)</th></tr></thead><tbody>`;
             rows.forEach(r => {
                 let qty = parseFloat(r.qty) || 0;
                 let price = parseFloat(r.price) || 0;
+                let ref = parseFloat(r.ref) || 0;
                 let subtotal = qty * price;
-                html += `<tr><td>${r.model}</td><td>${r.config}</td><td>${r.qty}</td><td>${r.price ? '¥' + r.price : ''}</td><td>${subtotal.toFixed(0)}</td><td>${r.ref ? '¥' + r.ref : ''}</td></tr>`;
+                let refSubtotal = qty * ref;
+                html += `<tr><td>${r.model}</td><td>${r.config}</td><td>${r.qty}</td><td>${r.price ? '¥' + r.price : ''}</td><td>${subtotal.toFixed(0)}</td><td>${r.ref ? '¥' + r.ref : ''}</td><td>${refSubtotal.toFixed(0)}</td></tr>`;
             });
             html += `</tbody></table><br>`;
         }
+        
+        // 计算总计
+        let totalMoney = 0, totalRef = 0;
+        brands.forEach(b => {
+            totalMoney += parseFloat(document.getElementById(`money-${b.id}`)?.innerText) || 0;
+            totalRef += parseFloat(document.getElementById(`ref-${b.id}`)?.innerText) || 0;
+        });
+        let ratio = '';
+        if (totalRef > 0) {
+            let r = ((totalMoney - totalRef) / totalRef * 100).toFixed(1);
+            ratio = r >= 0 ? `比参考价高 ${r}%` : `比参考价低 ${Math.abs(r)}%`;
+        }
+        html += `<h3>汇总：实际总金额 ¥${totalMoney.toFixed(0)} | 参考总金额 ¥${totalRef.toFixed(0)} | ${ratio}</h3>`;
         html += `<p>📦 全国批量回收，量大价优，欢迎联系！</p></body></html>`;
         
         let blob = new Blob([html], { type: 'application/vnd.ms-excel' });
         let link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `批量废旧手机清单_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xls`;
+        link.download = `批量废旧手机清单_${data.userName}_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xls`;
         link.click();
         URL.revokeObjectURL(link.href);
         return data;
@@ -328,13 +400,21 @@
             for (let brand of brands) {
                 totalRows += (data.data[brand.id] || []).length;
             }
+            let totalMoney = 0, totalRef = 0;
+            brands.forEach(b => {
+                totalMoney += parseFloat(document.getElementById(`money-${b.id}`)?.innerText) || 0;
+                totalRef += parseFloat(document.getElementById(`ref-${b.id}`)?.innerText) || 0;
+            });
             let payload = {
-                _subject: `【废旧手机回收数据】同行提交的清单`,
-                提交时间: new Date().toLocaleString(),
+                _subject: `【废旧手机回收数据】${data.userName} 提交的清单`,
+                填表人: data.userName,
+                提交时间: data.submitTime,
                 回收商联系方式: MY_CONTACT,
                 品牌数量: brands.length,
                 数据行数: totalRows,
-                详细数据: data
+                实际总金额: totalMoney.toFixed(0),
+                参考总金额: totalRef.toFixed(0),
+                详细数据: JSON.stringify(data, null, 2)
             };
             let response = await fetch(FORMSPREE_URL, {
                 method: 'POST',
@@ -349,6 +429,13 @@
     }
     
     async function oneKeyExport() {
+        let userName = document.getElementById('userName').value.trim();
+        if (!userName) {
+            document.getElementById('userNameWarning').innerText = '请填写您的称呼/微信';
+            return;
+        }
+        document.getElementById('userNameWarning').innerText = '';
+        
         let data = collectAllData();
         let hasData = false;
         for (let brand of brands) {
@@ -359,9 +446,22 @@
             return;
         }
         
+        // 1. 下载 Excel
         exportToExcel();
+        
+        // 2. 下载 JSON 备份（你可以直接恢复）
+        let jsonStr = JSON.stringify(data, null, 2);
+        let jsonBlob = new Blob([jsonStr], { type: 'application/json' });
+        let jsonLink = document.createElement('a');
+        jsonLink.href = URL.createObjectURL(jsonBlob);
+        jsonLink.download = `废旧手机回收数据_${data.userName}_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
+        jsonLink.click();
+        URL.revokeObjectURL(jsonLink.href);
+        
+        // 3. 发送到 Formspree
         await sendToFormspree(data);
-        alert("✅ 清单已导出！");
+        
+        alert("✅ 清单已导出！\n\n已下载 Excel 和 JSON 备份文件。\nJSON 文件可以通过「恢复」按钮直接导入。");
     }
     
     function backupData() {
@@ -388,6 +488,9 @@
                     let data = JSON.parse(ev.target.result);
                     if (data.brands && data.brands.length) {
                         brands = data.brands;
+                        if (data.userName) {
+                            document.getElementById('userName').value = data.userName;
+                        }
                         renderAllBrands();
                         if (data.data) {
                             for (let [bid, rows] of Object.entries(data.data)) {
@@ -440,6 +543,9 @@
                 let data = JSON.parse(saved);
                 if (data.brands && data.brands.length) {
                     brands = data.brands;
+                    if (data.userName) {
+                        document.getElementById('userName').value = data.userName;
+                    }
                     renderAllBrands();
                     if (data.data) {
                         for (let [bid, rows] of Object.entries(data.data)) {
@@ -519,12 +625,13 @@
                     </div>
                 </div>
                 <table id="table-${b.id}">
-                    <thead><tr><th>型号</th><th>高低配</th><th>数量</th><th>老板填金额(元)</th><th>小计(元)</th><th>参考价(元)</th><th>删除</th></tr></thead>
+                    <thead>运转<th>型号</th><th>高低配</th><th>数量</th><th>老板填金额(元)</th><th>小计(元)</th><th>参考价(元)</th><th>删除</th></tr></thead>
                     <tbody></tbody>
                 </table>
                 <div class="brand-stats">
                     <span>📊 共 <span id="qty-${b.id}">0</span> 台</span>
-                    <span>💰 总金额：¥<span id="money-${b.id}">0</span> 元</span>
+                    <span>💰 实际金额：¥<span id="money-${b.id}">0</span> 元</span>
+                    <span>📋 参考金额：¥<span id="ref-${b.id}">0</span> 元</span>
                 </div>
             `;
             grid.appendChild(card);
