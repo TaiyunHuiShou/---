@@ -2,618 +2,583 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>二手手机回收清单 - 分销版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>批量废旧手机回收清单</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            background: #f0f2f5;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1600px;
-            margin: 0 auto;
-        }
-        .card {
+        * { box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #f0f2f5; padding: 20px; margin: 0; }
+        .container { max-width: 1600px; margin: 0 auto; }
+        
+        .btn { background: #10b981; color: white; border: none; padding: 8px 18px; border-radius: 40px; cursor: pointer; font-size: 13px; font-weight: 500; margin: 2px; }
+        .btn-purple { background: #8b5cf6; }
+        .btn-blue { background: #3b82f6; }
+        .btn-red { background: #ef4444; }
+        .btn-gray { background: #64748b; }
+        
+        .row-buttons {
             background: white;
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .distributor-panel {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .distributor-link {
-            background: white;
-            color: #333;
-            padding: 12px;
-            border-radius: 12px;
-            margin: 15px 0;
-            word-break: break-all;
-            font-family: monospace;
-        }
-        .btn {
-            background: #10b981;
-            color: white;
-            border: none;
             padding: 10px 20px;
-            border-radius: 40px;
-            cursor: pointer;
-            font-weight: bold;
-            margin: 5px;
-        }
-        .btn-secondary { background: #3b82f6; }
-        .commission-list {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        .commission-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .search-bar {
-            background: white;
             border-radius: 60px;
-            padding: 10px 20px;
             margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .contact-bar { 
+            background: #1e293b; 
+            color: white; 
+            padding: 12px 20px; 
+            border-radius: 40px; 
+            margin-bottom: 16px; 
+            text-align: center; 
+            font-size: 14px; 
+        }
+        .contact-bar strong { color: #fbbf24; }
+        
+        .row-search {
+            background: white;
+            padding: 10px 20px;
+            border-radius: 60px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .search-area {
             display: flex;
             gap: 10px;
             align-items: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .search-bar input {
-            flex: 1;
-            padding: 12px 20px;
-            border: 1px solid #e2e8f0;
+            background: #f0f2f5;
+            padding: 5px 16px;
             border-radius: 40px;
-            font-size: 1rem;
+            width: 100%;
+            max-width: 400px;
+        }
+        .search-area span { font-size: 18px; }
+        .search-area input {
+            border: none;
+            padding: 8px;
+            flex: 1;
             outline: none;
+            font-size: 14px;
+            background: transparent;
         }
-        .search-bar input:focus { border-color: #10b981; }
-        .brand-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
+        .search-area button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
         }
-        .brand-card {
-            flex: 1;
-            min-width: 400px;
+        
+        .row-add-brand {
             background: white;
-            border-radius: 16px;
-            padding: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .brand-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e2e8f0;
-        }
-        .brand-name {
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: #1e293b;
-        }
-        .brand-badge {
-            font-size: 0.7rem;
-            background: #eef2ff;
-            padding: 4px 12px;
-            border-radius: 40px;
-            color: #1e40af;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.75rem;
-        }
-        th, td {
-            border: 1px solid #cbd5e1;
-            padding: 6px 4px;
-            text-align: center;
-        }
-        th {
-            background: #f8fafc;
-        }
-        .model-cell input, .config-cell select, .qty-cell input, .price-cell input, .ref-cell input {
-            width: 100%;
-            padding: 5px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 0.7rem;
-        }
-        .config-cell select { width: 65px; }
-        .qty-cell input, .price-cell input, .ref-cell input { width: 70px; text-align: center; }
-        .subtotal-cell {
-            background: #fef9e3;
-            font-weight: bold;
-            color: #b45309;
-        }
-        .stats-row td {
-            background: #f1f5f9;
-            font-weight: bold;
-        }
-        .total-row td {
-            background: #eef2ff;
-            font-weight: bold;
-        }
-        .toolbar {
-            margin-top: 12px;
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-        }
-        .grand-total {
-            background: #1e293b;
-            color: white;
-            padding: 15px;
+            padding: 10px 20px;
             border-radius: 60px;
-            text-align: center;
-            font-weight: bold;
-            margin-top: 20px;
-        }
-        .trial-banner {
-            background: linear-gradient(135deg, #f59e0b, #dc2626);
-            color: white;
-            padding: 10px;
-            border-radius: 40px;
-            text-align: center;
             margin-bottom: 20px;
-            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
         }
-        .no-result-msg {
-            text-align: center;
-            padding: 20px;
-            color: #64748b;
-            font-style: italic;
+        .row-add-brand input {
+            padding: 8px 16px;
+            border-radius: 40px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            width: 200px;
         }
-        @media (max-width: 900px) {
-            .brand-card { min-width: 100%; }
-        }
+        
+        .brand-grid { display: flex; flex-wrap: wrap; gap: 24px; }
+        .brand-card { background: white; border-radius: 24px; padding: 18px; flex: 1; min-width: 520px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .brand-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; }
+        .brand-name { font-size: 1.3rem; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { border: 1px solid #e2e8f0; padding: 6px 4px; text-align: center; }
+        th { background: #f8fafc; font-weight: 600; }
+        input, select { padding: 5px; border-radius: 10px; border: 1px solid #ccc; }
+        .qty-input, .unit-price, .ref-price { width: 70px; text-align: center; }
+        .subtotal-cell { background: #fef9e3; font-weight: bold; }
+        .delete-row-btn { background: #ef4444; color: white; border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-size: 12px; }
+        .brand-stats { margin-top: 12px; padding: 8px 12px; background: #f1f5f9; border-radius: 16px; display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; }
+        .grand-total { background: #1e293b; color: white; padding: 16px; border-radius: 60px; text-align: center; margin-top: 24px; font-weight: bold; font-size: 16px; }
+        .small-btn { background: none; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 30px; cursor: pointer; font-size: 11px; }
+        .small-btn:hover { background: #f1f5f9; }
+        
+        @media (max-width: 700px) { .brand-card { min-width: 100%; } }
+        
+        body.dark { background: #0f172a; }
+        body.dark .brand-card { background: #1e293b; color: #f1f5f9; }
+        body.dark .row-buttons { background: #1e293b; border: 1px solid #475569; }
+        body.dark .row-search { background: #1e293b; border: 1px solid #475569; }
+        body.dark .row-add-brand { background: #1e293b; border: 1px solid #475569; }
+        body.dark input, body.dark select { background: #334155; color: white; border-color: #475569; }
+        body.dark th { background: #334155; }
+        body.dark .brand-stats { background: #334155; }
+        body.dark .search-area { background: #334155; }
+        body.dark .search-area input { color: white; }
     </style>
 </head>
 <body>
 <div class="container">
-    <div id="trialBanner" class="trial-banner">
-        ⚠️ 当前为试用版 · 每个品牌限8行 · 付费解锁全部功能（无限行+分销赚钱）
+    <div class="row-buttons">
+        <button id="oneKeyBtn" class="btn btn-purple">📤 一键导出清单</button>
+        <button id="backupBtn" class="btn btn-blue">💾 备份</button>
+        <button id="restoreBtn" class="btn btn-blue">📂 恢复</button>
+        <button id="clearAllBtn" class="btn btn-red">🗑️ 清空</button>
+        <button id="printBtn" class="btn btn-gray">🖨️ 打印</button>
+        <button id="themeBtn" class="btn btn-gray">🌙 暗色</button>
     </div>
 
-    <div id="distributorPanel" class="distributor-panel" style="display: none;">
-        <h3>🤝 恭喜成为分销员！分享赚钱</h3>
-        <p>朋友通过你的链接购买，你获得 <strong style="font-size:1.2rem;">50%</strong> 佣金</p>
-        <div class="distributor-link" id="distributorLink">加载中...</div>
-        <button class="btn" onclick="copyDistributorLink()">📋 复制分销链接</button>
-        <button class="btn btn-secondary" onclick="showCommission()">💰 查看我的佣金</button>
+    <div class="contact-bar">
+        📱 批量废旧手机回收 | 微信：<strong>Egg77Egg88</strong> | 全国可寄 · 量大价优
     </div>
 
-    <div id="commissionModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
-        <div style="background:white; border-radius:24px; padding:24px; max-width:500px; width:90%; max-height:80%; overflow:auto;">
-            <h3>💰 我的佣金记录（50%）</h3>
-            <div id="commissionList" class="commission-list"></div>
-            <div style="margin-top:20px; text-align:center;">
-                <button class="btn btn-secondary" onclick="closeModal()">关闭</button>
-                <button class="btn" onclick="applyWithdraw()">申请提现</button>
-            </div>
+    <div class="row-search">
+        <div class="search-area">
+            <span>🔍</span>
+            <input type="text" id="searchInput" placeholder="搜索型号...">
+            <button id="clearSearch">✖</button>
         </div>
     </div>
 
-    <div id="unlockPanel" class="card" style="text-align:center;">
-        <h2>🔓 解锁专业版</h2>
-        <p>试用版每个品牌限8行，付费后解锁全部功能+成为分销员（50%佣金）</p>
-        <input type="text" id="unlockCode" placeholder="请输入解锁码" style="padding:10px; width:200px; margin:10px;">
-        <button class="btn" onclick="unlock()">立即解锁</button>
-        <button class="btn btn-secondary" onclick="showDeviceId()">🖥️ 获取设备码</button>
-        <p style="margin-top:10px; font-size:12px; color:#666;">购买联系微信：<strong>Egg77Egg88</strong></p>
+    <div class="row-add-brand">
+        <span>➕ 添加新品牌：</span>
+        <input type="text" id="newBrandName" placeholder="如：魅族">
+        <button id="addBrandBtn" class="btn btn-blue" style="padding: 6px 20px;">添加品牌</button>
     </div>
 
-    <div class="search-bar">
-        <span>🔍</span>
-        <input type="text" id="globalSearch" placeholder="搜索型号... 输入关键字，自动筛选所有品牌">
-        <button id="clearSearch" style="background:#e2e8f0; border:none; padding:8px 16px; border-radius:40px; cursor:pointer;">清除</button>
-    </div>
+    <div id="brandsGrid" class="brand-grid"></div>
 
-    <div id="brandsContainer"></div>
-
-    <div id="grandTotal" class="grand-total">
-        📊 所有品牌总计金额：0 元 &nbsp;&nbsp;|&nbsp;&nbsp; 📱 所有品牌总计台数：0 台
-    </div>
+    <div id="grandTotal" class="grand-total">📊 总计金额：0 元 | 📱 总台数：0 台</div>
 </div>
 
 <script>
-    const SECRET_KEY = 'EGG2024_SECRET';
-    const COMMISSION_RATE = 0.5;
-    let isPaid = false;
-    let currentDeviceId = null;
-    let brands = [
-        { id: 'brand_1', name: '华为' },
-        { id: 'brand_2', name: '小米' },
-        { id: 'brand_3', name: '苹果' },
-        { id: 'brand_4', name: 'OPPO' },
-        { id: 'brand_5', name: 'vivo' },
-        { id: 'brand_6', name: '一加' },
-        { id: 'brand_7', name: '三星' }
+    const FORMSPREE_URL = 'https://formspree.io/f/xvzdzoej';
+    const MY_CONTACT = '微信: Egg77Egg88';
+    
+    let fixedBrands = [
+        { id: 'oppo', name: 'OPPO' },
+        { id: 'vivo', name: 'vivo' },
+        { id: 'huawei', name: '华为' },
+        { id: 'apple', name: '苹果' },
+        { id: 'xiaomi', name: '小米' },
+        { id: 'samsung', name: '三星' },
+        { id: 'oneplus', name: '一加' }
     ];
-    const TRIAL_MAX_ROWS = 8;
-
-    function getDeviceFingerprint() {
-        let fingerprint = navigator.userAgent + screen.width + screen.height + screen.colorDepth + navigator.language;
-        let hash = 0;
-        for (let i = 0; i < fingerprint.length; i++) {
-            hash = ((hash << 5) - hash) + fingerprint.charCodeAt(i);
-            hash |= 0;
+    
+    let customBrands = [];
+    let nextId = 100;
+    
+    function getBrands() {
+        return [...fixedBrands, ...customBrands];
+    }
+    
+    function genId() { return 'custom_' + (nextId++); }
+    
+    function createRowHtml() {
+        return `<tr class="data-row">
+            <td class="model-cell"><input type="text" placeholder="型号" value=""></td>
+            <td class="config-cell"><select><option value="">—</option><option value="高配">高配</option><option value="中配">中配</option><option value="低配">低配</option></select></td>
+            <td class="qty-cell"><input type="number" min="0" step="1" value="1" class="qty-input" style="width:65px"></td>
+            <td class="price-cell"><input type="number" min="0" step="10" value="" class="unit-price" placeholder="单价" style="width:75px"></td>
+            <td class="subtotal-cell">0</select></td>
+            <td class="ref-cell"><input type="number" min="0" step="10" value="" class="ref-price" placeholder="参考价" style="width:75px"></td>
+            <td style="width:35px"><button class="delete-row-btn">✖</button></td>
+        </tr>`;
+    }
+    
+    function updateRowSubtotal(row) {
+        let qty = parseFloat(row.querySelector('.qty-input')?.value) || 0;
+        let price = parseFloat(row.querySelector('.unit-price')?.value) || 0;
+        row.querySelector('.subtotal-cell').innerText = (qty * price).toFixed(0);
+    }
+    
+    function updateBrandStats(brandId) {
+        let tbody = document.querySelector(`#table-${brandId} tbody`);
+        if (!tbody) return;
+        let totalMoney = 0, totalQty = 0;
+        tbody.querySelectorAll('.data-row').forEach(row => {
+            totalMoney += parseFloat(row.querySelector('.subtotal-cell')?.innerText) || 0;
+            totalQty += parseFloat(row.querySelector('.qty-input')?.value) || 0;
+        });
+        let moneySpan = document.getElementById(`money-${brandId}`);
+        let qtySpan = document.getElementById(`qty-${brandId}`);
+        if (moneySpan) moneySpan.innerText = totalMoney.toFixed(0);
+        if (qtySpan) qtySpan.innerText = totalQty;
+        updateGrandTotal();
+        autoSave();
+    }
+    
+    function updateGrandTotal() {
+        let brands = getBrands();
+        let totalMoney = 0, totalQty = 0;
+        brands.forEach(b => {
+            let m = parseFloat(document.getElementById(`money-${b.id}`)?.innerText) || 0;
+            let q = parseFloat(document.getElementById(`qty-${b.id}`)?.innerText) || 0;
+            totalMoney += m;
+            totalQty += q;
+        });
+        document.getElementById('grandTotal').innerHTML = `📊 总计金额：${totalMoney.toFixed(0)} 元 | 📱 总台数：${totalQty} 台`;
+    }
+    
+    function bindRowEvents(row, brandId) {
+        let handler = () => { updateRowSubtotal(row); updateBrandStats(brandId); };
+        row.querySelector('.qty-input').addEventListener('input', handler);
+        row.querySelector('.unit-price').addEventListener('input', handler);
+        row.querySelector('.delete-row-btn').addEventListener('click', () => {
+            if (document.querySelector(`#table-${brandId} tbody`).children.length > 1) {
+                row.remove(); updateBrandStats(brandId);
+            } else alert('至少保留一行');
+        });
+        updateRowSubtotal(row);
+    }
+    
+    function initTable(brandId, rowsCount = 5) {
+        let tbody = document.querySelector(`#table-${brandId} tbody`);
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        for (let i = 0; i < rowsCount; i++) tbody.insertAdjacentHTML('beforeend', createRowHtml());
+        tbody.querySelectorAll('.data-row').forEach(row => bindRowEvents(row, brandId));
+        updateBrandStats(brandId);
+    }
+    
+    function addRow(brandId) {
+        let tbody = document.querySelector(`#table-${brandId} tbody`);
+        tbody.insertAdjacentHTML('beforeend', createRowHtml());
+        bindRowEvents(tbody.lastElementChild, brandId);
+        updateBrandStats(brandId);
+    }
+    
+    function deleteBrand(brandId) {
+        if (confirm('确定删除该品牌？')) {
+            if (fixedBrands.some(b => b.id === brandId)) {
+                alert('固定品牌不能删除');
+                return;
+            }
+            customBrands = customBrands.filter(b => b.id !== brandId);
+            renderAllBrands();
+            autoSave();
         }
-        return Math.abs(hash).toString(16);
     }
     
-    function generateUnlockCode(deviceId) {
-        let combined = deviceId + SECRET_KEY;
-        let hash = 0;
-        for (let i = 0; i < combined.length; i++) {
-            hash = ((hash << 5) - hash) + combined.charCodeAt(i);
-            hash |= 0;
-        }
-        return Math.abs(hash).toString(16).substring(0, 10).toUpperCase();
+    function addNewBrand() {
+        let name = document.getElementById('newBrandName').value.trim();
+        if (!name) return alert('请输入品牌名');
+        let existingBrands = getBrands();
+        if (existingBrands.some(b => b.name === name)) return alert('品牌已存在');
+        customBrands.push({ id: genId(), name });
+        renderAllBrands();
+        document.getElementById('newBrandName').value = '';
+        autoSave();
     }
     
-    function showDeviceId() {
-        alert(`您的设备码：${getDeviceFingerprint()}\n\n请将此码发送给卖家（微信：Egg77Egg88）获取解锁码。`);
+    function collectAllData() {
+        let brands = getBrands();
+        let result = { brands: [], data: {} };
+        brands.forEach(b => {
+            result.brands.push({ id: b.id, name: b.name });
+            let rows = [];
+            document.querySelectorAll(`#table-${b.id} tbody .data-row`).forEach(row => {
+                rows.push({
+                    model: row.querySelector('.model-cell input')?.value || '',
+                    config: row.querySelector('.config-cell select')?.value || '',
+                    qty: row.querySelector('.qty-input')?.value || '0',
+                    price: row.querySelector('.unit-price')?.value || '',
+                    ref: row.querySelector('.ref-price')?.value || ''
+                });
+            });
+            result.data[b.id] = rows;
+        });
+        return result;
     }
     
-    function setupGlobalSearch() {
-        const searchInput = document.getElementById('globalSearch');
-        const clearBtn = document.getElementById('clearSearch');
+    function exportToExcel() {
+        let data = collectAllData();
+        let brands = getBrands();
+        let html = `<!DOCTYPE html>
+        <html><head><meta charset="UTF-8"><title>批量废旧手机回收清单</title>
+        <style>th,td{border:1px solid #888;padding:8px;text-align:center;} table{margin-bottom:30px;}</style>
+        </head><body>
+        <h2>📱 批量废旧手机回收清单</h2>
+        <p>导出时间: ${new Date().toLocaleString()}</p>
+        <p>回收联系：${MY_CONTACT}</p>
+        <hr>`;
         
-        function filterRows() {
-            const keyword = searchInput.value.trim().toLowerCase();
-            let hasAnyResult = false;
-            
-            brands.forEach(brand => {
-                const table = document.getElementById(brand.id + '-table');
-                if (!table) return;
-                const rows = table.querySelectorAll('.data-row');
-                let brandHasResult = false;
-                
+        for (let brand of brands) {
+            let rows = data.data[brand.id] || [];
+            html += `<h3>${brand.name}</h3>`;
+            html += `<td><thead><tr><th>型号</th><th>高低配</th><th>数量</th><th>成交单价(元)</th><th>小计(元)</th><th>参考价(元)</th></tr></thead><tbody>`;
+            rows.forEach(r => {
+                let qty = parseFloat(r.qty) || 0;
+                let price = parseFloat(r.price) || 0;
+                let subtotal = qty * price;
+                html += `<tr><td>${r.model}</td><td>${r.config}</td><td>${r.qty}</td><td>${r.price ? '¥' + r.price : ''}</td><td>${subtotal.toFixed(0)}</td><td>${r.ref ? '¥' + r.ref : ''}</td></tr>`;
+            });
+            html += `</tbody></table><br>`;
+        }
+        html += `<p>📦 全国批量回收，量大价优，欢迎联系！</p></body></html>`;
+        
+        let blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+        let link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `批量废旧手机清单_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xls`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+        return data;
+    }
+    
+    async function sendToFormspree(data) {
+        let brands = getBrands();
+        try {
+            let totalRows = 0;
+            for (let brand of brands) {
+                totalRows += (data.data[brand.id] || []).length;
+            }
+            let payload = {
+                _subject: `【废旧手机回收数据】同行提交的清单`,
+                提交时间: new Date().toLocaleString(),
+                回收商联系方式: MY_CONTACT,
+                品牌数量: brands.length,
+                数据行数: totalRows,
+                详细数据: data
+            };
+            let response = await fetch(FORMSPREE_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            return response.ok;
+        } catch(e) {
+            console.error(e);
+            return false;
+        }
+    }
+    
+    async function oneKeyExport() {
+        let data = collectAllData();
+        let hasData = false;
+        let brands = getBrands();
+        for (let brand of brands) {
+            if ((data.data[brand.id] || []).length > 0) { hasData = true; break; }
+        }
+        if (!hasData) {
+            alert("请先填写一些手机数据");
+            return;
+        }
+        
+        exportToExcel();
+        await sendToFormspree(data);
+        alert("✅ 清单已导出！");
+    }
+    
+    function backupData() {
+        let data = collectAllData();
+        let json = JSON.stringify(data, null, 2);
+        let blob = new Blob([json], { type: 'application/json' });
+        let link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `废旧手机回收备份_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
+    
+    function restoreData() {
+        let input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = e => {
+            let file = e.target.files[0];
+            if (!file) return;
+            let reader = new FileReader();
+            reader.onload = ev => {
+                try {
+                    let data = JSON.parse(ev.target.result);
+                    if (data.brands && data.brands.length) {
+                        let loadedBrands = data.brands;
+                        let newCustom = [];
+                        for (let b of loadedBrands) {
+                            if (!fixedBrands.some(fb => fb.id === b.id)) {
+                                newCustom.push(b);
+                            }
+                        }
+                        customBrands = newCustom;
+                        renderAllBrands();
+                        if (data.data) {
+                            for (let [bid, rows] of Object.entries(data.data)) {
+                                let tbody = document.querySelector(`#table-${bid} tbody`);
+                                if (tbody && rows.length) {
+                                    tbody.innerHTML = '';
+                                    rows.forEach(r => {
+                                        tbody.insertAdjacentHTML('beforeend', createRowHtml());
+                                        let row = tbody.lastElementChild;
+                                        row.querySelector('.model-cell input').value = r.model || '';
+                                        row.querySelector('.config-cell select').value = r.config || '';
+                                        row.querySelector('.qty-input').value = r.qty || '1';
+                                        row.querySelector('.unit-price').value = r.price || '';
+                                        row.querySelector('.ref-price').value = r.ref || '';
+                                        bindRowEvents(row, bid);
+                                    });
+                                    updateBrandStats(bid);
+                                }
+                            }
+                        }
+                        alert('恢复成功！');
+                    } else {
+                        alert('文件格式错误');
+                    }
+                } catch(err) { alert('文件解析失败'); }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+    
+    function clearAllTables() {
+        if (confirm('⚠️ 确定清空所有数据？不可撤销！')) {
+            let brands = getBrands();
+            brands.forEach(b => initTable(b.id, 5));
+            autoSave();
+        }
+    }
+    
+    function printPage() { window.print(); }
+    
+    function autoSave() {
+        let data = collectAllData();
+        localStorage.setItem('phone_recycle_data', JSON.stringify(data));
+    }
+    
+    function loadAutoSave() {
+        let saved = localStorage.getItem('phone_recycle_data');
+        if (saved) {
+            try {
+                let data = JSON.parse(saved);
+                if (data.brands && data.brands.length) {
+                    let loadedBrands = data.brands;
+                    let newCustom = [];
+                    for (let b of loadedBrands) {
+                        if (!fixedBrands.some(fb => fb.id === b.id)) {
+                            newCustom.push(b);
+                        }
+                    }
+                    customBrands = newCustom;
+                    renderAllBrands();
+                    if (data.data) {
+                        for (let [bid, rows] of Object.entries(data.data)) {
+                            let tbody = document.querySelector(`#table-${bid} tbody`);
+                            if (tbody && rows.length) {
+                                tbody.innerHTML = '';
+                                rows.forEach(r => {
+                                    tbody.insertAdjacentHTML('beforeend', createRowHtml());
+                                    let row = tbody.lastElementChild;
+                                    row.querySelector('.model-cell input').value = r.model || '';
+                                    row.querySelector('.config-cell select').value = r.config || '';
+                                    row.querySelector('.qty-input').value = r.qty || '1';
+                                    row.querySelector('.unit-price').value = r.price || '';
+                                    row.querySelector('.ref-price').value = r.ref || '';
+                                    bindRowEvents(row, bid);
+                                });
+                                updateBrandStats(bid);
+                            }
+                        }
+                    }
+                }
+            } catch(e) {}
+        }
+    }
+    
+    function setupSearch() {
+        let searchInput = document.getElementById('searchInput');
+        let clearBtn = document.getElementById('clearSearch');
+        function filter() {
+            let kw = searchInput.value.trim().toLowerCase();
+            let brands = getBrands();
+            brands.forEach(b => {
+                let card = document.getElementById(`card-${b.id}`);
+                let rows = document.querySelectorAll(`#table-${b.id} .data-row`);
+                let brandMatch = false;
                 rows.forEach(row => {
-                    const modelInput = row.querySelector('.model-cell input');
-                    const model = modelInput?.value || '';
-                    if (keyword === '' || model.toLowerCase().includes(keyword)) {
+                    let model = row.querySelector('.model-cell input')?.value || '';
+                    if (kw === '' || model.toLowerCase().includes(kw)) {
                         row.style.display = '';
-                        brandHasResult = true;
-                        hasAnyResult = true;
+                        brandMatch = true;
                     } else {
                         row.style.display = 'none';
                     }
                 });
-                
-                const brandCard = document.getElementById(brand.id + '-card');
-                if (brandCard) {
-                    let noResultMsg = brandCard.querySelector('.no-result-msg');
-                    if (keyword !== '' && !brandHasResult) {
-                        if (!noResultMsg) {
-                            noResultMsg = document.createElement('div');
-                            noResultMsg.className = 'no-result-msg';
-                            noResultMsg.innerText = '没有找到匹配的型号';
-                            table.parentNode.insertBefore(noResultMsg, table.nextSibling);
-                        }
-                    } else {
-                        if (noResultMsg) noResultMsg.remove();
-                    }
-                }
+                if (card) card.style.display = (kw !== '' && !brandMatch) ? 'none' : '';
             });
-            
-            let globalNoResult = document.getElementById('globalNoResult');
-            if (keyword !== '' && !hasAnyResult) {
-                if (!globalNoResult) {
-                    globalNoResult = document.createElement('div');
-                    globalNoResult.id = 'globalNoResult';
-                    globalNoResult.style.cssText = 'text-align:center; padding:40px; background:white; border-radius:20px; margin-top:20px; color:#64748b;';
-                    globalNoResult.innerText = '🔍 没有找到匹配的型号，试试其他关键字';
-                    document.getElementById('brandsContainer').appendChild(globalNoResult);
-                }
-            } else {
-                if (globalNoResult) globalNoResult.remove();
-            }
         }
-        
-        searchInput.addEventListener('input', filterRows);
-        clearBtn.addEventListener('click', () => {
-            searchInput.value = '';
-            filterRows();
+        searchInput.addEventListener('input', filter);
+        clearBtn.addEventListener('click', () => { searchInput.value = ''; filter(); });
+    }
+    
+    function setupTheme() {
+        let btn = document.getElementById('themeBtn');
+        let isDark = localStorage.getItem('darkMode') === 'true';
+        if (isDark) document.body.classList.add('dark');
+        btn.innerHTML = isDark ? '☀️ 亮色' : '🌙 暗色';
+        btn.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            let darkNow = document.body.classList.contains('dark');
+            localStorage.setItem('darkMode', darkNow);
+            btn.innerHTML = darkNow ? '☀️ 亮色' : '🌙 暗色';
         });
     }
     
-    function getCommissionList() {
-        return JSON.parse(localStorage.getItem('commission_' + currentDeviceId) || '[]');
-    }
-    
-    function addCommission(amount, fromDeviceId) {
-        const commissions = getCommissionList();
-        commissions.push({
-            id: Date.now(),
-            amount: amount,
-            fromDeviceId: fromDeviceId,
-            time: new Date().toLocaleString(),
-            status: 'pending'
-        });
-        localStorage.setItem('commission_' + currentDeviceId, JSON.stringify(commissions));
-    }
-    
-    function showCommission() {
-        const commissions = getCommissionList();
-        const listDiv = document.getElementById('commissionList');
-        if (commissions.length === 0) {
-            listDiv.innerHTML = '<div style="text-align:center; padding:20px;">暂无佣金记录</div>';
-        } else {
-            let total = 0;
-            listDiv.innerHTML = commissions.map(c => {
-                total += c.amount;
-                return `<div class="commission-item">
-                    <span>${c.time}</span>
-                    <span>¥${c.amount}</span>
-                    <span>${c.status === 'paid' ? '已结算' : '待结算'}</span>
-                </div>`;
-            }).join('');
-            listDiv.innerHTML += `<div class="commission-item" style="font-weight:bold; background:#f1f5f9;">
-                <span>累计佣金</span>
-                <span>¥${total}</span>
-                <span>(50%)</span>
-            </div>`;
-        }
-        document.getElementById('commissionModal').style.display = 'flex';
-    }
-    
-    function closeModal() {
-        document.getElementById('commissionModal').style.display = 'none';
-    }
-    
-    function applyWithdraw() {
-        alert('提现申请已提交，卖家会联系您处理。\n联系微信：Egg77Egg88');
-    }
-    
-    function copyDistributorLink() {
-        const link = document.getElementById('distributorLink').innerText;
-        navigator.clipboard.writeText(link);
-        alert('分销链接已复制！分享后朋友购买您得50%佣金');
-    }
-    
-    function generateDistributorLink() {
-        return `${window.location.href.split('?')[0]}?ref=${getDeviceFingerprint()}`;
-    }
-    
-    function checkReferral() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const refId = urlParams.get('ref');
-        if (refId && refId !== currentDeviceId) {
-            localStorage.setItem('referred_by_' + currentDeviceId, refId);
-        }
-    }
-    
-    function recordPurchase(amount) {
-        const referredBy = localStorage.getItem('referred_by_' + currentDeviceId);
-        if (referredBy && referredBy !== currentDeviceId) {
-            const commission = amount * COMMISSION_RATE;
-            const commissions = JSON.parse(localStorage.getItem('commission_' + referredBy) || '[]');
-            commissions.push({
-                id: Date.now(),
-                amount: commission,
-                fromDeviceId: currentDeviceId,
-                time: new Date().toLocaleString(),
-                status: 'pending'
-            });
-            localStorage.setItem('commission_' + referredBy, JSON.stringify(commissions));
-        }
-    }
-    
-    function createRow() {
-        return `<tr class="data-row">
-            <td class="model-cell"><input type="text" placeholder="例: Mate 60 Pro" value=""></td>
-            <td class="config-cell"><select><option value="">—</option><option value="高配">高配</option><option value="中配">中配</option><option value="低配">低配</option></select></td>
-            <td class="qty-cell"><input type="number" min="0" step="1" value="1" class="qty-input" style="width:65px; text-align:center;"></td>
-            <td class="price-cell"><input type="number" min="0" step="10" value="" class="unit-price" placeholder="单价" style="width:75px; text-align:center;"></td>
-            <td class="subtotal-cell">0</td>
-            <td class="ref-cell"><input type="number" min="0" step="10" value="" class="ref-price" placeholder="参考价" style="width:75px; text-align:center;"></td>
-         </tr>`;
-    }
-    
-    function updateRowSubtotal(row) {
-        const qty = parseFloat(row.querySelector('.qty-input')?.value) || 0;
-        const price = parseFloat(row.querySelector('.unit-price')?.value) || 0;
-        row.querySelector('.subtotal-cell').innerText = (qty * price).toFixed(0);
-    }
-    
-    function updateBrandTotal(tableId) {
-        const table = document.getElementById(tableId);
-        if (!table) return;
-        let total = 0, totalQty = 0;
-        table.querySelectorAll('.data-row').forEach(row => {
-            total += parseFloat(row.querySelector('.subtotal-cell')?.innerText) || 0;
-            totalQty += parseFloat(row.querySelector('.qty-input')?.value) || 0;
-        });
-        const totalSpan = document.getElementById(tableId + '-total');
-        const qtySpan = document.getElementById(tableId + '-qty');
-        if (totalSpan) totalSpan.innerText = total.toFixed(0);
-        if (qtySpan) qtySpan.innerText = totalQty;
-        updateGrandTotal();
-    }
-    
-    function updateGrandTotal() {
-        let grandTotal = 0, grandQty = 0;
-        brands.forEach(brand => {
-            const totalSpan = document.getElementById(brand.id + '-table-total');
-            const qtySpan = document.getElementById(brand.id + '-table-qty');
-            if (totalSpan) grandTotal += parseFloat(totalSpan.innerText) || 0;
-            if (qtySpan) grandQty += parseFloat(qtySpan.innerText) || 0;
-        });
-        document.getElementById('grandTotal').innerHTML = `📊 所有品牌总计金额：${grandTotal.toFixed(0)} 元 &nbsp;&nbsp;|&nbsp;&nbsp; 📱 所有品牌总计台数：${grandQty} 台`;
-    }
-    
-    function bindEvents(tableId) {
-        const table = document.getElementById(tableId);
-        table.querySelectorAll('.data-row').forEach(row => {
-            const handler = () => {
-                updateRowSubtotal(row);
-                updateBrandTotal(tableId);
-                if (isPaid) saveToLocalStorage();
-            };
-            row.querySelector('.qty-input')?.addEventListener('input', handler);
-            row.querySelector('.unit-price')?.addEventListener('input', handler);
-            updateRowSubtotal(row);
-        });
-        updateBrandTotal(tableId);
-    }
-    
-    function initTable(tableId, rows = 8) {
-        const tbody = document.getElementById(tableId).querySelector('tbody');
-        tbody.innerHTML = '';
-        for (let i = 0; i < rows; i++) tbody.insertAdjacentHTML('beforeend', createRow());
-        bindEvents(tableId);
-    }
-    
-    function addRow(tableId) {
-        if (!isPaid && document.querySelectorAll(`#${tableId} .data-row`).length >= TRIAL_MAX_ROWS) {
-            alert('试用版每个品牌最多8行。购买专业版解锁无限行，联系微信：Egg77Egg88');
-            return;
-        }
-        document.getElementById(tableId).querySelector('tbody').insertAdjacentHTML('beforeend', createRow());
-        bindEvents(tableId);
-        if (isPaid) saveToLocalStorage();
-    }
-    
-    function deleteLastRow(tableId) {
-        const tbody = document.getElementById(tableId).querySelector('tbody');
-        if (tbody.children.length > 1) tbody.removeChild(tbody.lastElementChild);
-        else alert('至少保留一行');
-        bindEvents(tableId);
-        if (isPaid) saveToLocalStorage();
-    }
-    
-    function saveToLocalStorage() {
-        const allData = {};
-        brands.forEach(brand => {
-            const rows = document.querySelectorAll(`#${brand.id}-table .data-row`);
-            allData[brand.id] = Array.from(rows).map(row => ({
-                model: row.querySelector('.model-cell input')?.value || '',
-                config: row.querySelector('.config-cell select')?.value || '',
-                qty: row.querySelector('.qty-input')?.value || '1',
-                price: row.querySelector('.unit-price')?.value || '',
-                ref: row.querySelector('.ref-price')?.value || ''
-            }));
-        });
-        localStorage.setItem('phone_data_' + currentDeviceId, JSON.stringify(allData));
-    }
-    
-    function loadFromLocalStorage() {
-        const saved = localStorage.getItem('phone_data_' + currentDeviceId);
-        if (saved) {
-            const data = JSON.parse(saved);
-            for (const [brandId, rowsData] of Object.entries(data)) {
-                const tbody = document.getElementById(brandId + '-table').querySelector('tbody');
-                tbody.innerHTML = '';
-                rowsData.forEach(d => {
-                    tbody.insertAdjacentHTML('beforeend', createRow());
-                    const row = tbody.lastElementChild;
-                    row.querySelector('.model-cell input').value = d.model || '';
-                    row.querySelector('.config-cell select').value = d.config || '';
-                    row.querySelector('.qty-input').value = d.qty || '1';
-                    row.querySelector('.unit-price').value = d.price || '';
-                    row.querySelector('.ref-price').value = d.ref || '';
-                });
-                bindEvents(brandId + '-table');
-            }
-        }
-    }
-    
-    function renderBrands() {
-        const container = document.getElementById('brandsContainer');
-        container.innerHTML = '<div class="brand-grid" id="brandGrid"></div>';
-        const grid = document.getElementById('brandGrid');
-        brands.forEach(brand => {
-            const card = document.createElement('div');
+    function renderAllBrands() {
+        let grid = document.getElementById('brandsGrid');
+        grid.innerHTML = '';
+        let brands = getBrands();
+        brands.forEach(b => {
+            let card = document.createElement('div');
             card.className = 'brand-card';
-            card.id = brand.id + '-card';
+            card.id = `card-${b.id}`;
+            let isFixed = fixedBrands.some(fb => fb.id === b.id);
+            let deleteBtnHtml = isFixed ? '' : `<button class="small-btn delete-brand-local" data-brand="${b.id}" style="color:#ef4444;">🗑️ 删品牌</button>`;
             card.innerHTML = `
                 <div class="brand-header">
-                    <span class="brand-name">${brand.name}</span>
-                    <span class="brand-badge">数量×单价=小计</span>
+                    <span class="brand-name">${b.name}</span>
+                    <div>
+                        <button class="small-btn add-row-local" data-brand="${b.id}">➕ 加行</button>
+                        ${deleteBtnHtml}
+                    </div>
                 </div>
-                <table id="${brand.id}-table">
-                    <thead><tr><th style="width:28%">型号</th><th style="width:12%">高低配</th><th style="width:10%">数量</th><th style="width:15%">老板填金额(元)</th><th style="width:12%">小计(元)</th><th style="width:23%">参考价(元)</th></tr></thead>
+                <table id="table-${b.id}">
+                    <thead><tr><th>型号</th><th>高低配</th><th>数量</th><th>老板填金额(元)</th><th>小计(元)</th><th>参考价(元)</th><th>删除</th></tr></thead>
                     <tbody></tbody>
-                    <tr class="stats-row"><td colspan="2" style="text-align:right;">📊 本品牌统计：</td><td id="${brand.id}-table-qty" style="font-weight:bold;color:#059669;">0</td><td>台</td><td id="${brand.id}-table-total" style="font-weight:bold;">0</td><td>元</td></tr>
-                    <tr class="total-row"><td colspan="6" style="text-align:right;">${brand.name} 汇总：共 <span id="${brand.id}-table-qty2" style="color:#059669;">0</span> 台，总金额 <span id="${brand.id}-table-total2">0</span> 元</td></tr>
                 </table>
-                <div class="toolbar">
-                    <button class="btn-add" data-table="${brand.id}-table">➕ 增加一行</button>
-                    <button class="btn-del" data-table="${brand.id}-table">🗑️ 删除最后一行</button>
+                <div class="brand-stats">
+                    <span>📊 共 <span id="qty-${b.id}">0</span> 台</span>
+                    <span>💰 总金额：¥<span id="money-${b.id}">0</span> 元</span>
                 </div>
             `;
             grid.appendChild(card);
-            
-            const tableId = brand.id + '-table';
-            initTable(tableId, TRIAL_MAX_ROWS);
-            
-            card.querySelector('.btn-add').addEventListener('click', () => addRow(tableId));
-            card.querySelector('.btn-del').addEventListener('click', () => deleteLastRow(tableId));
+            initTable(b.id, 5);
+            card.querySelector('.add-row-local').addEventListener('click', () => addRow(b.id));
+            if (!isFixed) {
+                card.querySelector('.delete-brand-local').addEventListener('click', () => deleteBrand(b.id));
+            }
         });
     }
     
-    function unlock() {
-        const code = document.getElementById('unlockCode').value.trim().toUpperCase();
-        const deviceId = getDeviceFingerprint();
-        if (generateUnlockCode(deviceId) === code) {
-            isPaid = true;
-            localStorage.setItem('isPaid_' + deviceId, 'true');
-            document.getElementById('unlockPanel').style.display = 'none';
-            document.getElementById('trialBanner').style.display = 'none';
-            document.getElementById('distributorPanel').style.display = 'block';
-            document.getElementById('distributorLink').innerText = generateDistributorLink();
-            
-            recordPurchase(29.9);
-            loadFromLocalStorage();
-            
-            alert('解锁成功！您已成为分销员，分享链接可获得50%佣金！');
-        } else {
-            alert('解锁码错误。购买联系微信：Egg77Egg88');
-        }
+    function init() {
+        renderAllBrands();
+        loadAutoSave();
+        setupSearch();
+        setupTheme();
+        document.getElementById('oneKeyBtn').addEventListener('click', oneKeyExport);
+        document.getElementById('backupBtn').addEventListener('click', backupData);
+        document.getElementById('restoreBtn').addEventListener('click', restoreData);
+        document.getElementById('clearAllBtn').addEventListener('click', clearAllTables);
+        document.getElementById('printBtn').addEventListener('click', printPage);
+        document.getElementById('addBrandBtn').addEventListener('click', addNewBrand);
+        window.addEventListener('beforeunload', autoSave);
     }
-    
-    function checkUnlockStatus() {
-        currentDeviceId = getDeviceFingerprint();
-        if (localStorage.getItem('isPaid_' + currentDeviceId) === 'true') {
-            isPaid = true;
-            document.getElementById('unlockPanel').style.display = 'none';
-            document.getElementById('trialBanner').style.display = 'none';
-            document.getElementById('distributorPanel').style.display = 'block';
-            document.getElementById('distributorLink').innerText = generateDistributorLink();
-        }
-        renderBrands();
-        if (isPaid) loadFromLocalStorage();
-        checkReferral();
-        setupGlobalSearch();
-        
-        if (isPaid) {
-            setInterval(() => saveToLocalStorage(), 30000);
-            window.addEventListener('beforeunload', () => saveToLocalStorage());
-        }
-    }
-    
-    window.showDeviceId = showDeviceId;
-    window.unlock = unlock;
-    window.showCommission = showCommission;
-    window.closeModal = closeModal;
-    window.applyWithdraw = applyWithdraw;
-    window.copyDistributorLink = copyDistributorLink;
-    
-    checkUnlockStatus();
+    init();
 </script>
 </body>
 </html>
