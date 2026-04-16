@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
-    <title>废机回收 ERP - v8.5 Professional</title>
+    <title>废机宝 - 让废机回收更简单</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -114,7 +114,7 @@
 </head>
 <body class="show-ref">
 <div class="navbar">
-    <div class="nav-title">废机回收 ERP 8.5</div>
+    <div class="nav-title">废机宝 8.5</div>
     <div style="font-size: 12px; color: var(--gray);">专业版</div>
 </div>
 <div id="screenshot-area">
@@ -143,6 +143,7 @@
         <div class="drawer-item" onclick="app.printPage()">🖨️ 打印清单</div>
         <div class="drawer-item" onclick="app.showBackupCode()">📂 备份数据 (生成短码)</div>
         <div class="drawer-item" onclick="app.showRecoverByCode()">📥 恢复数据 (输入短码)</div>
+        <div class="drawer-item" onclick="app.showChangePasswordModal()">🔑 修改密码</div>
         <div class="drawer-item" style="color:var(--danger)" onclick="app.clearAll()">🗑️ 清空当前批次</div>
         <div style="text-align:center; padding:15px; opacity:0.8; font-size:14px; color:var(--info); cursor:pointer;" onclick="app.showContact()">
             💬 意见反馈
@@ -154,19 +155,11 @@
 </div>
 
 <script>
-const SEC_KEY = "Egg77Egg88_secret_2026";
-// 完整型号数据库 (2012-2026)
-const FULL_MODEL_MAP = {
-    "OPPO": ["Find 7","Find 5","Find X","Find X2 Pro","Find X2","Find X3","Find X3 Pro","Find X5","Find X5 Pro","Find X6","Find X6 Pro","Find X7","Find X7 Ultra","Find N","Find N2","Find N2 Flip","Find N3","Find N3 Flip","R9","R9s","R11","R11s","R15","R17","Reno","Reno2","Reno3","Reno3 Pro","Reno4","Reno4 Pro","Reno5","Reno5 Pro","Reno6","Reno6 Pro","Reno7","Reno7 Pro","Reno8","Reno8 Pro","Reno9","Reno9 Pro","Reno10","Reno10 Pro","Reno11","Reno11 Pro","Reno12","Reno12 Pro","Reno13","Reno13 Pro","A37","A57","A59","A73","A83","A1","A3","A5","A7","A9","A11","A12","A32","A52","A72","A92","A1 Pro","A2","A2 Pro","A3 Pro","K1","K3","K5","K7","K9","K9x","K10","K10x","K11","K11x"],
-    "vivo": ["X3","X5","X6","X7","X9","X20","X21","X23","X27","X30","X50","X50 Pro","X60","X60 Pro","X70","X70 Pro","X80","X80 Pro","X90","X90 Pro","X90 Pro+","X100","X100 Pro","X100 Ultra","X200","X200 Pro","X200 Ultra","Xplay3S","Xplay5","Xplay6","X Fold","X Fold+","X Fold2","X Fold3","X Flip","S12","S12 Pro","S15","S15 Pro","S16","S16 Pro","S17","S17 Pro","S18","S18 Pro","S19","S19 Pro","S20","S20 Pro","Y17","Y20","Y22","Y27","Y28","Y30","Y31","Y33","Y35","Y37","Y50","Y51","Y52","Y55","Y66","Y67","Y70","Y71","Y73","Y75","Y79","Y81","Y83","Y85","Y93","Y95","Y97","Z1","Z3","Z5","Z6","iQOO 7","iQOO 8","iQOO 9","iQOO 10","iQOO 11","iQOO 12","iQOO 13","iQOO Neo5","iQOO Neo6","iQOO Neo7","iQOO Neo8","iQOO Neo9","iQOO Z5","iQOO Z6","iQOO Z7","iQOO Z8","iQOO Z9"],
-    "华为": ["Mate 7","Mate 8","Mate 9","Mate 10","Mate 20","Mate 30","Mate 40","Mate 40 Pro","Mate 40 Pro+","Mate 40E","Mate 50","Mate 50 Pro","Mate 50E","Mate 60","Mate 60 Pro","Mate 60 Pro+","Mate 60 RS","P6","P7","P8","P9","P10","P20","P30","P40","P50","P50 Pro","P50 Pocket","P60","P60 Pro","P60 Art","P70","P70 Pro","P70 Art","Nova","Nova 2","Nova 3","Nova 4","Nova 5","Nova 6","Nova 7","Nova 8","Nova 8 Pro","Nova 9","Nova 9 Pro","Nova 10","Nova 10 Pro","Nova 11","Nova 11 Pro","Nova 12","Nova 12 Pro","Nova 12 Ultra","Nova 13","Nova 13 Pro","畅享5","畅享6","畅享7","畅享8","畅享9","畅享10","Mate X","Mate Xs 2","Mate X3","Mate X5","Pocket 2","Pocket S"],
-    "荣耀": ["荣耀3","荣耀4","荣耀5X","荣耀6","荣耀7","荣耀8","荣耀9","荣耀10","荣耀20","荣耀30","荣耀50","荣耀60","荣耀70","荣耀80","荣耀90","荣耀100","荣耀200","荣耀300","荣耀V8","荣耀V9","荣耀V10","荣耀V20","荣耀V30","荣耀V40","荣耀Play","荣耀Play3","荣耀Play4","荣耀Play5","荣耀Play6","荣耀Play7","荣耀Play8","荣耀Note 8","荣耀Note 10","荣耀Magic","荣耀Magic 2","荣耀Magic3","荣耀Magic4","荣耀Magic5","荣耀Magic6","荣耀Magic7","荣耀X30","荣耀X40","荣耀X50","荣耀X60","荣耀畅玩20","荣耀畅玩30","荣耀畅玩40","荣耀畅玩50","荣耀畅玩60"],
-    "苹果": ["iPhone 5","iPhone 5c","iPhone 5s","iPhone 6","iPhone 6 Plus","iPhone 6s","iPhone 6s Plus","iPhone 7","iPhone 7 Plus","iPhone 8","iPhone 8 Plus","iPhone X","iPhone XR","iPhone XS","iPhone XS Max","iPhone 11","iPhone 11 Pro","iPhone 11 Pro Max","iPhone 12","iPhone 12 mini","iPhone 12 Pro","iPhone 12 Pro Max","iPhone 13","iPhone 13 mini","iPhone 13 Pro","iPhone 13 Pro Max","iPhone 14","iPhone 14 Plus","iPhone 14 Pro","iPhone 14 Pro Max","iPhone 15","iPhone 15 Plus","iPhone 15 Pro","iPhone 15 Pro Max","iPhone 16","iPhone 16 Plus","iPhone 16 Pro","iPhone 16 Pro Max","iPhone SE(第一代)","iPhone SE(第二代)","iPhone SE(第三代)","iPhone SE(第四代)"],
-    "小米": ["小米1","小米2","小米3","小米4","小米5","小米6","小米8","小米9","小米10","小米10 Pro","小米11","小米11 Pro","小米11 Ultra","小米12","小米12 Pro","小米12S","小米12S Pro","小米12S Ultra","小米13","小米13 Pro","小米13 Ultra","小米14","小米14 Pro","小米14 Ultra","小米15","小米15 Pro","小米Civi","Civi 1S","Civi 2","Civi 3","Civi 4 Pro","小米Note","Note 2","Note 3","MIX","MIX 2","MIX 2S","MIX 3","MIX 4","MIX Fold","MIX Fold 2","MIX Fold 3","MIX Fold 4","红米1","红米2","红米3","红米4","红米5","红米6","红米7","红米8","红米9","红米10","红米11","红米12","红米13","红米14","红米Note 1","红米Note 2","红米Note 3","红米Note 4","红米Note 5","红米Note 6","红米Note 7","红米Note 8","红米Note 9","红米Note 10","红米Note 11","红米Note 12","红米Note 13","红米Note 14","红米K20","红米K30","红米K40","红米K50","红米K60","红米K70","红米K80"],
-    "三星": ["S3","S4","S5","S6","S7","S8","S9","S10","S10+","S10e","S20","S20+","S20 Ultra","S21","S21+","S21 Ultra","S22","S22+","S22 Ultra","S23","S23+","S23 Ultra","S24","S24+","S24 Ultra","S25","S25+","S25 Ultra","Note 2","Note 3","Note 4","Note 5","Note 7","Note 8","Note 9","Note 10","Note 10+","Note 20","Z Fold3","Z Fold4","Z Fold5","Z Fold6","Z Flip3","Z Flip4","Z Flip5","Z Flip6","A3","A5","A7","A8","A9","A10","A20","A30","A40","A50","A60","A70","A80","A90","J3","J5","J7","J4","J6","J8"],
-    "一加": ["一加1","一加2","一加3","一加3T","一加5","一加5T","一加6","一加6T","一加7","一加7 Pro","一加7T","一加8","一加8 Pro","一加9","一加9 Pro","一加9R","一加10 Pro","一加10R","一加11","一加12","一加13","一加Ace","Ace Pro","Ace 2","Ace 2 Pro","Ace 3","Ace 3 Pro","一加Nord"],
-    "魅族": ["魅族MX","MX2","MX3","MX4","MX5","Pro 5","Pro 6","Pro 7","Pro 7 Plus","魅蓝Note","魅蓝Note 2","魅蓝Note 3","魅蓝Note 5","魅蓝Note 6","魅蓝E","魅蓝X","魅族15","魅族16","魅族16s","魅族16T","魅族17","魅族17 Pro","魅族20","魅族21","魅族21s","魅族22","魅族22 Pro"]
-};
+const PBKDF2_ITERATIONS = 100000;
+const KEY_SIZE = 256 / 32;
+
+let currentDerivedKey = null;
+let currentSalt = null;
 
 const app = {
     data: [],
@@ -176,33 +169,257 @@ const app = {
     isWechat: /MicroMessenger/i.test(navigator.userAgent),
     activeSuggest: null,
 
+    deriveKey(password, salt) {
+        return CryptoJS.PBKDF2(password, salt, {
+            keySize: KEY_SIZE,
+            iterations: PBKDF2_ITERATIONS,
+            hasher: CryptoJS.algo.SHA256
+        });
+    },
+
+    encryptData(dataObj, password, salt) {
+        const key = this.deriveKey(password, salt);
+        const jsonStr = JSON.stringify(dataObj);
+        return CryptoJS.AES.encrypt(jsonStr, key).toString();
+    },
+
+    decryptData(encrypted, password, salt) {
+        const key = this.deriveKey(password, salt);
+        const bytes = CryptoJS.AES.decrypt(encrypted, key);
+        const decryptedStr = bytes.toString(CryptoJS.enc.Utf8);
+        return JSON.parse(decryptedStr);
+    },
+
     init() {
         const refPref = localStorage.getItem('ref_display_pref');
         if (refPref) {
             document.body.classList.remove('show-ref', 'hide-ref');
             document.body.classList.add(refPref);
         }
-        const encrypted = localStorage.getItem("erp_v7_secure_data");
-        if (encrypted) {
-            try {
-                const bytes = CryptoJS.AES.decrypt(encrypted, SEC_KEY);
-                this.data = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-            } catch (e) { this.reset(); }
-        } else { this.reset(); }
-        this.render();
+
+        const secureData = localStorage.getItem("erp_v7_secure");
+        if (!secureData) {
+            this.showPasswordSetupModal();
+        } else {
+            this.showPasswordUnlockModal();
+        }
+
         if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
     },
-    reset() {
-        this.data = ["OPPO", "vivo", "华为", "荣耀", "苹果"].map(b => ({ brand: b, items: this.generateEmptyRows(5) }));
+
+    resetDataForInit() {
+        return ["OPPO", "vivo", "华为", "荣耀", "苹果"].map(b => ({ brand: b, items: this.generateEmptyRows(5) }));
     },
+
+    showPasswordSetupModal() {
+        const m = document.getElementById('appModal');
+        const c = document.getElementById('modalContent');
+        c.innerHTML = `
+            <div style="font-weight:bold; margin-bottom:20px; text-align:center;">首次使用 - 设置主密码</div>
+            <div style="font-size:14px; color:var(--gray); text-align:center; margin-bottom:20px;">请设置一个至少8位的高强度密码（包含字母+数字）</div>
+            <input type="password" id="setupPassword" class="brand-select-full" placeholder="输入主密码" style="margin-bottom:10px;">
+            <input type="password" id="setupPasswordConfirm" class="brand-select-full" placeholder="再次确认密码">
+            <div class="modal-footer" style="margin-top:20px;">
+                <div class="btn-confirm" onclick="app.confirmPasswordSetup()">确认设置</div>
+            </div>
+        `;
+        m.style.display = 'flex';
+    },
+
+    confirmPasswordSetup() {
+        const pwd1 = document.getElementById('setupPassword').value.trim();
+        const pwd2 = document.getElementById('setupPasswordConfirm').value.trim();
+        if (!pwd1 || pwd1.length < 8) { alert("密码至少8位"); return; }
+        if (pwd1 !== pwd2) { alert("两次密码不一致"); return; }
+        const salt = CryptoJS.lib.WordArray.random(16).toString();
+        const encrypted = this.encryptData(this.resetDataForInit(), pwd1, salt);
+        localStorage.setItem("erp_v7_secure", JSON.stringify({ salt: salt, encrypted: encrypted }));
+        currentDerivedKey = this.deriveKey(pwd1, salt);
+        currentSalt = salt;
+        this.data = this.resetDataForInit();
+        this.render();
+        this.closeModal();
+    },
+
+    showPasswordUnlockModal() {
+        const m = document.getElementById('appModal');
+        const c = document.getElementById('modalContent');
+        c.innerHTML = `
+            <div style="font-weight:bold; margin-bottom:20px; text-align:center;">请输入主密码</div>
+            <input type="password" id="unlockPassword" class="brand-select-full" placeholder="输入您的主密码" style="margin-bottom:10px;">
+            <div class="modal-footer" style="margin-top:20px;">
+                <div class="btn-confirm" onclick="app.confirmPasswordUnlock()">解锁</div>
+            </div>
+            <div style="text-align:center; margin-top:15px; font-size:13px; color:var(--gray); cursor:pointer;" onclick="app.resetAllData()">忘记密码？重置所有数据</div>
+        `;
+        m.style.display = 'flex';
+    },
+
+    confirmPasswordUnlock() {
+        const password = document.getElementById('unlockPassword').value.trim();
+        const secureStr = localStorage.getItem("erp_v7_secure");
+        if (!secureStr) return;
+        let secure;
+        try { secure = JSON.parse(secureStr); } catch(e) { return; }
+        try {
+            this.data = this.decryptData(secure.encrypted, password, secure.salt);
+            currentDerivedKey = this.deriveKey(password, secure.salt);
+            currentSalt = secure.salt;
+            this.render();
+            this.closeModal();
+        } catch(e) {
+            alert("密码错误，请重试");
+        }
+    },
+
+    showChangePasswordModal() {
+        if (!currentDerivedKey) {
+            alert("请先解锁");
+            return;
+        }
+        const m = document.getElementById('appModal');
+        const c = document.getElementById('modalContent');
+        c.innerHTML = `
+            <div style="font-weight:bold; margin-bottom:15px; text-align:center;">修改主密码</div>
+            <input type="password" id="oldPassword" class="brand-select-full" placeholder="输入当前密码">
+            <input type="password" id="newPassword" class="brand-select-full" placeholder="输入新密码（至少8位）" style="margin-top:10px;">
+            <input type="password" id="newPasswordConfirm" class="brand-select-full" placeholder="再次确认新密码">
+            <div class="modal-footer">
+                <div class="btn-cancel" onclick="app.closeModal()">取消</div>
+                <div class="btn-confirm" onclick="app.confirmChangePassword()">确认修改</div>
+            </div>
+        `;
+        m.style.display = 'flex';
+    },
+
+    confirmChangePassword() {
+        const oldPwd = document.getElementById('oldPassword').value.trim();
+        const newPwd = document.getElementById('newPassword').value.trim();
+        const newPwd2 = document.getElementById('newPasswordConfirm').value.trim();
+        if (!newPwd || newPwd.length < 8) { alert("新密码至少8位"); return; }
+        if (newPwd !== newPwd2) { alert("两次新密码不一致"); return; }
+        const secureStr = localStorage.getItem("erp_v7_secure");
+        let secure = JSON.parse(secureStr);
+        try {
+            this.decryptData(secure.encrypted, oldPwd, secure.salt);
+        } catch(e) {
+            alert("当前密码错误");
+            return;
+        }
+        const newSalt = CryptoJS.lib.WordArray.random(16).toString();
+        const newEncrypted = this.encryptData(this.data, newPwd, newSalt);
+        localStorage.setItem("erp_v7_secure", JSON.stringify({ salt: newSalt, encrypted: newEncrypted }));
+        currentDerivedKey = this.deriveKey(newPwd, newSalt);
+        currentSalt = newSalt;
+        this.closeModal();
+        alert("密码修改成功！");
+    },
+
+    resetAllData() {
+        if (confirm("⚠️ 警告：重置密码将永久删除所有现有数据，此操作不可撤销！\n\n确定要继续吗？")) {
+            localStorage.removeItem("erp_v7_secure");
+            this.closeModal();
+            this.reset();
+            this.render();
+            this.showPasswordSetupModal();
+        }
+    },
+
+    save() {
+        if (!currentDerivedKey || !currentSalt) return;
+        const jsonStr = JSON.stringify(this.data);
+        const encrypted = CryptoJS.AES.encrypt(jsonStr, currentDerivedKey).toString();
+        localStorage.setItem("erp_v7_secure", JSON.stringify({
+            salt: currentSalt,
+            encrypted: encrypted
+        }));
+        this.updateStats();
+    },
+
+    showBackupCode() {
+        const m = document.getElementById('appModal');
+        const c = document.getElementById('modalContent');
+        c.innerHTML = `
+            <div style="font-weight:bold; margin-bottom:15px; text-align:center;">设置分享密码</div>
+            <div style="font-size:14px; color:var(--gray); text-align:center; margin-bottom:15px;">请输入一个分享密码（对方恢复时需要）</div>
+            <input type="password" id="sharePassword" class="brand-select-full" placeholder="输入分享密码">
+            <div class="modal-footer">
+                <div class="btn-cancel" onclick="app.closeModal()">取消</div>
+                <div class="btn-confirm" onclick="app.generateEncryptedShareCode()">生成短码</div>
+            </div>
+        `;
+        m.style.display = 'flex';
+    },
+
+    generateEncryptedShareCode() {
+        const sharePwd = document.getElementById('sharePassword').value.trim();
+        if (!sharePwd) { alert("请输入分享密码"); return; }
+        const shareSalt = CryptoJS.lib.WordArray.random(16).toString();
+        const shareKey = this.deriveKey(sharePwd, shareSalt);
+        const jsonStr = JSON.stringify(this.data);
+        const aesEncrypted = CryptoJS.AES.encrypt(jsonStr, shareKey).toString();
+        const payload = JSON.stringify({ salt: shareSalt, encrypted: aesEncrypted });
+        const compressed = LZString.compressToBase64(payload);
+        const shareCode = `📱回收#${compressed}`;
+        this.closeModal();
+        const m = document.getElementById('appModal');
+        const c = document.getElementById('modalContent');
+        c.innerHTML = `<div style="text-align:center"><div style="font-weight:bold">备份短码（已加密）</div><div style="font-size:18px;margin:20px 0;word-break:break-all;line-height:1.4">${shareCode}</div><div style="font-size:12px;color:var(--gray)">长按复制完整短码，对方需要输入您设置的分享密码才能恢复</div><div class="modal-footer"><div class="btn-confirm" onclick="navigator.clipboard.writeText('${shareCode}');alert('已复制短码');app.closeModal();">复制短码</div><div class="btn-cancel" onclick="app.closeModal()">关闭</div></div></div>`;
+        m.style.display = 'flex';
+    },
+
+    showRecoverByCode() {
+        this.closeModal();
+        const m = document.getElementById('appModal');
+        const c = document.getElementById('modalContent');
+        c.innerHTML = `<div style="text-align:center"><div style="font-weight:bold">输入备份短码</div><input id="recoverCodeInput" class="brand-select-full" placeholder="粘贴以 📱回收# 开头的完整短码" style="margin:15px 0"><div class="modal-footer"><div class="btn-confirm" onclick="app.recoverWithCode()">下一步</div><div class="btn-cancel" onclick="app.closeModal()">取消</div></div></div>`;
+        m.style.display = 'flex';
+    },
+
+    recoverWithCode() {
+        const code = document.getElementById('recoverCodeInput').value.trim();
+        if (!code || !code.startsWith('📱回收#')) {
+            alert("无效短码格式");
+            return;
+        }
+        const compressed = code.split('#')[1];
+        let payloadStr;
+        try {
+            payloadStr = LZString.decompressFromBase64(compressed);
+        } catch(e) { alert("短码解压失败"); return; }
+        let payload;
+        try { payload = JSON.parse(payloadStr); } catch(e) { alert("数据格式错误"); return; }
+        this.closeModal();
+        const m = document.getElementById('appModal');
+        const c = document.getElementById('modalContent');
+        c.innerHTML = `<div style="text-align:center"><div style="font-weight:bold">输入分享密码</div><input id="shareRecoverPassword" class="brand-select-full" placeholder="输入该短码的分享密码" style="margin:15px 0"><div class="modal-footer"><div class="btn-confirm" onclick="app.finalRecoverWithSharePassword('${payload.salt}', '${payload.encrypted}')">恢复数据</div><div class="btn-cancel" onclick="app.closeModal()">取消</div></div></div>`;
+        m.style.display = 'flex';
+    },
+
+    finalRecoverWithSharePassword(shareSalt, aesEncrypted) {
+        const sharePwd = document.getElementById('shareRecoverPassword').value.trim();
+        if (!sharePwd) { alert("请输入分享密码"); return; }
+        let decryptedData;
+        try {
+            const shareKey = this.deriveKey(sharePwd, shareSalt);
+            const bytes = CryptoJS.AES.decrypt(aesEncrypted, shareKey);
+            const str = bytes.toString(CryptoJS.enc.Utf8);
+            decryptedData = JSON.parse(str);
+        } catch(e) {
+            alert("分享密码错误或短码已损坏");
+            return;
+        }
+        this.data = decryptedData;
+        this.save();
+        this.render();
+        this.closeModal();
+        alert("数据恢复成功！");
+    },
+
     generateEmptyRows(count) {
         return Array(count).fill().map(() => ({ m: "", s: "废机整机", c: "—", q: 1, p: "", r: "" }));
     },
-    save() {
-        const jsonStr = JSON.stringify(this.data);
-        localStorage.setItem("erp_v7_secure_data", CryptoJS.AES.encrypt(jsonStr, SEC_KEY).toString());
-        this.updateStats();
-    },
+
     render() {
         const container = document.getElementById('brand-container');
         container.innerHTML = this.data.map((b, bIdx) => `
@@ -230,22 +447,8 @@ const app = {
                                     </td>
                                     <td><div style="display:flex; flex-direction:column; gap:2px;"><select class="cell-input" onchange="app.update(${bIdx}, ${rIdx}, 's', this.value)">${this.statusList.map(s => `<option value="${s}" ${i.s === s ? 'selected' : ''}>${s}</option>`).join('')}</select><select class="cell-input" style="color:var(--gray); font-size:11px" onchange="app.update(${bIdx}, ${rIdx}, 'c', this.value)">${this.cfgList.map(c => `<option value="${c}" ${i.c === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div></td>
                                     <td><div class="qty-container"><div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},-1)">-</div><div style="font-weight:bold">${i.q}</div><div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},1)">+</div></div></td>
-                                    <!-- 问题1修复：加强数字输入过滤 -->
-                                    <td>
-                                        <input type="text" inputmode="decimal" 
-                                               class="cell-input" style="color:var(--primary);font-weight:bold" 
-                                               value="${i.p}" 
-                                               oninput="app.filterPriceInput(this, ${bIdx}, ${rIdx}, 'p')"
-                                               onkeypress="return app.blockNonNumeric(event)"
-                                               onpaste="app.handlePaste(event, this, ${bIdx}, ${rIdx}, 'p')">
-                                    </td>
-                                    <td class="ref-column">
-                                        <input type="text" inputmode="decimal" 
-                                               class="cell-input" value="${i.r}" 
-                                               oninput="app.filterPriceInput(this, ${bIdx}, ${rIdx}, 'r')"
-                                               onkeypress="return app.blockNonNumeric(event)"
-                                               onpaste="app.handlePaste(event, this, ${bIdx}, ${rIdx}, 'r')">
-                                    </td>
+                                    <td><input type="text" inputmode="decimal" class="cell-input" style="color:var(--primary);font-weight:bold" value="${i.p}" oninput="app.filterPriceInput(this, ${bIdx}, ${rIdx}, 'p')" onkeypress="return app.blockNonNumeric(event)" onpaste="setTimeout(() => app.filterPriceInput(this, ${bIdx}, ${rIdx}, 'p'), 0)"></td>
+                                    <td class="ref-column"><input type="text" inputmode="decimal" class="cell-input" value="${i.r}" oninput="app.filterPriceInput(this, ${bIdx}, ${rIdx}, 'r')" onkeypress="return app.blockNonNumeric(event)" onpaste="setTimeout(() => app.filterPriceInput(this, ${bIdx}, ${rIdx}, 'r'), 0)"></td>
                                     <td><button onclick="app.delRow(${bIdx}, ${rIdx})" style="border:none;background:none;color:var(--gray)">✕</button></td>
                                 </tr>
                             `).join('')}
@@ -257,48 +460,38 @@ const app = {
         `).join('');
         this.updateStats();
     },
-    escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); },
 
-    // ==================== 问题1：加强数字输入过滤 ====================
     filterPriceInput(input, bIdx, rIdx, key) {
         let val = input.value.replace(/[^0-9.]/g, '');
         const parts = val.split('.');
         if (parts.length > 2) val = parts[0] + '.' + parts[1];
-        if (parts[1] && parts[1].length > 2) val = parts[0] + '.' + parts[1].slice(0,2);
+        if (parts[1] && parts[1].length > 2) val = parts[0] + '.' + parts[1].slice(0, 2);
         input.value = val;
         this.data[bIdx].items[rIdx][key] = val;
         this.save();
     },
+
     blockNonNumeric(e) {
         if (e.key === '.' || (e.key >= '0' && e.key <= '9')) return true;
+        e.preventDefault();
         return false;
     },
-    handlePaste(e, input, bIdx, rIdx, key) {
-        setTimeout(() => {
-            this.filterPriceInput(input, bIdx, rIdx, key);
-        }, 10);
-    },
-    // =================================================================
 
-    // ==================== 问题3：按品牌隔离型号建议 ====================
-    showSuggestions(bIdx, rIdx, currentVal) {
-        this.filterSuggestions(bIdx, rIdx, currentVal);
-    },
+    escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); },
+
+    showSuggestions(bIdx, rIdx, currentVal) { this.filterSuggestions(bIdx, rIdx, currentVal); },
     filterSuggestions(bIdx, rIdx, keyword) {
         const wrapper = document.getElementById(`model-wrapper-${bIdx}-${rIdx}`);
         if (!wrapper) return;
         const existingList = wrapper.querySelector('.suggest-list');
         if(existingList) existingList.remove();
         if(!keyword || !keyword.trim()) return;
-
         const brand = this.data[bIdx].brand;
         let modelList = FULL_MODEL_MAP[brand] || [];
-        if (modelList.length === 0) modelList = Object.values(FULL_MODEL_MAP).flat(); // 未知品牌显示全部
-
+        if (modelList.length === 0) modelList = Object.values(FULL_MODEL_MAP).flat();
         const lowerKw = keyword.toLowerCase();
         let matches = modelList.filter(m => m.toLowerCase().includes(lowerKw)).slice(0,8);
         if(matches.length === 0) return;
-
         const ul = document.createElement('ul');
         ul.className = 'suggest-list';
         matches.forEach(model => {
@@ -340,31 +533,13 @@ const app = {
             this.update(bIdx, rIdx, 'm', newModel);
         }
     },
-    // =================================================================
-
-    // ==================== 问题2：彻底使用自定义 Modal 删除品牌 ====================
     delBrand(idx) {
-        const m = document.getElementById('appModal');
-        const c = document.getElementById('modalContent');
-        c.innerHTML = `
-            <div style="text-align:center; font-weight:bold; margin-bottom:20px; color:var(--danger);">确定删除该品牌吗？</div>
-            <div style="font-size:14px; color:var(--gray); text-align:center; margin-bottom:25px;">删除后该品牌下的所有数据将消失，此操作不可撤销。</div>
-            <div class="modal-footer">
-                <div class="btn-cancel" onclick="app.closeModal()">取消</div>
-                <div class="btn-confirm" style="flex:1; background:var(--danger);" onclick="app.confirmDeleteBrand(${idx})">确认删除</div>
-            </div>
-        `;
-        m.style.display = 'flex';
+        if (confirm("确定删除该品牌吗？\n\n此操作不可撤销！")) {
+            this.data.splice(idx, 1);
+            this.render();
+            this.save();
+        }
     },
-
-    confirmDeleteBrand(idx) {
-        this.data.splice(idx, 1);
-        this.render();
-        this.save();
-        this.closeModal();
-    },
-    // =================================================================
-
     showAddBrandModal() {
         const m = document.getElementById('appModal');
         const c = document.getElementById('modalContent');
@@ -403,7 +578,6 @@ const app = {
     update(bi, ri, k, v) { this.data[bi].items[ri][k] = v; this.save(); },
     addRow(idx) { this.data[idx].items.push({m:"", s:"废机整机", c:"—", q:1, p:"", r:""}); this.render(); },
     delRow(bi, ri) { this.data[bi].items.splice(ri, 1); this.render(); this.save(); },
-   
     toggleRefColumn() { const body = document.body; if (body.classList.contains('show-ref')) body.classList.replace('show-ref', 'hide-ref'); else { body.classList.remove('hide-ref'); body.classList.add('show-ref'); } this.toggleDrawer(false); },
     toggleDrawer(s) { document.getElementById('manageDrawer').classList.toggle('active', s); },
     toggleTheme() { const d = document.body.classList.toggle('dark'); localStorage.setItem('theme', d ? 'dark' : 'light'); this.toggleDrawer(false); },
@@ -416,59 +590,6 @@ const app = {
         const rate = r > 0 ? ((p - r) / r) * 100 : 0;
         const icon = rate >= 0 ? '📈 高' : '📉 低';
         document.getElementById('profitRate').innerHTML = `${icon} ${Math.abs(rate).toFixed(1)}%`;
-    },
-    showBackupCode() {
-        const dataStr = JSON.stringify(this.data);
-        const compressed = LZString.compressToBase64(dataStr);
-        const shareCode = `📱回收#${compressed}`;
-        this.closeModal();
-        const m = document.getElementById('appModal');
-        const c = document.getElementById('modalContent');
-        c.innerHTML = `<div style="text-align:center"><div style="font-weight:bold">备份短码（跨设备）</div><div style="font-size:18px;margin:20px 0;word-break:break-all;line-height:1.4">${shareCode}</div><div style="font-size:12px;color:var(--gray)">长按复制完整短码，发给其他人即可恢复</div><div class="modal-footer"><div class="btn-confirm" onclick="navigator.clipboard.writeText('${shareCode}');alert('已复制短码');app.closeModal();">复制短码</div><div class="btn-cancel" onclick="app.closeModal()">关闭</div></div></div>`;
-        m.style.display = 'flex';
-    },
-    showRecoverByCode() {
-        this.closeModal();
-        const m = document.getElementById('appModal');
-        const c = document.getElementById('modalContent');
-        c.innerHTML = `<div style="text-align:center"><div style="font-weight:bold">输入备份短码</div><input id="recoverCodeInput" class="brand-select-full" placeholder="粘贴以 📱回收# 开头的完整短码" style="margin:15px 0"><div class="modal-footer"><div class="btn-confirm" onclick="app.recoverWithCode()">恢复数据</div><div class="btn-cancel" onclick="app.closeModal()">取消</div></div></div>`;
-        m.style.display = 'flex';
-    },
-    recoverWithCode() {
-        const code = document.getElementById('recoverCodeInput')?.value.trim();
-        if(!code) { alert("请输入短码"); return; }
-        if (!code.startsWith('📱回收#')) {
-            alert("无效短码格式，必须以 📱回收# 开头");
-            return;
-        }
-        const compressed = code.split('#')[1];
-        if (!compressed) {
-            alert("无效短码");
-            return;
-        }
-        let decompressed;
-        try {
-            decompressed = LZString.decompressFromBase64(compressed);
-        } catch(e) {
-            alert("短码解压失败");
-            return;
-        }
-        if (!decompressed) {
-            alert("无效或已过期的分享码");
-            return;
-        }
-        let parsed;
-        try {
-            parsed = JSON.parse(decompressed);
-        } catch(e) {
-            alert("数据格式错误");
-            return;
-        }
-        this.data = parsed;
-        this.save();
-        this.render();
-        this.closeModal();
-        alert("数据恢复成功！");
     },
     showCharts() {
         document.getElementById('modalContent').innerHTML = `<canvas id="chartCanvas"></canvas><div class="modal-footer"><div class="btn-cancel" style="flex:1" onclick="app.closeModal()">返回编辑</div></div>`;
@@ -505,7 +626,6 @@ const app = {
             window.print();
         }
     },
-   
     clearAll() { if(confirm("确定清空数据吗？此操作不可撤销！")) { localStorage.clear(); location.reload(); } },
     showContact() { alert("如有问题或合作意向，请 📧 联系作者：Egg77Egg88"); }
 };
