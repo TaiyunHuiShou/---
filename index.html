@@ -1,52 +1,235 @@
-// 1. 备份功能：文件名更专业，方便微信查找
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>钛云数码-二手机批量对账系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        :root { --main: #2563eb; --price: #dc2626; --bg: #f1f5f9; --card: #ffffff; --text: #1e293b; }
+        body.dark { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 10px; transition: 0.3s; }
+
+        /* 微信风格操作栏 */
+        .admin-bar { 
+            background: var(--card); padding: 12px; border-radius: 16px; 
+            margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); position: sticky; top: 10px; z-index: 100;
+        }
+        .btn { border: none; padding: 10px 16px; border-radius: 12px; font-size: 13px; font-weight: 600; cursor: pointer; color: white; display: flex; align-items: center; gap: 6px; flex: 1; justify-content: center; min-width: 100px; }
+        .btn-blue { background: var(--main); }
+        .btn-gray { background: #64748b; }
+        .btn-red { background: #ef4444; }
+
+        /* 品牌快速导航 */
+        .brand-nav { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 12px; margin-bottom: 10px; scrollbar-width: none; }
+        .nav-item { padding: 8px 16px; background: var(--card); border-radius: 12px; font-size: 12px; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+
+        /* 报价表格卡片 */
+        .brand-section { background: var(--card); border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .brand-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; margin-bottom: 10px; padding-bottom: 8px; }
+        .brand-name { font-size: 18px; font-weight: 900; color: var(--main); }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { font-size: 11px; color: #94a3b8; text-align: left; padding: 8px 4px; }
+        td { padding: 6px 2px; border-bottom: 1px solid #f8fafc; }
+
+        input, select { border: none; background: #8881; padding: 10px; border-radius: 8px; font-size: 14px; color: var(--text); width: 100%; outline: none; }
+        .input-price { color: var(--price); font-weight: bold; text-align: right; background: #ef44440a; }
+        
+        /* 统计样式 */
+        .stats { margin-top: 12px; display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--main); background: #f8fafc; padding: 8px; border-radius: 8px; }
+
+        .grand-summary { background: #1e293b; color: white; padding: 24px; border-radius: 20px; margin: 20px 0; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .grand-summary b { font-size: 28px; color: #fbbf24; }
+
+        .footer { text-align: center; font-size: 12px; color: #94a3b8; padding: 30px 0; line-height: 1.6; }
+
+        /* 遮罩层：显示生成的图片 */
+        #mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:1000; padding:20px; overflow-y: auto; text-align: center; }
+        #mask img { width: 100%; border-radius: 12px; box-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        #mask p { color: white; margin: 15px 0; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="admin-bar">
+    <button class="btn btn-blue" onclick="exportImg()">📤 生成对账长图</button>
+    <button class="btn btn-gray" onclick="backupJSON()">💾 备份(JSON)</button>
+    <button class="btn btn-gray" onclick="restoreJSON()">📂 恢复数据</button>
+    <button class="btn btn-gray" style="background:#475569" onclick="toggleTheme()">🌓 模式</button>
+    <button class="btn btn-red" onclick="clearData()">🗑️ 重置</button>
+</div>
+
+<div class="brand-nav" id="brandNav"></div>
+
+<div id="capture-area" style="background: var(--bg); padding: 5px;">
+    <div id="main-content"></div>
+
+    <div class="grand-summary">
+        <div><small style="opacity:0.7">报货总数</small><br><span id="total-q">0</span> 台</div>
+        <div style="text-align: right;"><small style="opacity:0.7">预计结算金额</small><br>¥ <b id="total-m">0</b></div>
+    </div>
+
+    <div class="footer">
+        <strong>钛云数码 · 专业二手机回收</strong><br>
+        联系人: Egg77Egg88 | 报价实时更新
+    </div>
+</div>
+
+<div id="mask" onclick="this.style.display='none'">
+    <p>—— 图片已生成，长按保存并发送微信 ——</p>
+    <div id="img-out"></div>
+    <button class="btn btn-gray" style="margin-top:20px; width:50%; margin-inline:auto;">点击关闭</button>
+</div>
+
+<script>
+    // 初始化数据
+    const DEFAULT_BRANDS = ["苹果", "华为", "OPPO", "vivo", "小米/红米", "荣耀", "三星", "二线/杂牌"];
+    let brands = JSON.parse(localStorage.getItem('ty_brands')) || DEFAULT_BRANDS;
+    let data = JSON.parse(localStorage.getItem('ty_data')) || {};
+
+    // 核心初始化：渲染页面
+    function init() {
+        // 渲染顶部导航
+        const nav = document.getElementById('brandNav');
+        nav.innerHTML = brands.map(b => `<div class="nav-item" onclick="document.getElementById('b-${b}').scrollIntoView({behavior:'smooth'})">${b}</div>`).join('') + `<div class="nav-item" style="color:var(--main); font-weight:bold" onclick="addBrand()">+ 增加品牌</div>`;
+        
+        // 渲染品牌板块
+        const container = document.getElementById('main-content');
+        container.innerHTML = brands.map(b => {
+            const rows = data[b] || [{m:'', c:'标配', q:1, p:''}];
+            return `
+                <div class="brand-section" id="b-${b}">
+                    <div class="brand-header">
+                        <span class="brand-name">${b}</span>
+                        <div style="display:flex; gap:12px">
+                            <button onclick="addRow('${b}')" style="border:none; background:none; color:var(--main); font-size:13px; font-weight:600">+ 加一行</button>
+                            <button onclick="delBrand('${b}')" style="border:none; background:none; color:#94a3b8; font-size:13px">删除</button>
+                        </div>
+                    </div>
+                    <table>
+                        <thead><tr><th>型号/成色</th><th width="70">配置</th><th width="45">台数</th><th width="90">单价</th></tr></thead>
+                        <tbody>${rows.map((r, i) => `
+                            <tr>
+                                <td><input type="text" value="${r.m}" placeholder="输入型号" oninput="upd('${b}',${i},'m',this.value)"></td>
+                                <td><select onchange="upd('${b}',${i},'c',this.value)">
+                                    <option ${r.c=='标配'?'selected':''}>标配</option>
+                                    <option ${r.c=='高配'?'selected':''}>高配</option>
+                                    <option ${r.c=='低配'?'selected':''}>低配</option>
+                                </select></td>
+                                <td><input type="number" value="${r.q}" style="text-align:center" oninput="upd('${b}',${i},'q',this.value)"></td>
+                                <td><input type="number" class="input-price" value="${r.p}" placeholder="¥单价" oninput="upd('${b}',${i},'p',this.value)"></td>
+                            </tr>
+                        `).join('')}</tbody>
+                    </table>
+                    <div class="stats">
+                        <span>小计: <span id="q-${b}">0</span> 台</span>
+                        <span>金额: ¥<span id="m-${b}">0</span></span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        calc();
+    }
+
+    // 实时更新数据
+    function upd(b, i, k, v) {
+        if(!data[b]) data[b] = [{}];
+        data[b][i][k] = v;
+        // 智能加行：如果最后一行开始输入内容，自动新增一行
+        if(k === 'm' && v !== '' && i === data[b].length - 1) { 
+            data[b].push({m:'', c:'标配', q:1, p:''}); 
+            init(); 
+            // 保持焦点在当前输入框
+            const inputs = document.querySelectorAll(`#b-${b} input`);
+            inputs[inputs.length-4].focus();
+        }
+        save(); calc();
+    }
+
+    function addRow(b) { data[b].push({m:'', c:'标配', q:1, p:''}); init(); }
+    function delBrand(b) { if(confirm('确定要删除整个 ['+b+'] 品牌吗？')) { brands = brands.filter(x => x!==b); delete data[b]; save(); init(); } }
+    function addBrand() { const n = prompt('请输入新品牌名称:'); if(n) { brands.push(n); save(); init(); } }
+
+    // 计算总账
+    function calc() {
+        let tQ = 0, tM = 0;
+        brands.forEach(b => {
+            let bQ = 0, bM = 0;
+            (data[b] || []).forEach(r => {
+                const q = parseFloat(r.q)||0, p = parseFloat(r.p)||0;
+                bQ += q; bM += (q*p);
+            });
+            document.getElementById(`q-${b}`).innerText = bQ;
+            document.getElementById(`m-${b}`).innerText = bM.toLocaleString();
+            tQ += bQ; tM += bM;
+        });
+        document.getElementById('total-q').innerText = tQ;
+        document.getElementById('total-m').innerText = tM.toLocaleString();
+    }
+
+    // 保存到微信浏览器本地缓存
+    function save() { 
+        localStorage.setItem('ty_brands', JSON.stringify(brands)); 
+        localStorage.setItem('ty_data', JSON.stringify(data)); 
+    }
+
+    // 备份功能：导出JSON文件，支持微信发送
     function backupJSON() {
-        const exportData = { 
-            brands, 
-            data, 
-            time: new Date().toLocaleString(), 
-            source: "钛云数码对账系统" 
-        };
+        const exportData = { brands, data, time: new Date().toLocaleString(), source: "钛云数码系统" };
         const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
         const a = document.createElement('a');
         const now = new Date();
-        const dateStr = `${now.getMonth()+1}月${now.getDate()}日_${now.getHours()}点${now.getMinutes()}分`;
-        
+        const timeStr = `${now.getMonth()+1}月${now.getDate()}日_${now.getHours()}时${now.getMinutes()}分`;
         a.href = URL.createObjectURL(blob);
-        // 文件名示例：钛云数码_报货备份_4月16日_15点30分.json
-        a.download = `钛云数码_报货备份_${dateStr}.json`;
+        a.download = `钛云数码_数据备份_${timeStr}.json`;
         a.click();
-        
-        alert('✅ 备份文件已下载\n您可以通过微信将文件发给同行或保存');
+        alert('✅ 备份成功！\n请在手机下载内容中找到该文件并发送到微信。');
     }
 
-    // 2. 恢复功能：增加微信环境下常见的操作引导
+    // 恢复功能：读取JSON文件，实现接力报货
     function restoreJSON() {
         const input = document.createElement('input');
         input.type = 'file';
-        input.accept = '.json'; // 仅限JSON
+        input.accept = '.json';
         input.onchange = e => {
-            const file = e.target.files[0];
-            if (!file) return;
-            
             const reader = new FileReader();
             reader.onload = ev => {
                 try {
                     const imported = JSON.parse(ev.target.result);
-                    // 校验是否是本系统的备份文件
                     if(imported.brands && imported.data) {
                         brands = imported.brands;
                         data = imported.data;
-                        save(); // 保存到本地
-                        init(); // 重新渲染界面
-                        alert('✅ 数据已恢复！所有品牌和单价已同步。');
-                    } else {
-                        alert('❌ 恢复失败：该文件不是有效的钛云备份文件');
+                        save(); init();
+                        alert('✅ 数据恢复成功！');
                     }
-                } catch(err) { 
-                    alert('❌ 解析失败：文件损坏或格式不正确'); 
-                }
+                } catch(err) { alert('❌ 恢复失败：文件格式不匹配'); }
             };
-            reader.readAsText(file);
+            reader.readAsText(e.target.files[0]);
         };
         input.click();
     }
+
+    function toggleTheme() { document.body.classList.toggle('dark'); }
+    function clearData() { if(confirm('警告：将清空所有已填写的价格数据，确定吗？')) { localStorage.clear(); location.reload(); } }
+
+    // 生成对账长图
+    async function exportImg() {
+        const btn = document.querySelector('.btn-blue');
+        btn.innerText = "正在生成...";
+        const canvas = await html2canvas(document.getElementById('capture-area'), { 
+            scale: 2, 
+            useCORS: true,
+            backgroundColor: document.body.classList.contains('dark') ? '#0f172a' : '#f1f5f9' 
+        });
+        document.getElementById('img-out').innerHTML = `<img src="${canvas.toDataURL('image/png')}">`;
+        document.getElementById('mask').style.display = 'block';
+        btn.innerText = "📤 生成对账长图";
+    }
+
+    init();
+</script>
+</body>
+</html>
