@@ -2,196 +2,227 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>批量废旧手机回收清单</title>
     <style>
-        * { box-sizing: border-box; }
-        body { font-family: system-ui, -apple-system, sans-serif; background: #f0f2f5; padding: 20px; margin: 0; }
-        .container { max-width: 1600px; margin: 0 auto; }
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #f0f2f5;
+            padding: 12px;
+            margin: 0;
+            color: #334155;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
         
-        .btn { background: #10b981; color: white; border: none; padding: 8px 18px; border-radius: 40px; cursor: pointer; font-size: 13px; font-weight: 500; margin: 2px; }
-        .btn-purple { background: #8b5cf6; }
-        .btn-blue { background: #3b82f6; }
-        .btn-red { background: #ef4444; }
-        .btn-gray { background: #64748b; }
-        
+        /* 顶部按钮行 - 适配手机自动换行 */
         .row-buttons {
             background: white;
-            padding: 10px 20px;
-            border-radius: 60px;
-            margin-bottom: 16px;
+            padding: 12px;
+            border-radius: 20px;
+            margin-bottom: 12px;
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             gap: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
         }
-        
-        /* 填表人行 */
-        .row-user {
-            background: white;
-            padding: 12px 20px;
-            border-radius: 60px;
-            margin-bottom: 16px;
+        .btn {
+            border: none;
+            padding: 10px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: opacity 0.2s;
             display: flex;
-            justify-content: center;
             align-items: center;
-            gap: 16px;
-            flex-wrap: wrap;
+            gap: 4px;
         }
-        .row-user label {
-            font-weight: bold;
-        }
-        .row-user input {
-            padding: 8px 16px;
-            border-radius: 40px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-            width: 220px;
-        }
-        .row-user .required {
-            color: #ef4444;
-        }
+        .btn:active { opacity: 0.7; }
+        .btn-purple { background: #8b5cf6; color: white; }
+        .btn-blue { background: #3b82f6; color: white; }
+        .btn-red { background: #ef4444; color: white; }
+        .btn-gray { background: #64748b; color: white; }
         
+        /* 联系方式 */
         .contact-bar { 
             background: #1e293b; 
             color: white; 
-            padding: 12px 20px; 
-            border-radius: 40px; 
-            margin-bottom: 16px; 
+            padding: 12px; 
+            border-radius: 15px; 
+            margin-bottom: 12px; 
             text-align: center; 
-            font-size: 14px; 
+            font-size: 13px; 
         }
         .contact-bar strong { color: #fbbf24; }
-        
-        .row-search {
-            background: white;
-            padding: 10px 20px;
-            border-radius: 60px;
-            margin-bottom: 16px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .search-area {
-            display: flex;
+
+        /* 搜索与添加 */
+        .controls-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 10px;
-            align-items: center;
-            background: #f0f2f5;
-            padding: 5px 16px;
-            border-radius: 40px;
-            width: 100%;
-            max-width: 400px;
+            margin-bottom: 12px;
         }
-        .search-area span { font-size: 18px; }
-        .search-area input {
-            border: none;
-            padding: 8px;
-            flex: 1;
-            outline: none;
-            font-size: 14px;
-            background: transparent;
+        @media (max-width: 600px) {
+            .controls-row { grid-template-columns: 1fr; }
         }
-        .search-area button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        
-        .row-add-brand {
+        .input-group {
             background: white;
-            padding: 10px 20px;
-            border-radius: 60px;
-            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 15px;
             display: flex;
-            justify-content: center;
             align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
+            gap: 8px;
         }
-        .row-add-brand input {
-            padding: 8px 16px;
-            border-radius: 40px;
-            border: 1px solid #ccc;
+        .input-group input {
+            border: 1px solid #e2e8f0;
+            padding: 8px 12px;
+            border-radius: 10px;
+            flex: 1;
             font-size: 14px;
-            width: 200px;
+            outline: none;
+        }
+
+        /* 品牌卡片 */
+        .brand-grid { display: flex; flex-wrap: wrap; gap: 16px; }
+        .brand-card { 
+            background: white; 
+            border-radius: 20px; 
+            padding: 16px; 
+            flex: 1; 
+            min-width: 100%; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .brand-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 12px; 
+            padding-bottom: 10px; 
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .brand-name { font-size: 1.2rem; font-weight: 800; color: #1e293b; }
+
+        /* 表格优化 - 手机端滚动 */
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 0 -5px;
+            border-radius: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            min-width: 650px; /* 保证手机上能滚动不挤压 */
+        }
+        th {
+            background: #f8fafc;
+            color: #64748b;
+            font-weight: 600;
+            padding: 10px 5px;
+            text-align: center;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        td {
+            padding: 8px 4px;
+            border-bottom: 1px solid #f1f5f9;
+            text-align: center;
         }
         
-        .brand-grid { display: flex; flex-wrap: wrap; gap: 24px; }
-        .brand-card { background: white; border-radius: 24px; padding: 18px; flex: 1; min-width: 520px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .brand-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; }
-        .brand-name { font-size: 1.3rem; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th, td { border: 1px solid #e2e8f0; padding: 6px 4px; text-align: center; }
-        th { background: #f8fafc; font-weight: 600; }
-        input, select { padding: 5px; border-radius: 10px; border: 1px solid #ccc; }
-        .qty-input, .unit-price, .ref-price { width: 70px; text-align: center; }
-        .subtotal-cell { background: #fef9e3; font-weight: bold; }
-        .delete-row-btn { background: #ef4444; color: white; border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-size: 12px; }
-        .brand-stats { margin-top: 12px; padding: 8px 12px; background: #f1f5f9; border-radius: 16px; display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; flex-wrap: wrap; gap: 8px; }
-        .grand-total { background: #1e293b; color: white; padding: 16px; border-radius: 60px; text-align: center; margin-top: 24px; font-weight: bold; font-size: 16px; display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; }
-        .grand-total span { display: inline-block; }
-        .ratio-badge { background: #fbbf24; color: #1e293b; padding: 4px 12px; border-radius: 40px; font-size: 13px; margin-left: 10px; }
-        .small-btn { background: none; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 30px; cursor: pointer; font-size: 11px; }
-        .small-btn:hover { background: #f1f5f9; }
+        /* 输入框内表格化 */
+        .data-row input, .data-row select {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 13px;
+        }
+        .subtotal-cell { background: #fffbeb; font-weight: bold; color: #b45309; }
         
-        @media (max-width: 700px) { .brand-card { min-width: 100%; } }
-        
-        body.dark { background: #0f172a; }
-        body.dark .brand-card { background: #1e293b; color: #f1f5f9; }
-        body.dark .row-buttons { background: #1e293b; border: 1px solid #475569; }
-        body.dark .row-user { background: #1e293b; border: 1px solid #475569; }
-        body.dark .row-search { background: #1e293b; border: 1px solid #475569; }
-        body.dark .row-add-brand { background: #1e293b; border: 1px solid #475569; }
-        body.dark input, body.dark select { background: #334155; color: white; border-color: #475569; }
-        body.dark th { background: #334155; }
-        body.dark .brand-stats { background: #334155; }
-        body.dark .search-area { background: #334155; }
-        body.dark .search-area input { color: white; }
+        .delete-row-btn { 
+            background: #fee2e2; color: #ef4444; border: none; 
+            width: 28px; height: 28px; border-radius: 50%; 
+            cursor: pointer; font-weight: bold;
+        }
+
+        /* 统计栏 */
+        .brand-stats { 
+            margin-top: 12px; 
+            padding: 10px; 
+            background: #f8fafc; 
+            border-radius: 12px; 
+            display: flex; 
+            justify-content: space-around; 
+            font-size: 12px; 
+            color: #475569;
+        }
+        .grand-total { 
+            background: #1e293b; color: white; 
+            padding: 20px; border-radius: 20px; 
+            text-align: center; margin-top: 20px; 
+            display: flex; flex-wrap: wrap; 
+            justify-content: center; gap: 20px;
+        }
+        .grand-total span { font-size: 15px; font-weight: bold; }
+        .highlight { color: #fbbf24; font-size: 18px; }
+
+        /* 暗色模式补丁 */
+        body.dark { background: #020617; color: #e2e8f0; }
+        body.dark .brand-card, body.dark .row-buttons, body.dark .input-group { background: #1e293b; border: none; }
+        body.dark .brand-name { color: white; }
+        body.dark input, body.dark select { background: #0f172a; color: white; border-color: #334155; }
+        body.dark th { background: #334155; color: #cbd5e1; border-color: #475569; }
+        body.dark td { border-color: #334155; }
+        body.dark .subtotal-cell { background: #42210b; color: #fbbf24; }
+        body.dark .brand-stats { background: #0f172a; }
+
+        /* 打印隐藏按钮 */
+        @media print {
+            .row-buttons, .controls-row, .delete-row-btn, .add-row-local, .delete-brand-local { display: none !important; }
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="row-buttons">
-        <button id="oneKeyBtn" class="btn btn-purple">📤 一键导出清单</button>
+        <button id="oneKeyBtn" class="btn btn-purple">📤 一键导出</button>
         <button id="backupBtn" class="btn btn-blue">💾 备份</button>
-        <button id="restoreBtn" class="btn btn-blue">📂 恢复</button>
-        <button id="clearAllBtn" class="btn btn-red">🗑️ 清空</button>
-        <button id="printBtn" class="btn btn-gray">🖨️ 打印</button>
-        <button id="themeBtn" class="btn btn-gray">🌙 暗色</button>
-    </div>
-
-    <!-- 填表人信息 -->
-    <div class="row-user">
-        <label><span class="required">*</span> 您的称呼/微信：</label>
-        <input type="text" id="userName" placeholder="例：张三 或 微信号" value="">
-        <span style="font-size: 12px; color: #ef4444;" id="userNameWarning"></span>
+        <button id="restoreBtn" class="btn btn-blue">📂 恢复数据</button>
+        <button id="clearAllBtn" class="btn btn-red">🗑️ 清空清单</button>
+        <button id="printBtn" class="btn btn-gray">🖨️ 打印预览</button>
+        <button id="themeBtn" class="btn btn-gray">🌙 切换模式</button>
     </div>
 
     <div class="contact-bar">
-        📱 批量废旧手机回收 | 微信：<strong>Egg77Egg88</strong> | 全国可寄 · 量大价优
+        📱 批量废旧手机回收 | 微信：<strong>Egg77Egg88</strong> | 全国寄运 · 合作共赢
     </div>
 
-    <div class="row-search">
-        <div class="search-area">
+    <div class="controls-row">
+        <div class="input-group">
             <span>🔍</span>
             <input type="text" id="searchInput" placeholder="搜索型号...">
-            <button id="clearSearch">✖</button>
         </div>
-    </div>
-
-    <div class="row-add-brand">
-        <span>➕ 添加新品牌：</span>
-        <input type="text" id="newBrandName" placeholder="如：魅族">
-        <button id="addBrandBtn" class="btn btn-blue" style="padding: 6px 20px;">添加品牌</button>
+        <div class="input-group">
+            <input type="text" id="newBrandName" placeholder="添加新品牌(如：魅族)">
+            <button id="addBrandBtn" class="btn btn-blue">添加</button>
+        </div>
     </div>
 
     <div id="brandsGrid" class="brand-grid"></div>
 
     <div id="grandTotal" class="grand-total">
-        <span>💰 实际总金额：<span id="totalActualMoney">0</span> 元</span>
-        <span>📊 参考总金额：<span id="totalRefMoney">0</span> 元</span>
-        <span id="totalRatioSpan">📈 整体比例：--</span>
+        <span>实际总计：<span id="totalActualMoney" class="highlight">0</span> 元</span>
+        <span>参考总计：<span id="totalRefMoney">0</span> 元</span>
+        <span id="totalRatioSpan">比例：--</span>
     </div>
 </div>
 
@@ -209,46 +240,41 @@
         { id: 'oneplus', name: '一加' }
     ];
     
-    let nextId = 100;
-    
-    function getBrands() { return brands; }
+    let nextId = Date.now();
     function genId() { return 'brand_' + (nextId++); }
     
     function createRowHtml() {
         return `<tr class="data-row">
-            <td class="model-cell"><input type="text" placeholder="型号" value=""></td>
-            <td class="config-cell"><select><option value="">—</option><option value="高配">高配</option><option value="中配">中配</option><option value="低配">低配</option></select></td>
-            <td class="qty-cell"><input type="number" min="0" step="1" value="1" class="qty-input" style="width:65px"></td>
-            <td class="price-cell"><input type="number" min="0" step="10" value="" class="unit-price" placeholder="单价" style="width:75px"></td>
-            <td class="subtotal-cell">0</select></td>
-            <td class="ref-cell"><input type="number" min="0" step="10" value="" class="ref-price" placeholder="参考价" style="width:75px"></td>
-            <td style="width:35px"><button class="delete-row-btn">✖</button></td>
+            <td style="width:180px"><input type="text" class="model-input" placeholder="输入型号"></td>
+            <td style="width:100px"><select class="config-select"><option value="">-</option><option value="高配">高配</option><option value="中配">中配</option><option value="低配">低配</option></select></td>
+            <td style="width:70px"><input type="number" value="1" class="qty-input"></td>
+            <td style="width:90px"><input type="number" class="unit-price" placeholder="单价"></td>
+            <td style="width:90px" class="subtotal-cell">0</td>
+            <td style="width:90px"><input type="number" class="ref-price" placeholder="参考价"></td>
+            <td style="width:45px"><button class="delete-row-btn">✕</button></td>
         </tr>`;
     }
     
     function updateRowSubtotal(row) {
-        let qty = parseFloat(row.querySelector('.qty-input')?.value) || 0;
-        let price = parseFloat(row.querySelector('.unit-price')?.value) || 0;
+        let qty = parseFloat(row.querySelector('.qty-input').value) || 0;
+        let price = parseFloat(row.querySelector('.unit-price').value) || 0;
         row.querySelector('.subtotal-cell').innerText = (qty * price).toFixed(0);
     }
     
     function updateBrandStats(brandId) {
         let tbody = document.querySelector(`#table-${brandId} tbody`);
-        if (!tbody) return;
         let totalMoney = 0, totalQty = 0, totalRef = 0;
         tbody.querySelectorAll('.data-row').forEach(row => {
-            totalMoney += parseFloat(row.querySelector('.subtotal-cell')?.innerText) || 0;
-            totalQty += parseFloat(row.querySelector('.qty-input')?.value) || 0;
-            let qty = parseFloat(row.querySelector('.qty-input')?.value) || 0;
-            let ref = parseFloat(row.querySelector('.ref-price')?.value) || 0;
+            let qty = parseFloat(row.querySelector('.qty-input').value) || 0;
+            let price = parseFloat(row.querySelector('.unit-price').value) || 0;
+            let ref = parseFloat(row.querySelector('.ref-price').value) || 0;
+            totalMoney += qty * price;
+            totalQty += qty;
             totalRef += qty * ref;
         });
-        let moneySpan = document.getElementById(`money-${brandId}`);
-        let qtySpan = document.getElementById(`qty-${brandId}`);
-        let refSpan = document.getElementById(`ref-${brandId}`);
-        if (moneySpan) moneySpan.innerText = totalMoney.toFixed(0);
-        if (qtySpan) qtySpan.innerText = totalQty;
-        if (refSpan) refSpan.innerText = totalRef.toFixed(0);
+        document.getElementById(`money-${brandId}`).innerText = totalMoney.toFixed(0);
+        document.getElementById(`qty-${brandId}`).innerText = totalQty;
+        document.getElementById(`ref-${brandId}`).innerText = totalRef.toFixed(0);
         updateGrandTotal();
         autoSave();
     }
@@ -256,359 +282,34 @@
     function updateGrandTotal() {
         let totalMoney = 0, totalRef = 0;
         brands.forEach(b => {
-            let m = parseFloat(document.getElementById(`money-${b.id}`)?.innerText) || 0;
-            let r = parseFloat(document.getElementById(`ref-${b.id}`)?.innerText) || 0;
-            totalMoney += m;
-            totalRef += r;
+            totalMoney += parseFloat(document.getElementById(`money-${b.id}`)?.innerText) || 0;
+            totalRef += parseFloat(document.getElementById(`ref-${b.id}`)?.innerText) || 0;
         });
         document.getElementById('totalActualMoney').innerText = totalMoney.toFixed(0);
         document.getElementById('totalRefMoney').innerText = totalRef.toFixed(0);
         
-        // 计算整体比例
         let ratioText = '--';
         if (totalRef > 0) {
             let ratio = ((totalMoney - totalRef) / totalRef * 100).toFixed(1);
-            if (ratio >= 0) {
-                ratioText = `📈 比参考价高 ${ratio}%`;
-            } else {
-                ratioText = `📉 比参考价低 ${Math.abs(ratio)}%`;
-            }
+            ratioText = ratio >= 0 ? `📈 高 ${ratio}%` : `📉 低 ${Math.abs(ratio)}%`;
         }
-        document.getElementById('totalRatioSpan').innerHTML = `📊 整体比例：${ratioText}`;
+        document.getElementById('totalRatioSpan').innerText = `📊 盈亏：${ratioText}`;
     }
     
     function bindRowEvents(row, brandId) {
-        let handler = () => { updateRowSubtotal(row); updateBrandStats(brandId); };
-        row.querySelector('.qty-input').addEventListener('input', handler);
-        row.querySelector('.unit-price').addEventListener('input', handler);
-        row.querySelector('.ref-price').addEventListener('input', () => updateBrandStats(brandId));
+        row.querySelectorAll('input, select').forEach(el => {
+            el.addEventListener('input', () => {
+                updateRowSubtotal(row);
+                updateBrandStats(brandId);
+            });
+        });
         row.querySelector('.delete-row-btn').addEventListener('click', () => {
             if (document.querySelector(`#table-${brandId} tbody`).children.length > 1) {
                 row.remove(); updateBrandStats(brandId);
-            } else alert('至少保留一行');
-        });
-        updateRowSubtotal(row);
-    }
-    
-    function initTable(brandId, rowsCount = 5) {
-        let tbody = document.querySelector(`#table-${brandId} tbody`);
-        if (!tbody) return;
-        tbody.innerHTML = '';
-        for (let i = 0; i < rowsCount; i++) tbody.insertAdjacentHTML('beforeend', createRowHtml());
-        tbody.querySelectorAll('.data-row').forEach(row => bindRowEvents(row, brandId));
-        updateBrandStats(brandId);
-    }
-    
-    function addRow(brandId) {
-        let tbody = document.querySelector(`#table-${brandId} tbody`);
-        tbody.insertAdjacentHTML('beforeend', createRowHtml());
-        bindRowEvents(tbody.lastElementChild, brandId);
-        updateBrandStats(brandId);
-    }
-    
-    function deleteBrand(brandId) {
-        if (confirm('确定删除该品牌？删除后该品牌的所有数据都会丢失！')) {
-            brands = brands.filter(b => b.id !== brandId);
-            renderAllBrands();
-            autoSave();
-        }
-    }
-    
-    function addNewBrand() {
-        let name = document.getElementById('newBrandName').value.trim();
-        if (!name) return alert('请输入品牌名');
-        if (brands.some(b => b.name === name)) return alert('品牌已存在');
-        brands.push({ id: genId(), name });
-        renderAllBrands();
-        document.getElementById('newBrandName').value = '';
-        autoSave();
-    }
-    
-    function collectAllData() {
-        let result = { brands: [], data: {}, userName: '', submitTime: new Date().toLocaleString() };
-        result.userName = document.getElementById('userName').value.trim() || '未填写';
-        brands.forEach(b => {
-            result.brands.push({ id: b.id, name: b.name });
-            let rows = [];
-            document.querySelectorAll(`#table-${b.id} tbody .data-row`).forEach(row => {
-                rows.push({
-                    model: row.querySelector('.model-cell input')?.value || '',
-                    config: row.querySelector('.config-cell select')?.value || '',
-                    qty: row.querySelector('.qty-input')?.value || '0',
-                    price: row.querySelector('.unit-price')?.value || '',
-                    ref: row.querySelector('.ref-price')?.value || ''
-                });
-            });
-            result.data[b.id] = rows;
-        });
-        return result;
-    }
-    
-    function exportToExcel() {
-        let data = collectAllData();
-        let html = `<!DOCTYPE html>
-        <html><head><meta charset="UTF-8"><title>批量废旧手机回收清单</title>
-        <style>th,td{border:1px solid #888;padding:8px;text-align:center;} table{margin-bottom:30px;}</style>
-        </head><body>
-        <h2>📱 批量废旧手机回收清单</h2>
-        <p>填表人：${data.userName}</p>
-        <p>导出时间: ${data.submitTime}</p>
-        <p>回收联系：${MY_CONTACT}</p>
-        <hr>`;
-        
-        for (let brand of brands) {
-            let rows = data.data[brand.id] || [];
-            html += `<h3>${brand.name}</h3>`;
-            html += `<tr><thead>运转<th>型号</th><th>高低配</th><th>数量</th><th>成交单价(元)</th><th>小计(元)</th><th>参考价(元)</th><th>参考小计(元)</th></tr></thead><tbody>`;
-            rows.forEach(r => {
-                let qty = parseFloat(r.qty) || 0;
-                let price = parseFloat(r.price) || 0;
-                let ref = parseFloat(r.ref) || 0;
-                let subtotal = qty * price;
-                let refSubtotal = qty * ref;
-                html += `<tr><td>${r.model}</td><td>${r.config}</td><td>${r.qty}</td><td>${r.price ? '¥' + r.price : ''}</td><td>${subtotal.toFixed(0)}</td><td>${r.ref ? '¥' + r.ref : ''}</td><td>${refSubtotal.toFixed(0)}</td></tr>`;
-            });
-            html += `</tbody></table><br>`;
-        }
-        
-        // 计算总计
-        let totalMoney = 0, totalRef = 0;
-        brands.forEach(b => {
-            totalMoney += parseFloat(document.getElementById(`money-${b.id}`)?.innerText) || 0;
-            totalRef += parseFloat(document.getElementById(`ref-${b.id}`)?.innerText) || 0;
-        });
-        let ratio = '';
-        if (totalRef > 0) {
-            let r = ((totalMoney - totalRef) / totalRef * 100).toFixed(1);
-            ratio = r >= 0 ? `比参考价高 ${r}%` : `比参考价低 ${Math.abs(r)}%`;
-        }
-        html += `<h3>汇总：实际总金额 ¥${totalMoney.toFixed(0)} | 参考总金额 ¥${totalRef.toFixed(0)} | ${ratio}</h3>`;
-        html += `<p>📦 全国批量回收，量大价优，欢迎联系！</p></body></html>`;
-        
-        let blob = new Blob([html], { type: 'application/vnd.ms-excel' });
-        let link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `批量废旧手机清单_${data.userName}_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xls`;
-        link.click();
-        URL.revokeObjectURL(link.href);
-        return data;
-    }
-    
-    async function sendToFormspree(data) {
-        try {
-            let totalRows = 0;
-            for (let brand of brands) {
-                totalRows += (data.data[brand.id] || []).length;
-            }
-            let totalMoney = 0, totalRef = 0;
-            brands.forEach(b => {
-                totalMoney += parseFloat(document.getElementById(`money-${b.id}`)?.innerText) || 0;
-                totalRef += parseFloat(document.getElementById(`ref-${b.id}`)?.innerText) || 0;
-            });
-            let payload = {
-                _subject: `【废旧手机回收数据】${data.userName} 提交的清单`,
-                填表人: data.userName,
-                提交时间: data.submitTime,
-                回收商联系方式: MY_CONTACT,
-                品牌数量: brands.length,
-                数据行数: totalRows,
-                实际总金额: totalMoney.toFixed(0),
-                参考总金额: totalRef.toFixed(0),
-                详细数据: JSON.stringify(data, null, 2)
-            };
-            let response = await fetch(FORMSPREE_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            return response.ok;
-        } catch(e) {
-            console.error(e);
-            return false;
-        }
-    }
-    
-    async function oneKeyExport() {
-        let userName = document.getElementById('userName').value.trim();
-        if (!userName) {
-            document.getElementById('userNameWarning').innerText = '请填写您的称呼/微信';
-            return;
-        }
-        document.getElementById('userNameWarning').innerText = '';
-        
-        let data = collectAllData();
-        let hasData = false;
-        for (let brand of brands) {
-            if ((data.data[brand.id] || []).length > 0) { hasData = true; break; }
-        }
-        if (!hasData) {
-            alert("请先填写一些手机数据");
-            return;
-        }
-        
-        // 1. 下载 Excel
-        exportToExcel();
-        
-        // 2. 下载 JSON 备份（你可以直接恢复）
-        let jsonStr = JSON.stringify(data, null, 2);
-        let jsonBlob = new Blob([jsonStr], { type: 'application/json' });
-        let jsonLink = document.createElement('a');
-        jsonLink.href = URL.createObjectURL(jsonBlob);
-        jsonLink.download = `废旧手机回收数据_${data.userName}_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
-        jsonLink.click();
-        URL.revokeObjectURL(jsonLink.href);
-        
-        // 3. 发送到 Formspree
-        await sendToFormspree(data);
-        
-        alert("✅ 清单已导出！\n\n已下载 Excel 和 JSON 备份文件。\nJSON 文件可以通过「恢复」按钮直接导入。");
-    }
-    
-    function backupData() {
-        let data = collectAllData();
-        let json = JSON.stringify(data, null, 2);
-        let blob = new Blob([json], { type: 'application/json' });
-        let link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `废旧手机回收备份_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
-        link.click();
-        URL.revokeObjectURL(link.href);
-    }
-    
-    function restoreData() {
-        let input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
-        input.onchange = e => {
-            let file = e.target.files[0];
-            if (!file) return;
-            let reader = new FileReader();
-            reader.onload = ev => {
-                try {
-                    let data = JSON.parse(ev.target.result);
-                    if (data.brands && data.brands.length) {
-                        brands = data.brands;
-                        if (data.userName) {
-                            document.getElementById('userName').value = data.userName;
-                        }
-                        renderAllBrands();
-                        if (data.data) {
-                            for (let [bid, rows] of Object.entries(data.data)) {
-                                let tbody = document.querySelector(`#table-${bid} tbody`);
-                                if (tbody && rows.length) {
-                                    tbody.innerHTML = '';
-                                    rows.forEach(r => {
-                                        tbody.insertAdjacentHTML('beforeend', createRowHtml());
-                                        let row = tbody.lastElementChild;
-                                        row.querySelector('.model-cell input').value = r.model || '';
-                                        row.querySelector('.config-cell select').value = r.config || '';
-                                        row.querySelector('.qty-input').value = r.qty || '1';
-                                        row.querySelector('.unit-price').value = r.price || '';
-                                        row.querySelector('.ref-price').value = r.ref || '';
-                                        bindRowEvents(row, bid);
-                                    });
-                                    updateBrandStats(bid);
-                                }
-                            }
-                        }
-                        alert('恢复成功！');
-                    } else {
-                        alert('文件格式错误');
-                    }
-                } catch(err) { alert('文件解析失败'); }
-            };
-            reader.readAsText(file);
-        };
-        input.click();
-    }
-    
-    function clearAllTables() {
-        if (confirm('⚠️ 确定清空所有数据？不可撤销！')) {
-            brands.forEach(b => initTable(b.id, 5));
-            autoSave();
-        }
-    }
-    
-    function printPage() { window.print(); }
-    
-    function autoSave() {
-        let data = collectAllData();
-        localStorage.setItem('phone_recycle_data', JSON.stringify(data));
-    }
-    
-    function loadAutoSave() {
-        let saved = localStorage.getItem('phone_recycle_data');
-        if (saved) {
-            try {
-                let data = JSON.parse(saved);
-                if (data.brands && data.brands.length) {
-                    brands = data.brands;
-                    if (data.userName) {
-                        document.getElementById('userName').value = data.userName;
-                    }
-                    renderAllBrands();
-                    if (data.data) {
-                        for (let [bid, rows] of Object.entries(data.data)) {
-                            let tbody = document.querySelector(`#table-${bid} tbody`);
-                            if (tbody && rows.length) {
-                                tbody.innerHTML = '';
-                                rows.forEach(r => {
-                                    tbody.insertAdjacentHTML('beforeend', createRowHtml());
-                                    let row = tbody.lastElementChild;
-                                    row.querySelector('.model-cell input').value = r.model || '';
-                                    row.querySelector('.config-cell select').value = r.config || '';
-                                    row.querySelector('.qty-input').value = r.qty || '1';
-                                    row.querySelector('.unit-price').value = r.price || '';
-                                    row.querySelector('.ref-price').value = r.ref || '';
-                                    bindRowEvents(row, bid);
-                                });
-                                updateBrandStats(bid);
-                            }
-                        }
-                    }
-                }
-            } catch(e) {}
-        }
-    }
-    
-    function setupSearch() {
-        let searchInput = document.getElementById('searchInput');
-        let clearBtn = document.getElementById('clearSearch');
-        function filter() {
-            let kw = searchInput.value.trim().toLowerCase();
-            brands.forEach(b => {
-                let card = document.getElementById(`card-${b.id}`);
-                let rows = document.querySelectorAll(`#table-${b.id} .data-row`);
-                let brandMatch = false;
-                rows.forEach(row => {
-                    let model = row.querySelector('.model-cell input')?.value || '';
-                    if (kw === '' || model.toLowerCase().includes(kw)) {
-                        row.style.display = '';
-                        brandMatch = true;
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-                if (card) card.style.display = (kw !== '' && !brandMatch) ? 'none' : '';
-            });
-        }
-        searchInput.addEventListener('input', filter);
-        clearBtn.addEventListener('click', () => { searchInput.value = ''; filter(); });
-    }
-    
-    function setupTheme() {
-        let btn = document.getElementById('themeBtn');
-        let isDark = localStorage.getItem('darkMode') === 'true';
-        if (isDark) document.body.classList.add('dark');
-        btn.innerHTML = isDark ? '☀️ 亮色' : '🌙 暗色';
-        btn.addEventListener('click', () => {
-            document.body.classList.toggle('dark');
-            let darkNow = document.body.classList.contains('dark');
-            localStorage.setItem('darkMode', darkNow);
-            btn.innerHTML = darkNow ? '☀️ 亮色' : '🌙 暗色';
+            } else alert('请至少保留一行');
         });
     }
-    
+
     function renderAllBrands() {
         let grid = document.getElementById('brandsGrid');
         grid.innerHTML = '';
@@ -620,40 +321,185 @@
                 <div class="brand-header">
                     <span class="brand-name">${b.name}</span>
                     <div>
-                        <button class="small-btn add-row-local" data-brand="${b.id}">➕ 加行</button>
-                        <button class="small-btn delete-brand-local" data-brand="${b.id}" style="color:#ef4444;">🗑️ 删品牌</button>
+                        <button class="btn btn-blue add-row-local" data-brand="${b.id}" style="padding:5px 10px; font-size:11px">＋加行</button>
+                        <button class="btn delete-brand-local" data-brand="${b.id}" style="padding:5px 10px; font-size:11px; color:#ef4444">删除</button>
                     </div>
                 </div>
-                <table id="table-${b.id}">
-                    <thead>运转<th>型号</th><th>高低配</th><th>数量</th><th>老板填金额(元)</th><th>小计(元)</th><th>参考价(元)</th><th>删除</th></tr></thead>
-                    <tbody></tbody>
-                </table>
+                <div class="table-wrapper">
+                    <table id="table-${b.id}">
+                        <thead>
+                            <tr><th>型号</th><th>高低配</th><th>数量</th><th>成交价</th><th>小计</th><th>参考价</th><th>操作</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
                 <div class="brand-stats">
-                    <span>📊 共 <span id="qty-${b.id}">0</span> 台</span>
-                    <span>💰 实际金额：¥<span id="money-${b.id}">0</span> 元</span>
-                    <span>📋 参考金额：¥<span id="ref-${b.id}">0</span> 元</span>
+                    <span>共 <b id="qty-${b.id}">0</b> 台</span>
+                    <span>实际: <b id="money-${b.id}">0</b> 元</span>
+                    <span>参考: <b id="ref-${b.id}">0</b> 元</span>
                 </div>
             `;
             grid.appendChild(card);
-            initTable(b.id, 5);
-            card.querySelector('.add-row-local').addEventListener('click', () => addRow(b.id));
-            card.querySelector('.delete-brand-local').addEventListener('click', () => deleteBrand(b.id));
+            let tbody = card.querySelector('tbody');
+            for(let i=0; i<3; i++) {
+                tbody.insertAdjacentHTML('beforeend', createRowHtml());
+                bindRowEvents(tbody.lastElementChild, b.id);
+            }
+            card.querySelector('.add-row-local').onclick = () => {
+                tbody.insertAdjacentHTML('beforeend', createRowHtml());
+                bindRowEvents(tbody.lastElementChild, b.id);
+            };
+            card.querySelector('.delete-brand-local').onclick = () => {
+                if(confirm('确定移除该品牌？')){
+                    brands = brands.filter(x => x.id !== b.id);
+                    renderAllBrands();
+                    autoSave();
+                }
+            };
         });
     }
-    
+
+    function collectAllData() {
+        let dataMap = {};
+        brands.forEach(b => {
+            let rows = [];
+            document.querySelectorAll(`#table-${b.id} tbody tr`).forEach(row => {
+                let model = row.querySelector('.model-input').value;
+                if(model.trim()){
+                    rows.push({
+                        model: model,
+                        config: row.querySelector('.config-select').value,
+                        qty: row.querySelector('.qty-input').value,
+                        price: row.querySelector('.unit-price').value,
+                        ref: row.querySelector('.ref-price').value
+                    });
+                }
+            });
+            dataMap[b.id] = rows;
+        });
+        return { brands, data: dataMap, time: new Date().toLocaleString() };
+    }
+
+    async function oneKeyExport() {
+        let fullData = collectAllData();
+        // 1. 生成简单Excel(HTML格式)
+        let excelHtml = `<html><meta charset="UTF-8"><body><h2>手机回收清单</h2><p>时间: ${fullData.time}</p>`;
+        brands.forEach(b => {
+            let rows = fullData.data[b.id];
+            if(rows.length > 0){
+                excelHtml += `<h3>${b.name}</h3><table border="1"><tr><th>型号</th><th>配置</th><th>数量</th><th>单价</th><th>参考价</th></tr>`;
+                rows.forEach(r => {
+                    excelHtml += `<tr><td>${r.model}</td><td>${r.config}</td><td>${r.qty}</td><td>${r.price}</td><td>${r.ref}</td></tr>`;
+                });
+                excelHtml += `</table>`;
+            }
+        });
+        excelHtml += `</body></html>`;
+        
+        let blob = new Blob([excelHtml], { type: 'application/vnd.ms-excel' });
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = `回收清单_${Date.now()}.xls`;
+        a.click();
+
+        // 2. 发送Formspree
+        try {
+            await fetch(FORMSPREE_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    subject: "新回收清单提交",
+                    total: document.getElementById('totalActualMoney').innerText,
+                    details: fullData
+                })
+            });
+            alert('导出成功并已同步云端！');
+        } catch(e) { alert('导出成功（本地），云端同步失败'); }
+    }
+
+    // 备份恢复
+    function backupData() {
+        let blob = new Blob([JSON.stringify(collectAllData())], {type: 'application/json'});
+        let a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `手机数据备份_${Date.now()}.json`;
+        a.click();
+    }
+
+    function restoreData() {
+        let input = document.createElement('input');
+        input.type = 'file';
+        input.onchange = e => {
+            let reader = new FileReader();
+            reader.onload = ev => {
+                let d = JSON.parse(ev.target.result);
+                if(d.brands) {
+                    brands = d.brands;
+                    renderAllBrands();
+                    // 恢复每一行数据
+                    for(let bid in d.data) {
+                        let tbody = document.querySelector(`#table-${bid} tbody`);
+                        if(tbody){
+                            tbody.innerHTML = '';
+                            d.data[bid].forEach(r => {
+                                tbody.insertAdjacentHTML('beforeend', createRowHtml());
+                                let last = tbody.lastElementChild;
+                                last.querySelector('.model-input').value = r.model;
+                                last.querySelector('.config-select').value = r.config;
+                                last.querySelector('.qty-input').value = r.qty;
+                                last.querySelector('.unit-price').value = r.price;
+                                last.querySelector('.ref-price').value = r.ref;
+                                bindRowEvents(last, bid);
+                                updateRowSubtotal(last);
+                            });
+                            updateBrandStats(bid);
+                        }
+                    }
+                }
+            };
+            reader.readAsText(e.target.files[0]);
+        };
+        input.click();
+    }
+
+    function autoSave() { localStorage.setItem('recycle_v2_data', JSON.stringify(collectAllData())); }
+
     function init() {
         renderAllBrands();
-        loadAutoSave();
-        setupSearch();
-        setupTheme();
-        document.getElementById('oneKeyBtn').addEventListener('click', oneKeyExport);
-        document.getElementById('backupBtn').addEventListener('click', backupData);
-        document.getElementById('restoreBtn').addEventListener('click', restoreData);
-        document.getElementById('clearAllBtn').addEventListener('click', clearAllTables);
-        document.getElementById('printBtn').addEventListener('click', printPage);
-        document.getElementById('addBrandBtn').addEventListener('click', addNewBrand);
-        window.addEventListener('beforeunload', autoSave);
+        let saved = localStorage.getItem('recycle_v2_data');
+        if(saved) {
+            // 这里可以添加自动加载逻辑
+        }
+        
+        document.getElementById('addBrandBtn').onclick = () => {
+            let n = document.getElementById('newBrandName').value.trim();
+            if(n) {
+                brands.push({ id: genId(), name: n });
+                renderAllBrands();
+                document.getElementById('newBrandName').value = '';
+            }
+        };
+
+        document.getElementById('oneKeyBtn').onclick = oneKeyExport;
+        document.getElementById('backupBtn').onclick = backupData;
+        document.getElementById('restoreBtn').onclick = restoreData;
+        document.getElementById('printBtn').onclick = () => window.print();
+        document.getElementById('clearAllBtn').onclick = () => { if(confirm('确定清空所有数据？')) location.reload(); };
+        
+        document.getElementById('themeBtn').onclick = () => {
+            document.body.classList.toggle('dark');
+        };
+
+        document.getElementById('searchInput').oninput = (e) => {
+            let val = e.target.value.toLowerCase();
+            document.querySelectorAll('.data-row').forEach(row => {
+                let txt = row.querySelector('.model-input').value.toLowerCase();
+                row.style.display = txt.includes(val) ? '' : 'none';
+            });
+        };
     }
+
     init();
 </script>
 </body>
