@@ -3,192 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>太云数码-二手机回收专业版</title>
+    <title>太云数码-报价单系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
-        * { box-sizing: border-box; }
-        body { font-family: system-ui, sans-serif; background: #f0f2f5; padding: 10px; margin: 0; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        .row-buttons { background: white; padding: 12px; border-radius: 15px; margin-bottom: 10px; display: flex; gap: 8px; overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .btn { border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: bold; white-space: nowrap; }
-        .btn-blue { background: #3b82f6; color: white; }
-        .btn-red { background: #ef4444; color: white; }
-        .brand-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .brand-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .brand-name { font-size: 18px; font-weight: bold; color: #1e293b; }
+        :root { --primary: #e11d48; --dark: #1e293b; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: system-ui, sans-serif; background: #f1f5f9; padding: 10px; margin: 0; }
         
-        table { width: 100%; border-collapse: collapse; }
-        th { font-size: 12px; color: #64748b; padding: 8px 4px; text-align: center; border-bottom: 2px solid #f1f5f9; }
-        td { padding: 8px 2px; border-bottom: 1px solid #f1f5f9; position: relative; }
+        .nav-tools { background: white; padding: 10px; border-radius: 12px; margin-bottom: 10px; display: flex; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 10px; z-index: 100; }
+        .btn { border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; color: white; }
+        .btn-img { background: #059669; } /* 绿色-生成图片 */
+        .btn-clear { background: #94a3b8; }
         
-        input, select { width: 100%; padding: 8px 4px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; outline: none; }
-        input:focus { border-color: #3b82f6; }
+        /* 导出海报的容器样式 */
+        #poster-area { background: white; padding: 20px; border-radius: 5px; }
+        .poster-header { border-left: 5px solid var(--primary); padding-left: 15px; margin-bottom: 20px; }
+        .poster-header h1 { margin: 0; font-size: 24px; color: var(--dark); }
+        .poster-header p { margin: 5px 0 0; color: #64748b; font-size: 14px; }
 
-        /* 联想窗样式修复 */
-        .suggest-container {
-            position: absolute; left: 0; top: 100%; width: 100%;
-            background: white; border: 1px solid #ddd; border-radius: 8px;
-            z-index: 999; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            max-height: 200px; overflow-y: auto; display: none;
-        }
-        .suggest-item { padding: 10px; font-size: 14px; border-bottom: 1px solid #f1f5f9; cursor: pointer; text-align: left; }
-        .suggest-item:hover { background: #eff6ff; color: #3b82f6; }
+        .brand-section { margin-bottom: 25px; }
+        .brand-title { background: #f8fafc; padding: 8px; font-weight: 800; border-bottom: 2px solid var(--primary); display: flex; justify-content: space-between; align-items: center; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; font-size: 12px; color: #94a3b8; padding-bottom: 8px; }
+        td { padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
+        
+        input { border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px; font-size: 14px; width: 100%; outline: none; }
+        input:focus { border-color: var(--primary); }
+        .price-input { color: var(--primary); font-weight: bold; }
 
-        .total-bar { background: #1e293b; color: white; padding: 15px; border-radius: 15px; text-align: center; font-size: 16px; }
-        .highlight { color: #fbbf24; font-weight: bold; }
+        .footer-summary { margin-top: 30px; background: var(--dark); color: white; padding: 20px; border-radius: 10px; text-align: center; }
+        .footer-summary h2 { color: #fbbf24; margin: 0 0 10px; }
+        
+        /* 隐藏删除按钮等不打印元素 */
+        .no-print { width: 30px; text-align: right; }
+        .btn-del { background: none; border: none; color: #cbd5e1; font-size: 18px; }
+
+        /* 浮动加载提示 */
+        #loading { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.8); color: white; padding: 20px; border-radius: 10px; z-index: 1000; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="row-buttons">
-        <button class="btn btn-blue" onclick="saveToCloud()">📤 同步云端</button>
-        <button class="btn btn-red" onclick="clearData()">🗑️ 清空清单</button>
+<div id="loading">正在生成精美报价图...</div>
+
+<div class="nav-tools">
+    <button class="btn btn-img" onclick="generateImage()">🖼️ 生成报价长图</button>
+    <button class="btn btn-clear" onclick="clearData()">🗑️ 清空</button>
+</div>
+
+<datalist id="model-list">
+    <option value="iPhone 15 Pro Max">
+    <option value="iPhone 15 Pro">
+    <option value="iPhone 14 Pro Max">
+    <option value="Mate 60 Pro">
+    <option value="Mate 60">
+    <option value="小米 14 Ultra">
+    <option value="Find X7 Ultra">
+    <option value="X100 Pro">
+</datalist>
+
+<div id="poster-area">
+    <div class="poster-header">
+        <h1>太云数码回收清单</h1>
+        <p>专业回收二手机、笔记本、数码废料 | 微信：Egg77Egg88</p>
     </div>
 
-    <div id="main-content"></div>
+    <div id="list-content"></div>
 
-    <div class="total-bar">
-        共合计：<span id="total-qty" class="highlight">0</span> 台 | 
-        金额：<span id="total-money" class="highlight">0</span> 元
+    <div class="footer-summary">
+        <p>合计数量：<span id="total-qty">0</span> 台</p>
+        <h2>估算总价：¥ <span id="total-money">0</span></h2>
+        <p style="font-size: 12px; opacity: 0.7;">清单生成时间：<span id="cur-time"></span></p>
     </div>
 </div>
 
 <script>
-    // 1. 扩充后的数据库
-    const MODEL_DB = {
-        '苹果': ['iPhone 15 Pro Max', 'iPhone 15 Pro', 'iPhone 15', 'iPhone 14 Pro Max', 'iPhone 14', 'iPhone 13 Pro', 'iPhone 13', 'iPhone 12', 'iPhone 11'],
-        '华为': ['Mate 60 Pro', 'Mate 60', 'X5 折叠屏', 'P60 Pro', 'P60', 'Mate 50 Pro', 'Mate 40 Pro', 'Nova 12', 'Nova 11'],
-        '小米': ['小米 14 Ultra', '小米 14', '小米 13', '红米 K70', '红米 Note 13', '小米 12 Pro'],
-        'OPPO': ['Find X7 Ultra', 'Find X6', 'Reno 11 Pro', 'Reno 10', 'A1 Pro', 'Find N3'],
-        'vivo': ['X100 Pro', 'X90', 'S18 Pro', 'S17', 'iQOO 12', 'iQOO Neo9']
-    };
-
-    let currentData = JSON.parse(localStorage.getItem('taiyun_cache')) || [
-        { brand: '苹果', rows: [{m:'', q:1, p:''}] },
-        { brand: '华为', rows: [{m:'', q:1, p:''}] },
-        { brand: '小米', rows: [{m:'', q:1, p:''}] }
-    ];
+    const STORAGE_KEY = 'taiyun_v5_final';
+    const brands = ['苹果', '华为', '小米', 'OPPO', 'vivo', '其他'];
+    
+    let currentData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || 
+        brands.map(b => ({ name: b, rows: [{ m: '', q: 1, p: '' }] }));
 
     function render() {
-        const container = document.getElementById('main-content');
+        const container = document.getElementById('list-content');
         container.innerHTML = currentData.map((b, bIdx) => `
-            <div class="brand-card">
-                <div class="brand-header">
-                    <span class="brand-name">${b.brand}</span>
-                    <button class="btn btn-blue" style="padding:4px 8px" onclick="addRow(${bIdx})">＋加行</button>
+            <div class="brand-section">
+                <div class="brand-title">
+                    <span>${b.name}</span>
+                    <button class="btn-del" onclick="addRow(${bIdx})" style="color:#3b82f6; font-size:14px; font-weight:bold">＋加行</button>
                 </div>
                 <table>
                     <thead>
-                        <tr><th>型号(点此输入)</th><th width="60">数量</th><th width="100">单价</th><th>操作</th></tr>
+                        <tr><th>型号(支持搜索)</th><th width="50">数量</th><th width="80">单价</th><th class="no-print"></th></tr>
                     </thead>
                     <tbody>
                         ${b.rows.map((r, rIdx) => `
                             <tr>
                                 <td>
-                                    <input type="text" class="m-input" value="${r.m}" 
-                                           oninput="handleInput(this, '${b.brand}', ${bIdx}, ${rIdx})" 
-                                           placeholder="输入型号...">
-                                    <div class="suggest-container"></div>
+                                    <input type="text" list="model-list" value="${r.m}" 
+                                           oninput="updateVal(${bIdx}, ${rIdx}, 'm', this.value)" 
+                                           placeholder="输入或选择...">
                                 </td>
                                 <td><input type="number" value="${r.q}" oninput="updateVal(${bIdx}, ${rIdx}, 'q', this.value)"></td>
-                                <td><input type="number" value="${r.p}" oninput="updateVal(${bIdx}, ${rIdx}, 'p', this.value)" placeholder="¥"></td>
-                                <td align="center"><button class="btn-red" style="border:none; border-radius:50%; width:24px; height:24px" onclick="delRow(${bIdx},${rIdx})">✕</button></td>
+                                <td><input type="number" class="price-input" value="${r.p}" oninput="updateVal(${bIdx}, ${rIdx}, 'p', this.value)" placeholder="¥"></td>
+                                <td class="no-print"><button class="btn-del" onclick="delRow(${bIdx}, ${rIdx})">×</button></td>
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
             </div>
         `).join('');
-        calculate();
-    }
-
-    // 处理输入联想
-    function handleInput(inputEl, brandName, bIdx, rIdx) {
-        const val = inputEl.value.trim().toLowerCase();
-        const suggestBox = inputEl.nextElementSibling;
         
-        // 更新数据对象
-        currentData[bIdx].rows[rIdx].m = inputEl.value;
-
-        if (!val) {
-            suggestBox.style.display = 'none';
-            return;
-        }
-
-        // 匹配逻辑
-        const matches = (MODEL_DB[brandName] || []).filter(m => m.toLowerCase().includes(val));
-
-        if (matches.length > 0) {
-            suggestBox.innerHTML = matches.map(m => `<div class="suggest-item">${m}</div>`).join('');
-            suggestBox.style.display = 'block';
-            
-            // 绑定点击事件
-            suggestBox.querySelectorAll('.suggest-item').forEach(item => {
-                item.onclick = function() {
-                    inputEl.value = this.innerText;
-                    currentData[bIdx].rows[rIdx].m = this.innerText;
-                    suggestBox.style.display = 'none';
-                    save();
-                    // 自动跳转到价格输入
-                    inputEl.parentElement.parentElement.querySelectorAll('input')[2].focus();
-                };
-            });
-        } else {
-            suggestBox.style.display = 'none';
-        }
+        document.getElementById('cur-time').innerText = new Date().toLocaleString();
+        calculate();
     }
 
     function updateVal(bIdx, rIdx, key, val) {
         currentData[bIdx].rows[rIdx][key] = val;
-        save();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(currentData));
         calculate();
     }
 
     function addRow(bIdx) {
-        currentData[bIdx].rows.push({m:'', q:1, p:''});
+        currentData[bIdx].rows.push({ m: '', q: 1, p: '' });
         render();
-        save();
     }
 
     function delRow(bIdx, rIdx) {
         currentData[bIdx].rows.splice(rIdx, 1);
         render();
-        save();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(currentData));
     }
 
     function calculate() {
-        let totalQ = 0, totalM = 0;
+        let q = 0, m = 0;
         currentData.forEach(b => {
             b.rows.forEach(r => {
-                const q = parseFloat(r.q) || 0;
-                const p = parseFloat(r.p) || 0;
-                totalQ += q;
-                totalM += (q * p);
+                const qty = parseFloat(r.q) || 0;
+                const price = parseFloat(r.p) || 0;
+                q += qty;
+                m += (qty * price);
             });
         });
-        document.getElementById('total-qty').innerText = totalQ;
-        document.getElementById('total-money').innerText = totalM;
+        document.getElementById('total-qty').innerText = q;
+        document.getElementById('total-money').innerText = m;
     }
 
-    function save() {
-        localStorage.setItem('taiyun_cache', JSON.stringify(currentData));
+    // 第三步：核心功能 - 生成长图
+    async function generateImage() {
+        const loading = document.getElementById('loading');
+        loading.style.display = 'block';
+        
+        // 隐藏删除按钮，防止出现在图片里
+        document.querySelectorAll('.no-print').forEach(el => el.style.opacity = '0');
+        
+        const area = document.getElementById('poster-area');
+        
+        try {
+            const canvas = await html2canvas(area, {
+                useCORS: true,
+                scale: 2, // 提高清晰度
+                backgroundColor: "#f1f5f9"
+            });
+            
+            const imgData = canvas.toDataURL("image/png");
+            
+            // 创建一个全屏预览层
+            const viewer = document.createElement('div');
+            viewer.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; overflow-y:auto; padding:20px; text-align:center;";
+            viewer.innerHTML = `
+                <p style="color:white; margin-bottom:10px;">长按图片保存到相册，发朋友圈</p>
+                <img src="${imgData}" style="width:100%; border-radius:10px; box-shadow:0 0 20px rgba(0,0,0,0.5);">
+                <button onclick="this.parentElement.remove()" style="margin-top:20px; padding:10px 20px; border-radius:5px; border:none; background:white;">关闭预览</button>
+            `;
+            document.body.appendChild(viewer);
+        } catch (err) {
+            alert('图片生成失败，请截图保存');
+            console.error(err);
+        }
+        
+        document.querySelectorAll('.no-print').forEach(el => el.style.opacity = '1');
+        loading.style.display = 'none';
     }
 
     function clearData() {
-        if(confirm('确定清空所有数据吗？')) {
-            localStorage.removeItem('taiyun_cache');
+        if(confirm('确定清空？')) {
+            localStorage.removeItem(STORAGE_KEY);
             location.reload();
         }
     }
 
-    // 点击页面其他地方关闭联想框
-    document.addEventListener('click', (e) => {
-        if (!e.target.classList.contains('m-input')) {
-            document.querySelectorAll('.suggest-container').forEach(box => box.style.display = 'none');
-        }
-    });
-
-    // 初始渲染
     render();
 </script>
 
