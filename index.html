@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
-    <title>废机回收 ERP - v7.6 Precise Logic</title>
+    <title>废机回收 ERP - v7.7 Stable</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -21,36 +21,27 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 100px; transition: 0.3s; }
 
-        /* 参考价显示控制 */
         .ref-column { display: none; } 
-        @media (min-width: 601px) { .ref-column { display: table-cell; } }
         body.show-ref .ref-column { display: table-cell !important; }
+        @media (min-width: 768px) {
+            body:not(.hide-ref) .ref-column { display: table-cell; }
+        }
 
-        /* UI 基础组件 */
         .navbar { background: var(--card); padding: 12px 15px; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 5px rgba(0,0,0,0.05); }
         .brand-card { background: var(--card); margin: 12px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
         .brand-header { padding: 10px 15px; background: rgba(0,0,0,0.02); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .brand-name { font-weight: bold; color: var(--primary); }
         
-        /* 表格布局 */
         .table-wrapper { width: 100%; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
         th { padding: 8px 4px; text-align: center; color: #8e8e93; border-bottom: 1px solid var(--border); }
         td { padding: 6px 4px; border-bottom: 1px solid var(--border); vertical-align: middle; }
         
-        .vertical-selects { display: flex; flex-direction: column; gap: 4px; align-items: center; }
-
-        /* 问题4修复：数量列居中对齐 */
         .qty-container { display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; }
         .btn-qty { border: 1px solid var(--border); background: var(--bg); color: var(--text); width: 22px; height: 22px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
-        .qty-val { min-width: 20px; text-align: center; font-weight: bold; }
-
+        
         .cell-input { width: 100%; padding: 4px; border: 1px solid transparent; background: transparent; color: var(--text); font-size: 13px; outline: none; text-align: center; }
-        .cell-input:focus { border-bottom: 1px solid var(--primary); }
 
-        /* 统计与抽屉 */
-        .summary-card { padding: 15px; margin: 12px; background: var(--card); border-radius: 12px; border: 1px dashed var(--border); }
-        .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(5, 1fr); padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); z-index: 500; }
         .tab-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--gray); font-size: 10px; border: none; background: none; }
         
@@ -59,58 +50,53 @@
         .drawer-content { position: absolute; bottom: 0; left: 0; right: 0; background: var(--card); border-radius: 20px 20px 0 0; padding: 20px 15px; transform: translateY(100%); transition: 0.3s; max-height: 80vh; overflow-y: auto; }
         .drawer.active .drawer-content { transform: translateY(0); }
         .drawer-item { display: flex; align-items: center; gap: 12px; padding: 15px; border-bottom: 1px solid var(--border); font-size: 15px; color: var(--text); }
-        .drawer-footer { text-align: center; font-size: 10px; color: #888; opacity: 0.5; margin-top: 20px; padding: 10px 0; border-top: 1px dashed var(--border); }
 
-        /* 弹窗样式 */
         .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: none; z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
-        .modal-body { background: var(--card); width: 100%; max-width: 400px; border-radius: 15px; padding: 25px; }
-        .modal-title { font-weight: bold; margin-bottom: 15px; text-align: center; }
+        .modal-body { background: var(--card); width: 100%; max-width: 400px; border-radius: 15px; padding: 25px; position: relative; }
         
-        /* 问题2相关的选择框样式 */
-        .brand-select-full { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 16px; outline: none; margin-bottom: 20px; }
+        .brand-select-full { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 16px; margin-bottom: 20px; }
         .btn-confirm { width: 100%; padding: 12px; border: none; background: var(--primary); color: white; border-radius: 8px; font-weight: bold; }
-
-        @media print { .tab-bar, .navbar, .drawer, button { display: none !important; } body { background: white; } .ref-column { display: table-cell !important; } }
     </style>
 </head>
-<body>
+<body class="show-ref">
 
 <div class="navbar">
-    <div class="nav-title">废机回收 ERP 7.6</div>
-    <div style="font-size: 12px; color: var(--gray);">安全加密运行</div>
+    <div class="nav-title">废机回收 ERP 7.7</div>
+    <div style="font-size: 12px; color: var(--gray);">稳定版</div>
 </div>
 
 <div id="screenshot-area">
     <div id="brand-container"></div>
-    <div class="summary-card">
-        <div class="summary-grid">
-            <div class="sum-item">总台数: <span id="totalQty">0</span></div>
-            <div class="sum-item">成交额: <span style="color:var(--warning)" id="totalActual">¥0</span></div>
-            <div class="sum-item" style="color:var(--gray)">参考总额: <span id="totalRef">¥0</span></div>
-            <div class="sum-item">利润率: <span id="profitRate">0%</span></div>
+    <div class="summary-card" style="padding:15px; margin:12px; background:var(--card); border-radius:12px; border:1px dashed var(--border);">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div>总台数: <span id="totalQty">0</span></div>
+            <div>成交额: <span style="color:var(--warning)" id="totalActual">¥0</span></div>
+            <div style="color:var(--gray)">参考总额: <span id="totalRef">¥0</span></div>
+            <div>利润率: <span id="profitRate">0%</span></div>
         </div>
     </div>
 </div>
 
 <div class="tab-bar">
     <button class="tab-item" onclick="app.showAddBrandModal()"><span style="font-size:20px">➕</span><span>添加</span></button>
-    <button class="tab-item" onclick="app.shareToken()"><span style="font-size:20px">📤</span><span>分享</span></button>
+    <button class="tab-item" onclick="app.shareToken()"><span style="font-size:20px">📤</span><span>分享口令</span></button>
     <button class="tab-item" onclick="app.exportReport()"><span style="font-size:20px">📎</span><span>导出</span></button>
     <button class="tab-item" onclick="app.showCharts()"><span style="font-size:20px">📊</span><span>统计</span></button>
     <button class="tab-item" onclick="app.toggleDrawer(true)"><span style="font-size:20px">⚙️</span><span>管理</span></button>
 </div>
 
+<div id="datalist-container"></div>
+
 <div class="drawer" id="manageDrawer" onclick="app.toggleDrawer(false)">
     <div class="drawer-content" onclick="event.stopPropagation()">
         <div class="drawer-item" onclick="app.toggleTheme()">🌓 切换亮/暗模式</div>
-        <div class="drawer-item" onclick="app.toggleRefColumn()" id="btnRefToggle">🔍 切换参考价显示</div>
+        <div class="drawer-item" onclick="app.toggleRefColumn()">🔍 显示/隐藏参考价列</div>
         <div class="drawer-item" onclick="app.generateLongImage()">📸 生成长图预览</div>
         <div class="drawer-item" onclick="app.printPage()">🖨️ 打印清单</div>
-        <div class="drawer-item" onclick="app.handleBackup()">📂 备份数据 (JSON)</div>
-        <div class="drawer-item" onclick="app.handleRestore()">📥 恢复数据 (JSON)</div>
-        <div class="drawer-item" onclick="app.showRecover()">🔑 恢复口令</div>
+        <div class="drawer-item" onclick="app.shareToken()">📤 备份数据 (生成口令)</div>
+        <div class="drawer-item" onclick="app.showRecover()">📥 恢复数据 (粘贴口令)</div>
         <div class="drawer-item" style="color:var(--danger)" onclick="app.clearAll()">🗑️ 清空所有数据</div>
-        <div class="drawer-footer">废机回收 ERP v7.6 Professional | 微信：Egg77Egg88</div>
+        <div style="text-align:center; padding:15px; opacity:0.7; font-size:12px; color:var(--info); cursor:pointer;" onclick="app.showContact()">💬 意见反馈 | 合作交流</div>
     </div>
 </div>
 
@@ -120,47 +106,72 @@
 
 <script>
 const SEC_KEY = "Egg77Egg88_secret_2026";
+const MODEL_DB = {
+    "OPPO": ["Find X7 Ultra", "Find X7", "Find X6 Pro", "Find X6", "Find N3", "Find N2 Flip", "Reno11 Pro", "Reno11", "Reno10 Pro+", "Reno10 Pro", "Reno10", "Reno9 Pro+", "Reno9", "K11", "K11x", "K10x", "K10", "A3 Pro", "A3x", "A2 Pro", "A2x", "A2", "A1 Pro", "A1x"],
+    "vivo": ["X100 Ultra", "X100 Pro", "X100", "X90 Pro+", "X90 Pro", "X90", "X Fold3", "X Flip", "S18 Pro", "S18", "S17 Pro", "S17", "S16 Pro", "S16", "Y200", "Y100", "Y78", "Y77", "Y36", "Y35", "iQOO Neo9 Pro", "iQOO Neo9", "iQOO 12", "iQOO Z9", "iQOO Z8"],
+    "华为": ["Mate 60 Pro+", "Mate 60 Pro", "Mate 60", "Mate 50 Pro", "Mate 50", "Mate X5", "Mate X3", "P60 Pro", "P60", "P60 Art", "P50 Pro", "P50", "Nova 12 Ultra", "Nova 12 Pro", "Nova 12", "Nova 11 Pro", "Nova 11", "畅享70 Pro", "畅享70", "畅享60 Pro", "畅享60"],
+    "荣耀": ["Magic6 Pro", "Magic6", "Magic5 Pro", "Magic5", "Magic V2", "Magic Vs2", "100 Pro", "100", "90 Pro", "90", "80 Pro", "80", "70 Pro", "70", "X50 Pro", "X50", "X40 GT", "X40", "畅玩50 Plus", "畅玩50", "畅玩40 Plus"],
+    "苹果": ["iPhone 15 Pro Max", "iPhone 15 Pro", "iPhone 15 Plus", "iPhone 15", "iPhone 14 Pro Max", "iPhone 14 Pro", "iPhone 14 Plus", "iPhone 14", "iPhone 13 Pro Max", "iPhone 13 Pro", "iPhone 13", "iPhone 13 mini", "iPhone 12 Pro Max", "iPhone 12 Pro", "iPhone 12", "iPhone 12 mini", "iPhone SE 2022", "iPhone SE 2020"],
+    "小米": ["14 Ultra", "14 Pro", "14", "13 Ultra", "13 Pro", "13", "12S Ultra", "12S Pro", "Redmi K70 Pro", "Redmi K70", "Redmi K60 Ultra", "Redmi K60 Pro", "Redmi Note 13 Pro+", "Redmi Note 13 Pro", "Redmi Note 13", "MIX Fold 4", "MIX Fold 3"],
+    "三星": ["S24 Ultra", "S24+", "S24", "S23 Ultra", "S23+", "S23", "Z Fold6", "Z Fold5", "Z Flip6", "Z Flip5", "A55", "A54", "A35", "A34", "A25", "A24"]
+};
+
 const app = {
     data: [],
     statusList: ["废机整机", "开机屏坏", "开机屏好", "正常机"],
     cfgList: ["—", "高配", "中配", "低配"],
-    // 问题2：预置品牌列表
     brandOptions: ["OPPO", "vivo", "华为", "荣耀", "苹果", "小米", "三星", "一加", "老年机", "杂牌机", "魅族", "锤子", "黑鲨", "努比亚", "联想", "中兴", "索尼", "谷歌", "摩托罗拉", "诺基亚"],
     isWechat: /MicroMessenger/i.test(navigator.userAgent),
 
     init() {
         const refPref = localStorage.getItem('ref_display_pref');
-        if (refPref) document.body.classList.add(refPref);
+        if (refPref) {
+            document.body.classList.remove('show-ref', 'hide-ref');
+            document.body.classList.add(refPref);
+        }
 
         const encrypted = localStorage.getItem("erp_v7_secure_data");
-        const storedHash = localStorage.getItem("erp_v7_data_hash");
-        if (encrypted && storedHash) {
+        if (encrypted) {
             try {
                 const bytes = CryptoJS.AES.decrypt(encrypted, SEC_KEY);
-                const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-                if (CryptoJS.MD5(decrypted).toString() === storedHash) {
-                    this.data = JSON.parse(decrypted);
-                } else { throw new Error(); }
+                this.data = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
             } catch (e) { this.reset(); }
         } else { this.reset(); }
+        this.buildDatalists();
         this.render();
         if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
     },
 
     reset() {
-        this.data = ["OPPO", "vivo", "华为"].map(b => ({ brand: b, items: this.generateEmptyRows(5) }));
-    },
-
-    // 问题3：生成5行空白行的通用逻辑
-    generateEmptyRows(count) {
-        return Array(count).fill().map(() => ({ m: "", s: "废机整机", c: "—", q: 1, p: "", r: "" }));
+        this.data = ["OPPO", "苹果"].map(b => ({ brand: b, items: [{ m: "", s: "废机整机", c: "—", q: 1, p: "", r: "" }] }));
     },
 
     save() {
         const jsonStr = JSON.stringify(this.data);
         localStorage.setItem("erp_v7_secure_data", CryptoJS.AES.encrypt(jsonStr, SEC_KEY).toString());
-        localStorage.setItem("erp_v7_data_hash", CryptoJS.MD5(jsonStr).toString());
         this.updateStats();
+    },
+
+    toggleRefColumn() {
+        const body = document.body;
+        if (body.classList.contains('show-ref')) {
+            body.classList.replace('show-ref', 'hide-ref');
+            localStorage.setItem('ref_display_pref', 'hide-ref');
+        } else {
+            body.classList.remove('hide-ref');
+            body.classList.add('show-ref');
+            localStorage.setItem('ref_display_pref', 'show-ref');
+        }
+        this.toggleDrawer(false);
+    },
+
+    buildDatalists() {
+        const container = document.getElementById('datalist-container');
+        container.innerHTML = Object.keys(MODEL_DB).map(brand => `
+            <datalist id="list-${brand}">
+                ${MODEL_DB[brand].map(m => `<option value="${m}">`).join('')}
+            </datalist>
+        `).join('');
     },
 
     render() {
@@ -169,7 +180,7 @@ const app = {
             <div class="brand-card">
                 <div class="brand-header">
                     <span class="brand-name">${b.brand}</span>
-                    <button onclick="app.delBrand(${bIdx})" style="color:var(--danger);border:none;background:none;font-size:12px">删除品牌</button>
+                    <button onclick="app.delBrand(${bIdx})" style="color:var(--danger);border:none;background:none;font-size:12px">删除</button>
                 </div>
                 <div class="table-wrapper">
                     <table>
@@ -186,9 +197,13 @@ const app = {
                         <tbody>
                             ${b.items.map((i, rIdx) => `
                                 <tr>
-                                    <td><input type="text" class="cell-input" placeholder="输入型号" value="${i.m}" oninput="app.update(${bIdx}, ${rIdx}, 'm', this.value)"></td>
                                     <td>
-                                        <div class="vertical-selects">
+                                        <input type="text" class="cell-input" list="list-${b.brand}" 
+                                            placeholder="输入型号" value="${i.m}" 
+                                            onchange="app.handleModelChange(${bIdx}, ${rIdx}, this.value)">
+                                    </td>
+                                    <td>
+                                        <div style="display:flex; flex-direction:column; gap:2px;">
                                             <select class="cell-input" onchange="app.update(${bIdx}, ${rIdx}, 's', this.value)">
                                                 ${this.statusList.map(s => `<option value="${s}" ${i.s === s ? 'selected' : ''}>${s}</option>`).join('')}
                                             </select>
@@ -200,13 +215,13 @@ const app = {
                                     <td>
                                         <div class="qty-container">
                                             <div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},-1)">-</div>
-                                            <div class="qty-val">${i.q}</div>
+                                            <div style="font-weight:bold">${i.q}</div>
                                             <div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},1)">+</div>
                                         </div>
                                     </td>
                                     <td><input type="number" class="cell-input" style="color:var(--primary);font-weight:bold" value="${i.p}" oninput="app.update(${bIdx}, ${rIdx}, 'p', this.value)"></td>
                                     <td class="ref-column"><input type="number" class="cell-input" value="${i.r}" oninput="app.update(${bIdx}, ${rIdx}, 'r', this.value)"></td>
-                                    <td><button onclick="app.delRow(${bi = bIdx}, ${ri = rIdx})" style="border:none;background:none;color:var(--gray)">✕</button></td>
+                                    <td><button onclick="app.delRow(${bIdx}, ${rIdx})" style="border:none;background:none;color:var(--gray)">✕</button></td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -218,59 +233,85 @@ const app = {
         this.updateStats();
     },
 
-    // 问题2：显示添加品牌的下拉框弹窗
-    showAddBrandModal() {
-        const modal = document.getElementById('appModal');
-        const content = document.getElementById('modalContent');
-        content.innerHTML = `
-            <div class="modal-title">快速选择回收品牌</div>
-            <select id="newBrandSelect" class="brand-select-full">
-                ${this.brandOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
-            </select>
-            <button class="btn-confirm" onclick="app.confirmAddBrand()">立即添加</button>
-        `;
-        modal.style.display = 'flex';
-    },
+    handleModelChange(bIdx, rIdx, val) {
+        if (!val) return;
+        const brandItems = this.data[bIdx].items;
+        const existingIdx = brandItems.findIndex((item, idx) => 
+            idx !== rIdx && item.m === val && item.s === brandItems[rIdx].s && item.c === brandItems[rIdx].c
+        );
 
-    // 问题2 & 问题3：确认添加品牌逻辑
-    confirmAddBrand() {
-        const brand = document.getElementById('newBrandSelect').value;
-        if (brand) {
-            // 自动生成5行空白数据
-            this.data.push({
-                brand: brand,
-                items: this.generateEmptyRows(5)
-            });
+        if (existingIdx !== -1) {
+            brandItems[existingIdx].q += brandItems[rIdx].q;
+            brandItems.splice(rIdx, 1);
+            alert(`检测到已录入 ${val}，数量已自动合并`);
             this.render();
-            this.save();
-            document.getElementById('appModal').style.display = 'none';
+        } else {
+            this.update(bIdx, rIdx, 'm', val);
         }
     },
 
-    // 问题1修复：删除品牌使用原生 confirm
     delBrand(idx) {
-        const brandName = this.data[idx].brand;
-        if (confirm(`确定要彻底删除品牌 [${brandName}] 及其所有录入数据吗？此操作不可撤销。`)) {
+        const name = this.data[idx].brand;
+        if (window.confirm(`确定要删除品牌「${name}」及其所有型号数据吗？此操作无法撤销。`)) {
             this.data.splice(idx, 1);
             this.render();
             this.save();
         }
     },
 
-    // 核心工具函数
-    changeQty(bi, ri, d) { let v = parseInt(this.data[bi].items[ri].q)||1; v = Math.max(1, v+d); this.data[bi].items[ri].q = v; this.render(); this.save(); },
+    shareToken() {
+        const token = `📱ERP#${LZString.compressToBase64(localStorage.getItem("erp_v7_secure_data"))}`;
+        const input = document.createElement('textarea');
+        input.value = token;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        alert("口令已复制，可发送给微信好友！恢复时只需在“管理-恢复口令”中粘贴即可。");
+    },
+
+    exportReport() {
+        if (this.isWechat) {
+            alert("微信端即将生成预览图片，请长按保存图片或截图分享。");
+            this.generateLongImage();
+        } else {
+            let csv = "\uFEFF品牌,型号,机况,数量,成交价\n";
+            this.data.forEach(b => b.items.forEach(i => csv += `${b.brand},${i.m},${i.s},${i.q},${i.p}\n`));
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `回收清单_${new Date().toLocaleDateString()}.csv`;
+            link.click();
+        }
+    },
+
+    showAddBrandModal() {
+        const m = document.getElementById('appModal');
+        const c = document.getElementById('modalContent');
+        c.innerHTML = `
+            <div style="font-weight:bold; margin-bottom:15px; text-align:center;">选择回收品牌</div>
+            <select id="nbSelect" class="brand-select-full">
+                ${this.brandOptions.map(o => `<option value="${o}">${o}</option>`).join('')}
+            </select>
+            <button class="btn-confirm" onclick="app.confirmAddBrand()">立即添加</button>
+        `;
+        m.style.display = 'flex';
+    },
+    confirmAddBrand() {
+        const b = document.getElementById('nbSelect').value;
+        this.data.push({ brand: b, items: [{ m: "", s: "废机整机", c: "—", q: 1, p: "", r: "" }] });
+        this.render(); this.save();
+        document.getElementById('appModal').style.display = 'none';
+    },
+    changeQty(bi, ri, d) { 
+        let v = parseInt(this.data[bi].items[ri].q)||1; 
+        v = Math.max(1, v+d); 
+        this.data[bi].items[ri].q = v; 
+        this.render(); this.save(); 
+    },
     update(bi, ri, k, v) { this.data[bi].items[ri][k] = v; this.save(); },
     addRow(idx) { this.data[idx].items.push({m:"", s:"废机整机", c:"—", q:1, p:"", r:""}); this.render(); },
     delRow(bi, ri) { this.data[bi].items.splice(ri, 1); this.render(); this.save(); },
-
-    // 基础功能
-    toggleRefColumn() { 
-        const next = document.body.classList.contains('show-ref') ? 'hide-ref' : 'show-ref';
-        document.body.classList.remove('show-ref', 'hide-ref');
-        document.body.classList.add(next);
-        localStorage.setItem('ref_display_pref', next);
-        this.toggleDrawer(false);
-    },
     toggleDrawer(s) { document.getElementById('manageDrawer').classList.toggle('active', s); },
     toggleTheme() {
         const d = document.body.classList.toggle('dark');
@@ -291,62 +332,25 @@ const app = {
         this.toggleDrawer(false);
         const m = document.getElementById('appModal');
         const c = document.getElementById('modalContent');
-        c.innerHTML = "正在生成预览..."; m.style.display = 'flex';
+        c.innerHTML = "正在处理快照..."; m.style.display = 'flex';
         const a = document.getElementById('screenshot-area');
-        const cv = await html2canvas(a, { scale: 2, backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg') });
-        c.innerHTML = `<div style="text-align:center"><img src="${cv.toDataURL('image/png')}" style="max-width:100%;border-radius:8px;"><p style="font-size:12px;color:var(--gray)">请长按上方图片保存到手机</p></div>`;
-    },
-    handleBackup() {
-        const j = JSON.stringify({e:localStorage.getItem("erp_v7_secure_data"), h:localStorage.getItem("erp_v7_data_hash")});
-        if(this.isWechat) {
-            document.getElementById('modalContent').innerHTML = `<p>请复制保存：</p><textarea style="width:100%;height:100px">${j}</textarea>`;
-            document.getElementById('appModal').style.display = 'flex';
-        } else {
-            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([j])); a.download=`backup_${Date.now()}.json`; a.click();
-        }
-    },
-    handleRestore() {
-        const t = prompt("粘贴备份数据:");
-        if(t) {
-            try {
-                const p = JSON.parse(t);
-                localStorage.setItem("erp_v7_secure_data", p.e);
-                localStorage.setItem("erp_v7_data_hash", p.h);
-                location.reload();
-            } catch(e) { alert("无效数据"); }
-        }
-    },
-    shareToken() {
-        const t = `📱ERP#${LZString.compressToBase64(localStorage.getItem("erp_v7_secure_data"))}`;
-        const x = document.createElement('textarea'); x.value = t; document.body.appendChild(x); x.select();
-        document.execCommand('copy'); document.body.removeChild(x); alert("口令已复制");
+        const cv = await html2canvas(a, { scale: 2, useCORS: true, backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg') });
+        c.innerHTML = `<div style="text-align:center"><img src="${cv.toDataURL('image/png')}" style="max-width:100%; border-radius:8px; border:1px solid #ddd;"><p style="font-size:12px;color:var(--gray);margin-top:10px;">微信端请长按图片保存或发送</p></div>`;
     },
     showRecover() {
-        const t = prompt("粘贴口令:");
+        const t = prompt("粘贴分享口令以恢复数据:");
         if(t && t.startsWith("📱ERP#")) {
-            localStorage.setItem("erp_v7_secure_data", LZString.decompressFromBase64(t.split('#')[1]));
-            localStorage.setItem("erp_v7_data_hash", CryptoJS.MD5(LZString.decompressFromBase64(t.split('#')[1])).toString());
+            const raw = LZString.decompressFromBase64(t.split('#')[1]);
+            localStorage.setItem("erp_v7_secure_data", CryptoJS.AES.encrypt(raw, SEC_KEY).toString());
             location.reload();
         }
     },
-    exportReport() {
-        let csv = "\uFEFF品牌,型号,机况,数量,成交价\n";
-        this.data.forEach(b => b.items.forEach(i => csv += `${b.brand},${i.m},${i.s},${i.q},${i.p}\n`));
-        const x = document.createElement('textarea'); x.value = csv; document.body.appendChild(x); x.select();
-        document.execCommand('copy'); document.body.removeChild(x); alert("已复制数据");
-    },
-    showCharts() {
-        document.getElementById('modalContent').innerHTML = `<canvas id="chartCanvas"></canvas>`;
-        document.getElementById('appModal').style.display = 'flex';
-        const l = [], v = [];
-        this.data.forEach(b => {
-            let s = 0; b.items.forEach(i => s += (parseInt(i.q)||0)*(parseFloat(i.p)||0));
-            if(s > 0) { l.push(b.brand); v.push(s); }
-        });
-        new Chart(document.getElementById('chartCanvas'), { type: 'pie', data: { labels:l, datasets:[{data:v, backgroundColor:['#FF3B30','#34C759','#007AFF','#FF9500']}] } });
-    },
     printPage() { this.toggleDrawer(false); window.print(); },
-    clearAll() { if(confirm("确定永久清空？")) { localStorage.clear(); location.reload(); } }
+    clearAll() { if(confirm("确定永久清空所有数据？")) { localStorage.clear(); location.reload(); } },
+    // 修改点：反馈弹出提示逻辑
+    showContact() {
+        alert("如有问题或合作意向，请联系\n微信：Egg77Egg88");
+    }
 };
 
 app.init();
