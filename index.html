@@ -143,7 +143,7 @@
         <div class="drawer-item" onclick="app.printPage()">🖨️ 打印清单</div>
         <div class="drawer-item" onclick="app.showBackupCode()">📂 备份数据 (生成短码)</div>
         <div class="drawer-item" onclick="app.showRecoverByCode()">📥 恢复数据 (输入短码)</div>
-        <div class="drawer-item" style="color:var(--danger)" onclick="app.clearAll()">🗑️ 清空当前批次</div>
+        <div class="drawer-item" style="color:var(--danger)" onclick="app.resetToInitial()">🗑️ 恢复初始</div>
         <div style="text-align:center; padding:15px; opacity:0.8; font-size:14px; color:var(--info); cursor:pointer;" onclick="app.showContact()">
             💬 意见反馈
         </div>
@@ -168,7 +168,6 @@ const app = {
             document.body.classList.remove('show-ref', 'hide-ref');
             document.body.classList.add(refPref);
         }
-
         const encrypted = localStorage.getItem("erp_v7_secure_data");
         if (encrypted) {
             try {
@@ -176,7 +175,6 @@ const app = {
                 this.data = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
             } catch (e) { this.reset(); }
         } else { this.reset(); }
-
         this.render();
         if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
     },
@@ -238,6 +236,38 @@ const app = {
 
     escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); },
 
+    // ==================== 新增：通用确认对话框 ====================
+    showConfirmDialog(title, message, onConfirm) {
+        const m = document.getElementById('appModal');
+        const c = document.getElementById('modalContent');
+        c.innerHTML = `
+            <div style="text-align:center; font-weight:bold; margin-bottom:20px;">${title}</div>
+            <div style="font-size:14px; color:var(--gray); text-align:center; margin-bottom:25px;">${message}</div>
+            <div class="modal-footer">
+                <div class="btn-cancel" onclick="app.closeModal()">取消</div>
+                <div class="btn-confirm" style="flex:1; background:var(--danger);" onclick="app.closeModal(); ${onConfirm}">确认删除</div>
+            </div>
+        `;
+        m.style.display = 'flex';
+    },
+
+    // ==================== 删除品牌 - 使用自定义模态框 ====================
+    delBrand(idx) {
+        const brandName = this.data[idx].brand;
+        this.showConfirmDialog(
+            "删除品牌",
+            `确定删除品牌「${brandName}」吗？<br>删除后该品牌下的所有数据将丢失。`,
+            `app.confirmDeleteBrand(${idx})`
+        );
+    },
+
+    confirmDeleteBrand(idx) {
+        this.data.splice(idx, 1);
+        this.render();
+        this.save();
+    },
+    // =================================================================
+
     filterPriceInput(input, bIdx, rIdx, key) {
         let val = input.value.replace(/[^0-9.]/g, '');
         const parts = val.split('.');
@@ -254,25 +284,19 @@ const app = {
         return false;
     },
 
-    showSuggestions(bIdx, rIdx, currentVal) {
-        this.filterSuggestions(bIdx, rIdx, currentVal);
-    },
-
+    showSuggestions(bIdx, rIdx, currentVal) { this.filterSuggestions(bIdx, rIdx, currentVal); },
     filterSuggestions(bIdx, rIdx, keyword) {
         const wrapper = document.getElementById(`model-wrapper-${bIdx}-${rIdx}`);
         if (!wrapper) return;
         const existingList = wrapper.querySelector('.suggest-list');
         if(existingList) existingList.remove();
         if(!keyword || !keyword.trim()) return;
-
         const brand = this.data[bIdx].brand;
         let modelList = FULL_MODEL_MAP[brand] || [];
         if (modelList.length === 0) modelList = Object.values(FULL_MODEL_MAP).flat();
-
         const lowerKw = keyword.toLowerCase();
         let matches = modelList.filter(m => m.toLowerCase().includes(lowerKw)).slice(0,8);
         if(matches.length === 0) return;
-
         const ul = document.createElement('ul');
         ul.className = 'suggest-list';
         matches.forEach(model => {
@@ -289,7 +313,6 @@ const app = {
         });
         wrapper.appendChild(ul);
     },
-
     hideSuggestions(bIdx, rIdx) {
         const wrapper = document.getElementById(`model-wrapper-${bIdx}-${rIdx}`);
         if(wrapper) {
@@ -297,11 +320,9 @@ const app = {
             if(list) list.remove();
         }
     },
-
     hideSuggestionsDelayed(bIdx, rIdx) {
         setTimeout(() => this.hideSuggestions(bIdx, rIdx), 200);
     },
-
     updateModelAndMerge(bIdx, rIdx, newModel) {
         if(!newModel) return;
         const brandObj = this.data[bIdx];
@@ -317,15 +338,6 @@ const app = {
             this.update(bIdx, rIdx, 'm', newModel);
         }
     },
-
-    delBrand(idx) {
-        if (confirm("确定删除该品牌吗？\n\n此操作不可撤销！")) {
-            this.data.splice(idx, 1);
-            this.render();
-            this.save();
-        }
-    },
-
     showAddBrandModal() {
         const m = document.getElementById('appModal');
         const c = document.getElementById('modalContent');
@@ -339,7 +351,6 @@ const app = {
         `;
         m.style.display = 'flex';
     },
-
     confirmAddBrand() {
         const select = document.getElementById('nbSelect');
         const manualInput = document.getElementById('manualBrandInput');
@@ -348,7 +359,6 @@ const app = {
         this.data.push({ brand: brandName, items: this.generateEmptyRows(5) });
         this.render(); this.save(); this.closeModal();
     },
-
     showExportConfirm() {
         const m = document.getElementById('appModal');
         const c = document.getElementById('modalContent');
@@ -362,60 +372,16 @@ const app = {
         `;
         m.style.display = 'flex';
     },
-
-    changeQty(bi, ri, d) { 
-        let v = parseInt(this.data[bi].items[ri].q)||1; 
-        v = Math.max(1, v+d); 
-        this.data[bi].items[ri].q = v; 
-        this.render(); 
-        this.save(); 
-    },
-
-    update(bi, ri, k, v) { 
-        this.data[bi].items[ri][k] = v; 
-        this.save(); 
-    },
-
-    addRow(idx) { 
-        this.data[idx].items.push({m:"", s:"废机整机", c:"—", q:1, p:"", r:""}); 
-        this.render(); 
-    },
-
-    delRow(bi, ri) { 
-        this.data[bi].items.splice(ri, 1); 
-        this.render(); 
-        this.save(); 
-    },
-
-    toggleRefColumn() { 
-        const body = document.body; 
-        if (body.classList.contains('show-ref')) 
-            body.classList.replace('show-ref', 'hide-ref'); 
-        else { 
-            body.classList.remove('hide-ref'); 
-            body.classList.add('show-ref'); 
-        } 
-        this.toggleDrawer(false); 
-    },
-
-    toggleDrawer(s) { 
-        document.getElementById('manageDrawer').classList.toggle('active', s); 
-    },
-
-    toggleTheme() { 
-        const d = document.body.classList.toggle('dark'); 
-        localStorage.setItem('theme', d ? 'dark' : 'light'); 
-        this.toggleDrawer(false); 
-    },
-
+    changeQty(bi, ri, d) { let v = parseInt(this.data[bi].items[ri].q)||1; v = Math.max(1, v+d); this.data[bi].items[ri].q = v; this.render(); this.save(); },
+    update(bi, ri, k, v) { this.data[bi].items[ri][k] = v; this.save(); },
+    addRow(idx) { this.data[idx].items.push({m:"", s:"废机整机", c:"—", q:1, p:"", r:""}); this.render(); },
+    delRow(bi, ri) { this.data[bi].items.splice(ri, 1); this.render(); this.save(); },
+    toggleRefColumn() { const body = document.body; if (body.classList.contains('show-ref')) body.classList.replace('show-ref', 'hide-ref'); else { body.classList.remove('hide-ref'); body.classList.add('show-ref'); } this.toggleDrawer(false); },
+    toggleDrawer(s) { document.getElementById('manageDrawer').classList.toggle('active', s); },
+    toggleTheme() { const d = document.body.classList.toggle('dark'); localStorage.setItem('theme', d ? 'dark' : 'light'); this.toggleDrawer(false); },
     updateStats() {
         let q = 0, p = 0, r = 0;
-        this.data.forEach(b => b.items.forEach(i => { 
-            const n = parseInt(i.q)||0; 
-            q += n; 
-            p += n*(parseFloat(i.p)||0); 
-            r += n*(parseFloat(i.r)||0); 
-        }));
+        this.data.forEach(b => b.items.forEach(i => { const n = parseInt(i.q)||0; q += n; p += n*(parseFloat(i.p)||0); r += n*(parseFloat(i.r)||0); }));
         document.getElementById('totalQty').innerText = q;
         document.getElementById('totalActual').innerText = '¥' + Math.round(p).toLocaleString();
         document.getElementById('totalRef').innerText = '¥' + Math.round(r).toLocaleString();
@@ -424,7 +390,15 @@ const app = {
         document.getElementById('profitRate').innerHTML = `${icon} ${Math.abs(rate).toFixed(1)}%`;
     },
 
-    // ==================== 恢复为简单短码（不加密） ====================
+    // ==================== 恢复初始 ====================
+    resetToInitial() {
+        if (confirm("确定恢复初始状态吗？所有已填写的数据将被清空，恢复为初始的5个品牌（OPPO、vivo、华为、荣耀、苹果），每个品牌5行空白行。此操作不可撤销！")) {
+            this.reset();
+            this.render();
+            this.save();
+        }
+    },
+
     showBackupCode() {
         const dataStr = JSON.stringify(this.data);
         const compressed = LZString.compressToBase64(dataStr);
@@ -515,16 +489,7 @@ const app = {
         }
     },
 
-    clearAll() { 
-        if(confirm("确定清空数据吗？此操作不可撤销！")) { 
-            localStorage.clear(); 
-            location.reload(); 
-        } 
-    },
-
-    showContact() { 
-        alert("如有问题或合作意向，请 📧 联系作者：Egg77Egg88"); 
-    }
+    showContact() { alert("如有问题或合作意向，请 📧 联系作者：Egg77Egg88"); }
 };
 
 app.init();
