@@ -152,6 +152,7 @@
 <div class="modal" id="appModal" onclick="app.closeModal()">
     <div class="modal-body" onclick="event.stopPropagation()" id="modalContent"></div>
 </div>
+
 <script>
 const SEC_KEY = "Egg77Egg88_secret_2026";
 // 完整型号数据库 (2012-2026)
@@ -166,15 +167,16 @@ const FULL_MODEL_MAP = {
     "一加": ["一加1","一加2","一加3","一加3T","一加5","一加5T","一加6","一加6T","一加7","一加7 Pro","一加7T","一加8","一加8 Pro","一加9","一加9 Pro","一加9R","一加10 Pro","一加10R","一加11","一加12","一加13","一加Ace","Ace Pro","Ace 2","Ace 2 Pro","Ace 3","Ace 3 Pro","一加Nord"],
     "魅族": ["魅族MX","MX2","MX3","MX4","MX5","Pro 5","Pro 6","Pro 7","Pro 7 Plus","魅蓝Note","魅蓝Note 2","魅蓝Note 3","魅蓝Note 5","魅蓝Note 6","魅蓝E","魅蓝X","魅族15","魅族16","魅族16s","魅族16T","魅族17","魅族17 Pro","魅族20","魅族21","魅族21s","魅族22","魅族22 Pro"]
 };
-// 全局所有型号列表 (用于建议)
 const ALL_MODELS_LIST = Object.values(FULL_MODEL_MAP).flat();
+
 const app = {
     data: [],
     statusList: ["废机整机", "开机屏坏", "开机屏好", "正常机"],
     cfgList: ["—", "高配", "中配", "低配"],
     brandOptions: ["OPPO", "vivo", "华为", "荣耀", "苹果", "小米", "红米", "三星", "一加", "魅族", "努比亚", "中兴", "联想", "锤子/坚果", "老年机", "杂牌机", "手动输入"],
     isWechat: /MicroMessenger/i.test(navigator.userAgent),
-    activeSuggest: null, // 当前打开的建议框品牌索引行索引
+    activeSuggest: null,
+
     init() {
         const refPref = localStorage.getItem('ref_display_pref');
         if (refPref) {
@@ -190,7 +192,6 @@ const app = {
         } else { this.reset(); }
         this.render();
         if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
-        // 清理过期短码备份
         this.cleanExpiredCodes();
     },
     reset() {
@@ -230,9 +231,24 @@ const app = {
                                         </div>
                                     </td>
                                     <td><div style="display:flex; flex-direction:column; gap:2px;"><select class="cell-input" onchange="app.update(${bIdx}, ${rIdx}, 's', this.value)">${this.statusList.map(s => `<option value="${s}" ${i.s === s ? 'selected' : ''}>${s}</option>`).join('')}</select><select class="cell-input" style="color:var(--gray); font-size:11px" onchange="app.update(${bIdx}, ${rIdx}, 'c', this.value)">${this.cfgList.map(c => `<option value="${c}" ${i.c === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div></td>
-                                    <td><div class="qty-container"><div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},-1)">-</div><div style="font-weight:bold">${i.q}</div><div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},1)">+</div></div></td>
-                                    <td><input type="number" class="cell-input" style="color:var(--primary);font-weight:bold" value="${i.p}" oninput="app.update(${bIdx}, ${rIdx}, 'p', this.value)"></td>
-                                    <td class="ref-column"><input type="number" class="cell-input" value="${i.r}" oninput="app.update(${bIdx}, ${rIdx}, 'r', this.value)"></td>
+                                    <td>
+                                        <div class="qty-container">
+                                            <div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},-1)">-</div>
+                                            <div style="font-weight:bold">${i.q}</div>
+                                            <div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},1)">+</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*" 
+                                               class="cell-input" style="color:var(--primary);font-weight:bold" 
+                                               value="${i.p}" 
+                                               oninput="app.handleNumberInput(this, ${bIdx}, ${rIdx}, 'p', true)">
+                                    </td>
+                                    <td class="ref-column">
+                                        <input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*" 
+                                               class="cell-input" value="${i.r}" 
+                                               oninput="app.handleNumberInput(this, ${bIdx}, ${rIdx}, 'r', true)">
+                                    </td>
                                     <td><button onclick="app.delRow(${bIdx}, ${rIdx})" style="border:none;background:none;color:var(--gray)">✕</button></td>
                                 </tr>
                             `).join('')}
@@ -245,7 +261,25 @@ const app = {
         this.updateStats();
     },
     escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); },
-    // 动态建议核心逻辑
+
+    // 新增：统一的数字输入处理函数（只修改此处，其他保持不变）
+    handleNumberInput(input, bIdx, rIdx, key, allowDecimal) {
+        let value = input.value;
+        if (allowDecimal) {
+            // 允许小数（最多两位）
+            value = value.replace(/[^0-9.]/g, '');
+            const parts = value.split('.');
+            if (parts.length > 2) value = parts[0] + '.' + parts.slice(1).join('');
+            if (parts[1] && parts[1].length > 2) value = parts[0] + '.' + parts[1].substring(0, 2);
+        } else {
+            // 只允许整数
+            value = value.replace(/[^0-9]/g, '');
+        }
+        input.value = value;
+        this.data[bIdx].items[rIdx][key] = value;
+        this.save();
+    },
+
     showSuggestions(bIdx, rIdx, currentVal) {
         this.filterSuggestions(bIdx, rIdx, currentVal);
     },
@@ -290,7 +324,6 @@ const app = {
         const currentRow = brandObj.items[rIdx];
         const oldModel = currentRow.m;
         if(oldModel === newModel) return;
-        // 合并逻辑: 相同品牌+相同型号+相同机况+相同配置合并数量
         const sameIdx = brandObj.items.findIndex((item, idx) => idx !== rIdx && item.m === newModel && item.s === currentRow.s && item.c === currentRow.c);
         if(sameIdx !== -1) {
             brandObj.items[sameIdx].q += currentRow.q;
@@ -301,23 +334,11 @@ const app = {
         }
     },
     delBrand(idx) {
-        const m = document.getElementById('appModal');
-        const c = document.getElementById('modalContent');
-        c.innerHTML = `
-            <div style="text-align:center; font-weight:bold; margin-bottom:15px;">确定删除该品牌吗？</div>
-            <div style="font-size:14px; color:var(--gray); text-align:center; margin-bottom:20px;">此操作不可撤销</div>
-            <div class="modal-footer">
-                <div class="btn-cancel" onclick="app.closeModal()">取消</div>
-                <div class="btn-confirm" style="flex:1; background:var(--danger);" onclick="app.confirmDeleteBrand(${idx})">确认删除</div>
-            </div>
-        `;
-        m.style.display = 'flex';
-    },
-    confirmDeleteBrand(idx) {
-        this.data.splice(idx, 1);
-        this.render();
-        this.save();
-        this.closeModal();
+        if (confirm("确定删除该品牌吗？")) {
+            this.data.splice(idx, 1);
+            this.render();
+            this.save();
+        }
     },
     showAddBrandModal() {
         const m = document.getElementById('appModal');
@@ -353,17 +374,51 @@ const app = {
         `;
         m.style.display = 'flex';
     },
-    changeQty(bi, ri, d) { let v = parseInt(this.data[bi].items[ri].q)||1; v = Math.max(1, v+d); this.data[bi].items[ri].q = v; this.render(); this.save(); },
-    update(bi, ri, k, v) { this.data[bi].items[ri][k] = v; this.save(); },
-    addRow(idx) { this.data[idx].items.push({m:"", s:"废机整机", c:"—", q:1, p:"", r:""}); this.render(); },
-    delRow(bi, ri) { this.data[bi].items.splice(ri, 1); this.render(); this.save(); },
+    changeQty(bi, ri, d) { 
+        let v = parseInt(this.data[bi].items[ri].q) || 1; 
+        v = Math.max(1, v + d); 
+        this.data[bi].items[ri].q = v; 
+        this.render(); 
+        this.save(); 
+    },
+    update(bi, ri, k, v) { 
+        this.data[bi].items[ri][k] = v; 
+        this.save(); 
+    },
+    addRow(idx) { 
+        this.data[idx].items.push({m:"", s:"废机整机", c:"—", q:1, p:"", r:""}); 
+        this.render(); 
+    },
+    delRow(bi, ri) { 
+        this.data[bi].items.splice(ri, 1); 
+        this.render(); 
+        this.save(); 
+    },
    
-    toggleRefColumn() { const body = document.body; if (body.classList.contains('show-ref')) body.classList.replace('show-ref', 'hide-ref'); else { body.classList.remove('hide-ref'); body.classList.add('show-ref'); } this.toggleDrawer(false); },
+    toggleRefColumn() { 
+        const body = document.body; 
+        if (body.classList.contains('show-ref')) 
+            body.classList.replace('show-ref', 'hide-ref'); 
+        else { 
+            body.classList.remove('hide-ref'); 
+            body.classList.add('show-ref'); 
+        } 
+        this.toggleDrawer(false); 
+    },
     toggleDrawer(s) { document.getElementById('manageDrawer').classList.toggle('active', s); },
-    toggleTheme() { const d = document.body.classList.toggle('dark'); localStorage.setItem('theme', d ? 'dark' : 'light'); this.toggleDrawer(false); },
+    toggleTheme() { 
+        const d = document.body.classList.toggle('dark'); 
+        localStorage.setItem('theme', d ? 'dark' : 'light'); 
+        this.toggleDrawer(false); 
+    },
     updateStats() {
         let q = 0, p = 0, r = 0;
-        this.data.forEach(b => b.items.forEach(i => { const n = parseInt(i.q)||0; q += n; p += n*(parseFloat(i.p)||0); r += n*(parseFloat(i.r)||0); }));
+        this.data.forEach(b => b.items.forEach(i => { 
+            const n = parseInt(i.q)||0; 
+            q += n; 
+            p += n*(parseFloat(i.p)||0); 
+            r += n*(parseFloat(i.r)||0); 
+        }));
         document.getElementById('totalQty').innerText = q;
         document.getElementById('totalActual').innerText = '¥' + Math.round(p).toLocaleString();
         document.getElementById('totalRef').innerText = '¥' + Math.round(r).toLocaleString();
@@ -371,17 +426,22 @@ const app = {
         const icon = rate >= 0 ? '📈 高' : '📉 低';
         document.getElementById('profitRate').innerHTML = `${icon} ${Math.abs(rate).toFixed(1)}%`;
     },
-    // 问题1：短码备份 (6-8位，7天有效期)
     showBackupCode() {
         const currentData = localStorage.getItem("erp_v7_secure_data");
         if(!currentData) { alert("无数据可备份"); return; }
         const hash = this.simpleHash(currentData);
-        const randomPart = Math.random().toString(36).substring(2,5).toUpperCase();
-        const shortCode = (hash.substring(0,4) + randomPart).slice(0,8).toUpperCase();
+        const randomPart = Math.random().toString(36).substring(2,6).toUpperCase();
+        let shortCode = (hash.substring(0,4) + randomPart).slice(0,8).toUpperCase();
+        const key = `share_code_${shortCode}`;
         const expireTime = Date.now() + 7 * 24 * 3600 * 1000;
-        const backupStore = JSON.parse(localStorage.getItem("erp_backup_codes") || "{}");
-        backupStore[shortCode] = { data: currentData, expire: expireTime };
-        localStorage.setItem("erp_backup_codes", JSON.stringify(backupStore));
+        const backupData = { code: shortCode, data: currentData, expireTime: expireTime };
+        localStorage.setItem(key, JSON.stringify(backupData));
+        let codes = JSON.parse(localStorage.getItem("share_codes") || "[]");
+        if (!codes.includes(shortCode)) {
+            codes.push(shortCode);
+            localStorage.setItem("share_codes", JSON.stringify(codes));
+        }
+        console.log(`[备份成功] 生成短码: ${shortCode}, 存储Key: ${key}`);
         this.closeModal();
         const m = document.getElementById('appModal');
         const c = document.getElementById('modalContent');
@@ -390,10 +450,26 @@ const app = {
     },
     simpleHash(str) { let h=0; for(let i=0;i<str.length;i++) h=((h<<5)-h)+str.charCodeAt(i)|0; return Math.abs(h).toString(36).toUpperCase(); },
     cleanExpiredCodes() {
-        const store = JSON.parse(localStorage.getItem("erp_backup_codes") || "{}");
-        let changed = false;
-        for(let k in store) { if(store[k].expire < Date.now()) { delete store[k]; changed=true; } }
-        if(changed) localStorage.setItem("erp_backup_codes", JSON.stringify(store));
+        const codes = JSON.parse(localStorage.getItem("share_codes") || "[]");
+        const now = Date.now();
+        const remaining = [];
+        for(let code of codes) {
+            const key = `share_code_${code}`;
+            const str = localStorage.getItem(key);
+            if(str) {
+                try {
+                    const record = JSON.parse(str);
+                    if(record.expireTime < now) {
+                        localStorage.removeItem(key);
+                    } else {
+                        remaining.push(code);
+                    }
+                } catch(e) {
+                    localStorage.removeItem(key);
+                }
+            }
+        }
+        localStorage.setItem("share_codes", JSON.stringify(remaining));
     },
     showRecoverByCode() {
         this.closeModal();
@@ -403,12 +479,26 @@ const app = {
         m.style.display = 'flex';
     },
     recoverWithCode() {
-        const code = document.getElementById('recoverCodeInput')?.value.trim().toUpperCase();
-        if(!code) { alert("请输入短码"); return; }
-        const backupStore = JSON.parse(localStorage.getItem("erp_backup_codes") || "{}");
-        const record = backupStore[code];
-        if(!record) { alert("无效或已过期的分享码"); return; }
-        if(record.expire < Date.now()) { alert("短码已过期"); delete backupStore[code]; localStorage.setItem("erp_backup_codes", JSON.stringify(backupStore)); return; }
+        const codeInput = document.getElementById('recoverCodeInput')?.value.trim().toUpperCase();
+        if(!codeInput) { alert("请输入短码"); return; }
+        const key = `share_code_${codeInput}`;
+        const recordStr = localStorage.getItem(key);
+        if(!recordStr) { 
+            alert("无效或已过期的分享码"); 
+            return; 
+        }
+        let record;
+        try {
+            record = JSON.parse(recordStr);
+        } catch(e) {
+            alert("无效或已过期的分享码"); 
+            return;
+        }
+        if(record.expireTime < Date.now()) { 
+            alert("短码已过期"); 
+            localStorage.removeItem(key);
+            return; 
+        }
         localStorage.setItem("erp_v7_secure_data", record.data);
         alert("数据恢复成功！页面将刷新。");
         location.reload();
@@ -431,13 +521,14 @@ const app = {
         const imgData = cv.toDataURL('image/png');
         c.innerHTML = `<div style="text-align:center"><img src="${imgData}" style="max-width:100%; max-height:60vh; border-radius:8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"><p style="font-size:12px;color:var(--gray);margin:12px 0;">已生成高清图片，长按图片保存到手机</p><div class="modal-footer"><div class="btn-cancel" style="flex:1" onclick="app.closeModal()">返回编辑</div></div></div>`;
     },
-    closeModal() { document.getElementById('appModal').style.display = 'none'; document.getElementById('modalContent').innerHTML = ''; },
-    // 问题3：微信环境打印提示 + 高亮导出图片
+    closeModal() { 
+        document.getElementById('appModal').style.display = 'none'; 
+        document.getElementById('modalContent').innerHTML = ''; 
+    },
     printPage() {
         this.toggleDrawer(false);
         if (this.isWechat) {
             alert("微信暂不支持直接打印。\n「请使用「导出图片」功能保存后打印」");
-            // 高亮导出按钮 (tab-bar 第二个)
             const exportBtn = document.querySelector('.tab-bar .tab-item:nth-child(2)');
             if(exportBtn) {
                 exportBtn.classList.add('highlight-export');
@@ -447,10 +538,10 @@ const app = {
             window.print();
         }
     },
-   
     clearAll() { if(confirm("确定清空数据吗？此操作不可撤销！")) { localStorage.clear(); location.reload(); } },
     showContact() { alert("如有问题或合作意向，请 📧 联系作者：Egg77Egg88"); }
 };
+
 app.init();
 </script>
 </body>
