@@ -3,244 +3,227 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>批量回收助手 - 纯净版</title>
+    <title>批量回收清单助手</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
-        /* 保持之前所有样式不变 */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: system-ui, -apple-system, sans-serif; background: #f0f2f5; padding: 12px; margin: 0; transition: background 0.3s; }
-        .container { max-width: 1600px; margin: 0 auto; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #f4f7f6; padding: 10px; margin: 0; transition: 0.3s; }
+        .container { max-width: 1200px; margin: 0 auto; }
         
-        .btn { background: #10b981; color: white; border: none; padding: 8px 14px; border-radius: 40px; cursor: pointer; font-size: 12px; font-weight: 500; margin: 2px; display: inline-flex; align-items: center; gap: 4px; transition: 0.2s; }
-        .btn:active { transform: scale(0.96); }
-        .btn-sync { background: #3b82f6; border: 2px solid #fff; box-shadow: 0 0 10px rgba(59,130,246,0.3); } /* 同步按钮高亮 */
-        .btn-purple { background: #8b5cf6; }
+        /* 顶部操作区 */
+        .header-tools { background: white; padding: 15px; border-radius: 15px; margin-bottom: 15px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .btn { border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; transition: 0.2s; color: white; }
+        .btn:active { transform: scale(0.95); }
+        .btn-green { background: #10b981; }
+        .btn-blue { background: #3b82f6; }
+        .btn-orange { background: #f59e0b; }
         .btn-red { background: #ef4444; }
         .btn-gray { background: #64748b; }
-        .btn-orange { background: #f59e0b; }
-        
-        .row-buttons { background: white; padding: 12px 16px; border-radius: 60px; margin-bottom: 12px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        
-        /* 搜索和添加品牌样式 */
-        .row-search, .row-add-brand { background: white; padding: 8px 16px; border-radius: 60px; margin-bottom: 12px; display: flex; justify-content: center; align-items: center; gap: 12px; }
-        .search-area { display: flex; gap: 8px; align-items: center; background: #f0f2f5; padding: 4px 16px; border-radius: 40px; flex: 1; max-width: 400px; }
-        .search-area input, .row-add-brand input { border: none; padding: 8px; flex: 1; outline: none; font-size: 14px; background: transparent; }
-        .row-add-brand input { border: 1px solid #ddd; border-radius: 40px; padding: 8px 16px; width: 150px; }
 
+        /* 搜索与品牌管理 */
+        .search-brand-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .input-box { flex: 1; min-width: 200px; padding: 10px 15px; border-radius: 8px; border: 1px solid #ddd; outline: none; }
+
+        /* 品牌卡片 */
+        .brand-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 15px; }
+        .brand-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .brand-name { font-size: 16px; font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        
         /* 表格样式 */
-        .brand-grid { display: flex; flex-wrap: wrap; gap: 16px; }
-        .brand-card { background: white; border-radius: 20px; padding: 16px; flex: 1; min-width: 100%; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
-        .brand-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; }
-        .brand-name { font-size: 1.1rem; font-weight: bold; color: #334155; }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { border: 1px solid #edf2f7; padding: 8px 4px; text-align: center; }
+        th { background: #f8fafc; color: #4a5568; }
+        .row-input { border: none; width: 100%; text-align: center; font-size: 13px; padding: 4px; outline: none; }
+        .row-input:focus { background: #f0f9ff; }
         
-        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 500px; }
-        th, td { border: 1px solid #e2e8f0; padding: 8px 4px; text-align: center; }
-        th { background: #f8fafc; color: #64748b; }
-        input, select { padding: 5px; border-radius: 6px; border: 1px solid #ddd; width: 100%; font-size: 13px; }
-        .subtotal-cell { background: #fffbeb; font-weight: bold; color: #b45309; }
+        /* 参考价显隐控制 */
+        .ref-col { display: none; background: #fff7ed; }
+        body.show-ref .ref-col { display: table-cell; }
+
+        /* 底部汇总 */
+        .footer-total { position: sticky; bottom: 10px; background: #1e293b; color: white; padding: 15px 25px; border-radius: 50px; display: flex; justify-content: center; gap: 30px; margin-top: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); z-index: 100; }
         
-        .ref-col, .ref-cell-col { display: none; }
-        body.show-ref .ref-col, body.show-ref .ref-cell-col { display: table-cell; }
+        /* 暗色模式 */
+        body.dark { background: #0f172a; color: #e2e8f0; }
+        body.dark .header-tools, body.dark .brand-card { background: #1e293b; border: 1px solid #334155; }
+        body.dark .input-box { background: #334155; color: white; border-color: #475569; }
+        body.dark th { background: #334155; color: #cbd5e1; }
+        body.dark .row-input { background: transparent; color: white; }
 
-        .grand-total { background: #1e293b; color: white; padding: 18px; border-radius: 50px; text-align: center; margin-top: 24px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
-        
-        /* 遮罩和提示 */
-        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 9999; color: white; flex-direction: column; }
-        .spinner { width: 30px; height: 30px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        body.dark { background: #0f172a; color: #f1f5f9; }
-        body.dark .brand-card, body.dark .row-buttons, body.dark .row-search, body.dark .row-add-brand { background: #1e293b; border: 1px solid #334155; }
-        body.dark input, body.dark select { background: #334155; color: white; border-color: #475569; }
-
-        @media (min-width: 768px) { .brand-card { min-width: 48%; } }
+        @media (max-width: 480px) {
+            .brand-grid { grid-template-columns: 1fr; }
+            .btn { flex: 1; text-align: center; }
+        }
     </style>
 </head>
-<body>
+<body class="">
 
 <div class="container">
-    <div class="row-buttons">
-        <button id="syncCloudBtn" class="btn btn-sync">☁️ 云同步数据</button>
-        <button id="oneKeyBtn" class="btn btn-purple">📤 一键导出清单</button>
-        <button id="toggleRefBtn" class="btn btn-orange">📊 显示参考价</button>
-        <button id="backupBtn" class="btn btn-gray">💾 备份</button>
-        <button id="clearAllBtn" class="btn btn-red">🗑️ 清空</button>
-        <button id="themeBtn" class="btn btn-gray">🌙 暗色</button>
+    <div class="header-tools">
+        <button onclick="exportExcel()" class="btn btn-green">📤 导出清单</button>
+        <button onclick="toggleRef()" class="btn btn-orange">⚖️ 显/隐参考价</button>
+        <button onclick="saveData()" class="btn btn-blue">💾 手动保存</button>
+        <button onclick="clearData()" class="btn btn-red">🗑️ 清空内容</button>
+        <button onclick="toggleTheme()" class="btn btn-gray">🌙 切换模式</button>
     </div>
 
-    <div class="row-search">
-        <div class="search-area">
-            <span>🔍</span>
-            <input type="text" id="searchInput" placeholder="搜索型号...">
-        </div>
+    <div class="search-brand-row">
+        <input type="text" id="brandInput" class="input-box" placeholder="输入新品牌名，回车添加...">
+        <input type="text" id="searchInput" class="input-box" placeholder="搜索型号..." oninput="filterModels()">
     </div>
 
-    <div class="row-add-brand">
-        <input type="text" id="newBrandName" placeholder="添加品牌...">
-        <button id="addBrandBtn" class="btn btn-blue">添加</button>
-    </div>
+    <div id="brandGrid" class="brand-grid"></div>
 
-    <div id="brandsGrid" class="brand-grid"></div>
-
-    <div id="grandTotal" class="grand-total">
-        <span>💰 总计：<span id="totalActualMoney">0</span> 元</span>
-        <span id="totalRatioSpan">📊 利润比：--</span>
+    <div class="footer-total">
+        <span>已收台数：<b id="totalQty">0</b></span>
+        <span>结算总额：<b id="totalMoney">0</b> 元</span>
     </div>
 </div>
 
-<div id="loadingOverlay" class="loading-overlay"><div class="spinner"></div><p>云端同步中...</p></div>
-
 <script>
-    // --- 配置区 ---
-    const SYNC_API = 'https://jsonbin.org/me/phones'; // 示例：你可以后续更换为自己的存储接口
-    let brands = [{ id: 'oppo', name: 'OPPO' }, { id: 'apple', name: '苹果' }];
-    
-    // --- 核心：多端同步逻辑 ---
-    async function syncData(action = 'upload') {
-        const syncKey = localStorage.getItem('sync_key') || prompt("请输入你的私有同步口令(用于多端同步):");
-        if (!syncKey) return;
-        localStorage.setItem('sync_key', syncKey);
+    let brands = JSON.parse(localStorage.getItem('brands_v3')) || ["苹果", "华为", "小米", "OPPO", "VIVO", "荣耀"];
+    let mainData = JSON.parse(localStorage.getItem('data_v3')) || {};
 
-        document.getElementById('loadingOverlay').style.display = 'flex';
-        
-        try {
-            if (action === 'upload') {
-                const data = collectAllData();
-                // 这里暂时模拟上传到云端，实际推荐接入 Supabase 或 LeanCloud
-                localStorage.setItem(`cloud_sync_${syncKey}`, JSON.stringify(data));
-                alert("✅ 数据已同步到云端缓存！");
-            } else {
-                const cloudData = localStorage.getItem(`cloud_sync_${syncKey}`);
-                if (cloudData) {
-                    localStorage.setItem('phone_recycle_v2', cloudData);
-                    location.reload();
-                } else {
-                    alert("❌ 云端暂无该口令的数据");
-                }
-            }
-        } catch (e) {
-            alert("同步失败，请检查网络");
-        } finally {
-            document.getElementById('loadingOverlay').style.display = 'none';
-        }
-    }
-
-    // --- 基础功能 (保留之前的所有功能并修复 Bug) ---
-    function collectAllData() {
-        let result = { brands, data: {}, submitTime: new Date().toLocaleString() };
-        brands.forEach(b => {
-            let rows = [];
-            document.querySelectorAll(`#table-${b.id} tbody .data-row`).forEach(row => {
-                const model = row.querySelector('.model-cell input').value.trim();
-                if (model) {
-                    rows.push({
-                        model,
-                        config: row.querySelector('.config-cell select').value,
-                        qty: row.querySelector('.qty-input').value,
-                        price: row.querySelector('.unit-price').value,
-                        ref: row.querySelector('.ref-price').value
-                    });
-                }
-            });
-            result.data[b.id] = rows;
-        });
-        return result;
-    }
-
-    function autoSave() {
-        localStorage.setItem('phone_recycle_v2', JSON.stringify(collectAllData()));
-    }
-
-    // --- 渲染逻辑 (与前一版本一致，保证稳定性) ---
-    function renderAllBrands() {
-        const grid = document.getElementById('brandsGrid');
+    // 渲染页面
+    function render() {
+        const grid = document.getElementById('brandGrid');
         grid.innerHTML = '';
-        brands.forEach(b => {
+        brands.forEach(name => {
             const card = document.createElement('div');
             card.className = 'brand-card';
             card.innerHTML = `
-                <div class="brand-header"><span class="brand-name">${b.name}</span>
-                <button class="btn btn-gray" style="padding:4px 8px" onclick="addRow('${b.id}')">➕</button></div>
-                <div style="overflow-x:auto">
-                    <table id="table-${b.id}">
-                        <thead><tr><th>型号</th><th>配置</th><th>数量</th><th>价</th><th class="ref-col">参</th><th>删</th></tr></thead>
-                        <tbody></tbody>
+                <div class="brand-name">
+                    <span>${name}</span>
+                    <button onclick="removeBrand('${name}')" style="background:none; border:none; color:#ef4444; cursor:pointer;">× 移除</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr><th style="width:40%">型号</th><th>配置</th><th>台数</th><th>单价</th><th class="ref-col">参考</th></tr>
+                        </thead>
+                        <tbody id="body-${name}"></tbody>
                     </table>
+                    <button onclick="addRow('${name}')" style="width:100%; padding:8px; margin-top:8px; border:1px dashed #ccc; background:none; cursor:pointer;">+ 添加型号</button>
                 </div>
             `;
             grid.appendChild(card);
-            initTable(b.id);
+            
+            // 填充数据
+            const rows = mainData[name] || [{}, {}, {}]; // 默认三行
+            rows.forEach(rowData => addRow(name, rowData));
         });
+        updateTotal();
     }
 
-    function initTable(bid) {
-        const tbody = document.querySelector(`#table-${bid} tbody`);
-        for (let i = 0; i < 3; i++) addRowToTbody(tbody, bid);
-    }
-
-    function addRow(bid) {
-        addRowToTbody(document.querySelector(`#table-${bid} tbody`), bid);
-    }
-
-    function addRowToTbody(tbody, bid) {
+    function addRow(brand, data = {}) {
+        const tbody = document.getElementById(`body-${brand}`);
         const tr = document.createElement('tr');
         tr.className = 'data-row';
         tr.innerHTML = `
-            <td class="model-cell"><input type="text"></td>
-            <td class="config-cell"><select><option value="">-</option><option value="高">高</option><option value="中">中</option></select></td>
-            <td><input type="number" class="qty-input" value="1"></td>
-            <td><input type="number" class="unit-price"></td>
-            <td class="ref-cell-col"><input type="number" class="ref-price"></td>
-            <td><button onclick="this.parentElement.parentElement.remove();autoSave();">✖</button></td>
+            <td><input type="text" class="row-input model-in" value="${data.m||''}" placeholder="..."></td>
+            <td><input type="text" class="row-input config-in" value="${data.c||''}" placeholder="..."></td>
+            <td><input type="number" class="row-input qty-in" value="${data.q||1}"></td>
+            <td><input type="number" class="row-input price-in" value="${data.p||''}"></td>
+            <td class="ref-col"><input type="number" class="row-input ref-in" value="${data.r||''}"></td>
         `;
         tbody.appendChild(tr);
-        tr.querySelectorAll('input, select').forEach(i => i.oninput = () => { autoSave(); updateTotals(); });
+        
+        // 绑定自动保存和计算
+        tr.querySelectorAll('input').forEach(input => {
+            input.oninput = () => { updateTotal(); autoSave(); };
+        });
     }
 
-    function updateTotals() {
-        let total = 0;
-        document.querySelectorAll('.unit-price').forEach((p, i) => {
-            const q = document.querySelectorAll('.qty-input')[i]?.value || 0;
-            total += (p.value * q);
+    function updateTotal() {
+        let totalQ = 0, totalM = 0;
+        document.querySelectorAll('.data-row').forEach(row => {
+            const q = parseFloat(row.querySelector('.qty-in').value) || 0;
+            const p = parseFloat(row.querySelector('.price-in').value) || 0;
+            const m = row.querySelector('.model-in').value;
+            if(m) {
+                totalQ += q;
+                totalM += (q * p);
+            }
         });
-        document.getElementById('totalActualMoney').innerText = Math.round(total);
+        document.getElementById('totalQty').innerText = totalQ;
+        document.getElementById('totalMoney').innerText = Math.round(totalM);
     }
 
-    // --- 按钮事件绑定 ---
-    document.getElementById('syncCloudBtn').onclick = () => {
-        const op = confirm("点击 [确定] 上传当前数据，点击 [取消] 从云端下载数据");
-        syncData(op ? 'upload' : 'download');
-    };
-
-    document.getElementById('oneKeyBtn').onclick = () => {
-        const data = collectAllData();
-        const sheetData = [["品牌", "型号", "配置", "数量", "价格"]];
-        brands.forEach(b => {
-            (data.data[b.id] || []).forEach(r => sheetData.push([b.name, r.model, r.config, r.qty, r.price]));
+    function autoSave() {
+        const newData = {};
+        brands.forEach(name => {
+            const rows = [];
+            document.querySelectorAll(`#body-${name} .data-row`).forEach(row => {
+                const m = row.querySelector('.model-in').value;
+                if(m || row.querySelector('.price-in').value) {
+                    rows.push({
+                        m: m,
+                        c: row.querySelector('.config-in').value,
+                        q: row.querySelector('.qty-in').value,
+                        p: row.querySelector('.price-in').value,
+                        r: row.querySelector('.ref-in').value
+                    });
+                }
+            });
+            newData[name] = rows;
         });
-        const ws = XLSX.utils.aoa_to_sheet(sheetData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "清单");
-        XLSX.writeFile(wb, `清单_${new Date().getDate()}日.xlsx`);
-    };
+        mainData = newData;
+        localStorage.setItem('data_v3', JSON.stringify(mainData));
+        localStorage.setItem('brands_v3', JSON.stringify(brands));
+    }
 
-    document.getElementById('addBrandBtn').onclick = () => {
-        const n = document.getElementById('newBrandName').value;
-        if(n) { brands.push({id: 'b'+Date.now(), name: n}); renderAllBrands(); autoSave(); }
-    };
-
-    // 启动
-    window.onload = () => {
-        const saved = localStorage.getItem('phone_recycle_v2');
-        if (saved) {
-            const d = JSON.parse(saved);
-            brands = d.brands || brands;
-            renderAllBrands();
-            // 这里可以加入自动填充逻辑，保持数据持久化
-        } else {
-            renderAllBrands();
+    // 功能函数
+    function toggleRef() { document.body.classList.toggle('show-ref'); }
+    function toggleTheme() { document.body.classList.toggle('dark'); }
+    
+    document.getElementById('brandInput').onkeydown = (e) => {
+        if(e.key === 'Enter' && e.target.value) {
+            brands.push(e.target.value);
+            e.target.value = '';
+            render();
+            autoSave();
         }
     };
+
+    function removeBrand(name) {
+        if(confirm(`删除品牌 ${name} 吗？`)) {
+            brands = brands.filter(b => b !== name);
+            render();
+            autoSave();
+        }
+    }
+
+    function clearData() {
+        if(confirm('确定清空所有内容吗？')) {
+            localStorage.removeItem('data_v3');
+            location.reload();
+        }
+    }
+
+    function exportExcel() {
+        const sheetData = [["品牌", "型号", "配置", "台数", "单价", "小计", "参考价"]];
+        brands.forEach(b => {
+            (mainData[b] || []).forEach(r => {
+                const sub = (parseFloat(r.q)||0) * (parseFloat(r.p)||0);
+                sheetData.push([b, r.m, r.c, r.q, r.p, sub, r.r]);
+            });
+        });
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(sheetData);
+        XLSX.utils.book_append_sheet(wb, ws, "清单");
+        XLSX.writeFile(wb, `回收清单_${new Date().toLocaleDateString()}.xlsx`);
+    }
+
+    function filterModels() {
+        const kw = document.getElementById('searchInput').value.toLowerCase();
+        document.querySelectorAll('.data-row').forEach(row => {
+            const m = row.querySelector('.model-in').value.toLowerCase();
+            row.style.display = (m.includes(kw) || kw === '') ? '' : 'none';
+        });
+    }
+
+    window.onload = render;
 </script>
 </body>
 </html>
