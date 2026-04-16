@@ -2,198 +2,171 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>钛云数码-同行报货专业版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>数码回收对账助手</title>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
-        :root { --main: #e11d48; --gold: #fbbf24; --dark: #121826; }
+        :root { --main: #2563eb; --bg: #f8fafc; --text: #334155; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background: #0f172a; margin: 0; padding: 10px; color: #f8fafc; font-family: system-ui; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, system-ui, sans-serif; margin: 0; padding: 12px; }
         
-        /* 赋能区：让同行填自己的信息 */
-        .partner-config { background: #1e293b; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px dashed #334155; }
-        .config-title { font-size: 12px; color: var(--gold); margin-bottom: 10px; display: block; font-weight: bold; }
-        
-        /* 跑马灯行情：吸引力核心 */
-        .market-ticker { background: #000; padding: 8px; border-radius: 6px; overflow: hidden; white-space: nowrap; margin-bottom: 15px; border: 1px solid #1e293b; }
-        .ticker-text { display: inline-block; animation: scroll 20s linear infinite; color: var(--gold); font-size: 12px; }
-        @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+        /* 极致简约的头部 */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 5px; }
+        .header h1 { font-size: 18px; margin: 0; color: #1e293b; font-weight: 900; }
+        .date { font-size: 12px; color: #94a3b8; }
 
-        /* 清单海报区 */
-        #poster-area { background: white; color: #334155; padding: 25px; border-radius: 4px; position: relative; }
-        .poster-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 4px solid var(--dark); padding-bottom: 15px; margin-bottom: 20px; }
-        .partner-info h2 { margin: 0; font-size: 22px; color: var(--main); }
-        .partner-info p { margin: 5px 0 0; font-size: 13px; color: #64748b; font-weight: bold; }
+        /* 对账表主体 */
+        #bill-area { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .bill-table { width: 100%; border-collapse: collapse; }
+        .bill-table th { font-size: 12px; color: #94a3b8; font-weight: normal; padding-bottom: 10px; border-bottom: 1px solid #f1f5f9; text-align: left; }
+        .bill-table td { padding: 10px 4px; border-bottom: 1px solid #f8fafc; }
         
-        .tiyun-seal { text-align: right; }
-        .tiyun-seal b { display: block; font-size: 16px; color: var(--dark); }
-        .tiyun-seal span { font-size: 10px; background: var(--dark); color: white; padding: 2px 4px; border-radius: 3px; }
+        /* 输入框：透明化设计，像在纸上写字 */
+        input { border: none; background: transparent; width: 100%; font-size: 14px; outline: none; padding: 4px 0; }
+        input::placeholder { color: #cbd5e1; font-size: 13px; }
+        .input-qty { text-align: center; color: #1e293b; font-weight: bold; }
+        .input-price { text-align: right; color: #ef4444; font-weight: bold; }
+        
+        /* 自动计算的小计 */
+        .sub-total { text-align: right; font-size: 12px; color: #64748b; font-weight: 500; }
 
-        .brand-block { margin-bottom: 25px; }
-        .brand-head { background: var(--dark); color: white; padding: 8px 12px; font-weight: bold; font-size: 15px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px 4px 0 0; }
-        
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; font-size: 11px; padding: 10px 5px; color: #94a3b8; border-bottom: 1px solid #e2e8f0; }
-        td { padding: 8px 5px; border-bottom: 1px solid #f1f5f9; }
-        
-        input { border: none; background: #f8fafc; padding: 8px; width: 100%; border-radius: 4px; font-size: 14px; color: #1e293b; }
-        input:focus { background: #fff1f2; outline: 1px solid var(--main); }
-        .p-input { color: var(--main); font-weight: bold; text-align: right; }
+        /* 结算栏 */
+        .footer-bar { margin-top: 20px; padding-top: 15px; border-top: 2px solid #f1f5f9; }
+        .total-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .total-label { font-size: 14px; color: #64748b; }
+        .total-val { font-size: 22px; font-weight: 900; color: #1e293b; }
 
-        .poster-footer { margin-top: 30px; padding: 15px; background: #f8fafc; border-radius: 8px; border-top: 2px solid var(--main); display: flex; justify-content: space-between; align-items: center; }
-        .total-val { font-size: 24px; color: var(--main); font-weight: 800; }
+        /* 底部不显眼的联系方式 (你的伏笔) */
+        .credit { text-align: center; margin-top: 30px; font-size: 10px; color: #e2e8f0; letter-spacing: 1px; }
 
-        /* 底部工具栏 */
-        .toolbar { position: fixed; bottom: 0; left: 0; right: 0; background: #1e293b; display: flex; padding: 12px; gap: 10px; z-index: 1000; box-shadow: 0 -4px 10px rgba(0,0,0,0.3); }
-        .btn { flex: 1; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 14px; }
-        .btn-share { background: var(--main); color: white; }
-        .btn-add { background: #334155; color: white; }
-        
-        #mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; padding:20px; text-align:center; }
-        .no-export { visibility: visible; }
+        /* 操作按钮 */
+        .actions { position: fixed; bottom: 20px; left: 12px; right: 12px; display: flex; gap: 10px; }
+        .btn { flex: 1; border: none; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 15px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .btn-clear { background: #f1f5f9; color: #94a3b8; }
+        .btn-save { background: #1e293b; color: white; }
+
+        /* 遮罩层 */
+        #mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:1000; padding:20px; text-align:center; }
+        .no-export { width: 30px; text-align: center; }
     </style>
 </head>
 <body>
 
-<div class="partner-config">
-    <span class="config-title">⚙️ 自定义你的档口信息（仅生成海报用）</span>
-    <div class="flex-row" style="display: flex; gap:10px;">
-        <input type="text" id="my-name" placeholder="你的档口名" style="flex:1" oninput="updateHeader()">
-        <input type="text" id="my-wx" placeholder="你的微信" style="flex:1" oninput="updateHeader()">
+<div id="bill-area">
+    <div class="header">
+        <h1>交易对账单</h1>
+        <div class="date" id="date-now"></div>
+    </div>
+
+    <table class="bill-table">
+        <thead>
+            <tr>
+                <th>型号/配置描述</th>
+                <th width="50" style="text-align:center">数量</th>
+                <th width="80" style="text-align:right">单价</th>
+                <th class="no-export"></th>
+            </tr>
+        </thead>
+        <tbody id="data-body">
+            </tbody>
+    </table>
+
+    <div class="footer-bar">
+        <div class="total-row">
+            <span class="total-label">数量合计：</span>
+            <span id="sum-qty" style="font-weight:bold">0</span>
+        </div>
+        <div class="total-row">
+            <span class="total-label">金额总计：</span>
+            <span class="total-val" id="sum-money">¥ 0</span>
+        </div>
+    </div>
+
+    <div class="credit">
+        POWERED BY 钛云数码 · 专业二手机供应链
     </div>
 </div>
 
-<div class="market-ticker">
-    <div class="ticker-text">今日行情：iPhone15全系列回收价上浮50 | 华为Mate60屏碎机大量收 | 钛云数码：专注二手机行业联盟...</div>
-</div>
-
-<div id="poster-area">
-    <div class="poster-header">
-        <div class="partner-info">
-            <h2 id="view-name">未命名档口</h2>
-            <p id="view-wx">微信：-</p>
-        </div>
-        <div class="tiyun-seal">
-            <b>钛云数码</b>
-            <span>官方联营商</span>
-        </div>
-    </div>
-
-    <div id="main-list"></div>
-
-    <div class="poster-footer">
-        <div>
-            <div style="font-size:12px; color:#64748b;">合计报货数量</div>
-            <div style="font-size:20px; font-weight:800;" id="view-qty">0 台</div>
-        </div>
-        <div style="text-align: right;">
-            <div style="font-size:12px; color:#64748b;">结算总预估</div>
-            <div class="total-val" id="view-money">¥ 0</div>
-        </div>
-    </div>
-    
-    <div style="text-align:center; margin-top:20px; font-size:10px; color:#cbd5e1;">
-        * 本报货单由 [钛云数码] 技术驱动，扫码添加联盟商 *
-    </div>
-</div>
-
-<div class="toolbar">
-    <button class="btn btn-add" onclick="addBrandPrompt()">＋增加分类</button>
-    <button class="btn btn-share" onclick="genImage()">📸 生成精美报货图</button>
+<div style="height: 100px;"></div> <div class="actions">
+    <button class="btn btn-clear" onclick="resetAll()">清空重置</button>
+    <button class="btn btn-save" onclick="saveBill()">生成对账长图</button>
 </div>
 
 <div id="mask">
-    <p style="color:white">长按图片保存，发送给上家或朋友圈</p>
-    <div id="out"></div>
-    <button class="btn btn-add" style="margin-top:15px; width:120px" onclick="closeMask()">返回修改</button>
+    <p style="color:white; font-size:14px">长按图片保存，发送给档口/同行对账</p>
+    <div id="out-img"></div>
+    <button onclick="closeMask()" style="margin-top:15px; padding:10px 20px; border-radius:8px; border:none">返回</button>
 </div>
 
 <script>
-    const KEY = 'tiyun_partner_v1';
-    let data = JSON.parse(localStorage.getItem(KEY)) || [
-        { name: '苹果系列', rows: [{m:'', q:1, p:''}] },
-        { name: '华为系列', rows: [{m:'', q:1, p:''}] }
-    ];
+    let rows = JSON.parse(localStorage.getItem('simple_bill')) || [{m:'', q:1, p:''}];
 
     function render() {
-        const target = document.getElementById('main-list');
-        target.innerHTML = data.map((b, bi) => `
-            <div class="brand-block">
-                <div class="brand-head">
-                    <span>${b.name}</span>
-                    <div style="display:flex; gap:10px">
-                        <span onclick="addRow(${bi})" style="cursor:pointer">＋行</span>
-                        <span onclick="delBrand(${bi})" style="color:var(--main); cursor:pointer">×</span>
-                    </div>
-                </div>
-                <table>
-                    <thead><tr><th>机型及详情描述</th><th width="50">数量</th><th width="90">单价</th></tr></thead>
-                    <tbody>
-                        ${b.rows.map((r, ri) => `
-                            <tr>
-                                <td><input type="text" value="${r.m}" oninput="edit(${bi},${ri},'m',this.value)" placeholder="输入型号..."></td>
-                                <td><input type="number" value="${r.q}" oninput="edit(${bi},${ri},'q',this.value)"></td>
-                                <td><input type="number" class="p-input" value="${r.p}" oninput="edit(${bi},${ri},'p',this.value)" placeholder="¥"></td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
+        const body = document.getElementById('data-body');
+        body.innerHTML = rows.map((r, i) => `
+            <tr>
+                <td><input type="text" value="${r.m}" placeholder="输入型号..." oninput="update(${i},'m',this.value)"></td>
+                <td><input type="number" class="input-qty" value="${r.q}" oninput="update(${i},'q',this.value)"></td>
+                <td><input type="number" class="input-price" value="${r.p}" placeholder="0" oninput="update(${i},'p',this.value)"></td>
+                <td class="no-export"><span onclick="del(${i})" style="color:#e2e8f0">×</span></td>
+            </tr>
         `).join('');
+        
+        // 自动增加一行
+        if(rows[rows.length-1].m !== '') {
+            rows.push({m:'', q:1, p:''});
+            render();
+        }
+
+        document.getElementById('date-now').innerText = new Date().toLocaleDateString();
         calc();
     }
 
-    function edit(bi, ri, k, v) {
-        data[bi].rows[ri][k] = v;
-        save();
+    function update(i, k, v) {
+        rows[i][k] = v;
+        localStorage.setItem('simple_bill', JSON.stringify(rows));
         calc();
     }
 
-    function addRow(bi) {
-        data[bi].rows.push({m:'', q:1, p:''});
-        render();
-    }
-
-    function addBrandPrompt() {
-        const n = prompt("输入新分类名称(如：二手平板)");
-        if(n) { data.push({name:n, rows:[{m:'',q:1,p:''}]}); render(); save(); }
-    }
-
-    function delBrand(bi) {
-        if(confirm("确定删除该分类？")) { data.splice(bi, 1); render(); save(); }
-    }
-
-    function updateHeader() {
-        document.getElementById('view-name').innerText = document.getElementById('my-name').value || '未命名档口';
-        document.getElementById('view-wx').innerText = '微信：' + (document.getElementById('my-wx').value || '-');
+    function del(i) {
+        if(rows.length > 1) {
+            rows.splice(i, 1);
+            render();
+        }
     }
 
     function calc() {
-        let tq = 0, tm = 0;
-        data.forEach(b => b.rows.forEach(r => {
-            const q = parseFloat(r.q)||0; 
-            tq += q; tm += (q * (parseFloat(r.p)||0));
-        }));
-        document.getElementById('view-qty').innerText = tq + ' 台';
-        document.getElementById('view-money').innerText = '¥ ' + tm.toLocaleString();
+        let q = 0, m = 0;
+        rows.forEach(r => {
+            const qty = parseFloat(r.q) || 0;
+            const price = parseFloat(r.p) || 0;
+            q += qty;
+            m += (qty * price);
+        });
+        document.getElementById('sum-qty').innerText = q;
+        document.getElementById('sum-money').innerText = '¥ ' + m.toLocaleString();
     }
 
-    function save() { localStorage.setItem(KEY, JSON.stringify(data)); }
+    function resetAll() {
+        if(confirm('确定开始新一单？')) {
+            rows = [{m:'', q:1, p:''}];
+            render();
+        }
+    }
 
-    async function genImage() {
-        document.querySelectorAll('.btn-add, .admin-panel, .partner-config, .market-ticker').forEach(e=>e.style.display='none');
-        const canvas = await html2canvas(document.getElementById('poster-area'), {scale:3});
+    async function saveBill() {
+        document.querySelectorAll('.no-export, .actions').forEach(el => el.style.display = 'none');
+        const canvas = await html2canvas(document.getElementById('bill-area'), { scale: 3 });
         const img = new Image();
         img.src = canvas.toDataURL();
         img.style.width = '100%';
-        img.style.borderRadius = '8px';
-        document.getElementById('out').innerHTML = '';
-        document.getElementById('out').appendChild(img);
+        document.getElementById('out-img').innerHTML = '';
+        document.getElementById('out-img').appendChild(img);
         document.getElementById('mask').style.display = 'block';
-        document.querySelectorAll('.btn-add, .admin-panel, .partner-config, .market-ticker').forEach(e=>e.style.display='');
+        document.querySelectorAll('.no-export, .actions').forEach(el => el.style.display = '');
     }
 
-    function closeMask() { document.getElementById('mask').style.display='none'; }
+    function closeMask() { document.getElementById('mask').style.display = 'none'; }
 
     render();
 </script>
