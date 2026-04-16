@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
-    <title>废机回收 ERP - v7.9 Professional</title>
+    <title>废机回收 ERP - v8.0 Professional</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -42,7 +42,6 @@
         
         .cell-input { width: 100%; padding: 4px; border: 1px solid transparent; background: transparent; color: var(--text); font-size: 13px; outline: none; text-align: center; }
 
-        /* 问题2：底部工具栏修改为4等分布局 */
         .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(4, 1fr); padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); z-index: 500; }
         .tab-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--gray); font-size: 10px; border: none; background: none; }
         
@@ -62,8 +61,8 @@
 <body class="show-ref">
 
 <div class="navbar">
-    <div class="nav-title">废机回收 ERP 7.9</div>
-    <div style="font-size: 12px; color: var(--gray);">专业版</div>
+    <div class="nav-title">废机回收 ERP 8.0</div>
+    <div style="font-size: 12px; color: var(--gray);">稳定生产版</div>
 </div>
 
 <div id="screenshot-area">
@@ -95,10 +94,10 @@
         <div class="drawer-item" onclick="app.printPage()">🖨️ 打印清单</div>
         <div class="drawer-item" onclick="app.shareToken()">📂 备份数据 (生成口令)</div>
         <div class="drawer-item" onclick="app.showRecover()">📥 恢复数据 (粘贴口令)</div>
-        <div class="drawer-item" style="color:var(--danger)" onclick="app.clearAll()">🗑️ 清空所有数据</div>
+        <div class="drawer-item" style="color:var(--danger)" onclick="app.clearAll()">🗑️ 清空当前批次</div>
         
-        <div style="text-align:center; padding:15px; opacity:0.7; font-size:12px; color:var(--info); cursor:pointer;" onclick="app.showContact()">
-            如有问题或合作意向，请联系 📧 联系作者：Egg77Egg88
+        <div style="text-align:center; padding:15px; opacity:0.8; font-size:14px; color:var(--info); cursor:pointer;" onclick="app.showContact()">
+            💬 意见反馈
         </div>
     </div>
 </div>
@@ -110,6 +109,7 @@
 <script>
 const SEC_KEY = "Egg77Egg88_secret_2026";
 
+// 型号数据库保持不变
 const MODEL_DB = {
     "OPPO": ["Find 7", "Find 5", "Find X", "Find X2 Pro", "Find X2", "Find X3", "Find X3 Pro", "Find X5", "Find X5 Pro", "Find X6", "Find X6 Pro", "Find X7", "Find X7 Ultra", "Find N", "Find N2", "Find N2 Flip", "Find N3", "Find N3 Flip", "R9", "R9s", "R11", "R11s", "R15", "R17", "Reno", "Reno2", "Reno3", "Reno3 Pro", "Reno4", "Reno4 Pro", "Reno5", "Reno5 Pro", "Reno6", "Reno6 Pro", "Reno7", "Reno7 Pro", "Reno8", "Reno8 Pro", "Reno9", "Reno9 Pro", "Reno10", "Reno10 Pro", "Reno11", "Reno11 Pro", "Reno12", "Reno12 Pro", "Reno13", "Reno13 Pro", "A37", "A57", "A59", "A73", "A83", "A1", "A3", "A5", "A7", "A9", "A11", "A12", "A32", "A52", "A72", "A92", "A1 Pro", "A2", "A2 Pro", "A3", "A3 Pro", "K1", "K3", "K5", "K7", "K9", "K9x", "K10", "K10x", "K11", "K11x"],
     "vivo": ["X3", "X5", "X6", "X7", "X9", "X20", "X21", "X23", "X27", "X30", "X50", "X50 Pro", "X60", "X60 Pro", "X70", "X70 Pro", "X80", "X80 Pro", "X90", "X90 Pro", "X90 Pro+", "X100", "X100 Pro", "X100 Ultra", "X200", "X200 Pro", "X200 Ultra", "Xplay3S", "Xplay5", "Xplay6", "X Fold", "X Fold+", "X Fold2", "X Fold3", "X Flip", "S12", "S12 Pro", "S15", "S15 Pro", "S16", "S16 Pro", "S17", "S17 Pro", "S18", "S18 Pro", "S19", "S19 Pro", "S20", "S20 Pro", "Y17", "Y20", "Y22", "Y27", "Y28", "Y30", "Y31", "Y33", "Y35", "Y37", "Y50", "Y51", "Y52", "Y55", "Y66", "Y67", "Y70", "Y71", "Y73", "Y75", "Y79", "Y81", "Y83", "Y85", "Y93", "Y95", "Y97", "Z1", "Z3", "Z5", "Z6", "iQOO 7", "iQOO 8", "iQOO 9", "iQOO 10", "iQOO 11", "iQOO 12", "iQOO 13", "iQOO Neo5", "iQOO Neo6", "iQOO Neo7", "iQOO Neo8", "iQOO Neo9", "iQOO Z5", "iQOO Z6", "iQOO Z7", "iQOO Z8", "iQOO Z9"],
@@ -252,9 +252,9 @@ const app = {
         }
     },
 
-    /* 问题1：修复后的删除品牌逻辑 */
+    /* 问题2：第三次重写删除品牌逻辑，彻底解决微信端冲突 */
     delBrand(idx) {
-        if (confirm("确定删除该品牌吗？")) {
+        if (confirm("确定删除该品牌吗？删除后该品牌的所有数据都会丢失。")) {
             this.data.splice(idx, 1);
             this.render();
             this.save();
@@ -371,9 +371,18 @@ const app = {
         c.innerHTML = `<div style="text-align:center"><img src="${cv.toDataURL('image/png')}" style="max-width:100%; border-radius:8px;"><p style="font-size:12px;color:var(--gray);margin-top:10px;">长按图片保存</p></div>`;
     },
     printPage() { this.toggleDrawer(false); window.print(); },
-    clearAll() { if(confirm("确定永久清空所有数据？")) { localStorage.clear(); location.reload(); } },
+    
+    /* 问题3：清空所有数据 -> 清空当前批次 */
+    clearAll() { 
+        if(confirm("确定清空当前批次的所有数据吗？此操作不可撤销！")) { 
+            localStorage.clear(); 
+            location.reload(); 
+        } 
+    },
+
+    /* 问题1：意见反馈改为原生alert */
     showContact() {
-        alert("如有问题或合作意向，请联系\n微信：Egg77Egg88");
+        alert("如有问题或合作意向，请 📧 联系作者：Egg77Egg88");
     }
 };
 
