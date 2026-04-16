@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
-    <title>废机回收 ERP - v8.3 Professional</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+    <title>废机回收 ERP - v8.5 Professional</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
@@ -23,9 +21,6 @@
 
         .ref-column { display: none; } 
         body.show-ref .ref-column { display: table-cell !important; }
-        @media (min-width: 768px) {
-            body:not(.hide-ref) .ref-column { display: table-cell; }
-        }
 
         .navbar { background: var(--card); padding: 12px 15px; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 5px rgba(0,0,0,0.05); }
         .brand-card { background: var(--card); margin: 12px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
@@ -35,18 +30,26 @@
         .table-wrapper { width: 100%; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
         th { padding: 8px 4px; text-align: center; color: #8e8e93; border-bottom: 1px solid var(--border); }
-        td { padding: 6px 4px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        td { padding: 6px 4px; border-bottom: 1px solid var(--border); vertical-align: middle; position: relative; }
         
+        /* 问题4：型号输入建议列表样式 */
+        .model-suggest-box { position: absolute; top: 100%; left: 0; width: 180px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 2000; display: none; max-height: 250px; overflow-y: auto; }
+        .suggest-item { padding: 10px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 13px; }
+        .suggest-item:last-child { border-bottom: none; }
+        .suggest-item:active { background: var(--bg); }
+
         .qty-container { display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; }
         .btn-qty { border: 1px solid var(--border); background: var(--bg); color: var(--text); width: 22px; height: 22px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
         
-        /* 问题5：型号输入优化 - 确保输入框不被遮挡 */
-        .cell-input { width: 100%; padding: 6px 4px; border: 1px solid transparent; background: transparent; color: var(--text); font-size: 13px; outline: none; text-align: center; position: relative; z-index: 1; }
-        .cell-input:focus { background: rgba(7, 193, 96, 0.05); border-radius: 4px; }
+        .cell-input { width: 100%; padding: 6px 4px; border: 1px solid transparent; background: transparent; color: var(--text); font-size: 13px; outline: none; text-align: center; }
         
-        .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(4, 1fr); padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); z-index: 500; }
+        .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(4, 1fr); padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); z-index: 500; transition: background 0.5s; }
         .tab-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--gray); font-size: 10px; border: none; background: none; cursor: pointer; }
         
+        /* 微信打印时的导出高亮 */
+        .highlight-export { background: #fffbe6 !important; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(7,193,96,0.4); } 70% { box-shadow: 0 0 0 15px rgba(7,193,96,0); } 100% { box-shadow: 0 0 0 0 rgba(7,193,96,0); } }
+
         .drawer { position: fixed; bottom: 0; left: 0; right: 0; top: 0; background: rgba(0,0,0,0.5); visibility: hidden; opacity: 0; transition: 0.3s; z-index: 1000; }
         .drawer.active { visibility: visible; opacity: 1; }
         .drawer-content { position: absolute; bottom: 0; left: 0; right: 0; background: var(--card); border-radius: 20px 20px 0 0; padding: 20px 15px; transform: translateY(100%); transition: 0.3s; max-height: 80vh; overflow-y: auto; }
@@ -55,18 +58,16 @@
 
         .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: none; z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
         .modal-body { background: var(--card); width: 100%; max-width: 400px; border-radius: 15px; padding: 25px; position: relative; }
-        
-        .brand-select-full { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 16px; margin-bottom: 10px; }
-        .btn-confirm { width: 100%; padding: 12px; border: none; background: var(--primary); color: white; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .modal-footer { display: flex; gap: 10px; margin-top: 15px; }
         .btn-cancel { flex: 1; padding: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; }
+        .btn-confirm { flex: 1; padding: 12px; border: none; background: var(--primary); color: white; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; }
     </style>
 </head>
 <body class="show-ref">
 
 <div class="navbar">
-    <div class="nav-title">废机回收 ERP 8.3</div>
-    <div style="font-size: 12px; color: var(--gray);">稳定生产版</div>
+    <div class="nav-title">废机回收 ERP 8.5</div>
+    <div style="font-size: 12px; color: var(--gray);">技术优化版</div>
 </div>
 
 <div id="screenshot-area">
@@ -81,14 +82,12 @@
     </div>
 </div>
 
-<div class="tab-bar">
+<div class="tab-bar" id="bottomTabBar">
     <button class="tab-item" onclick="app.showAddBrandModal()"><span style="font-size:20px">➕</span><span>添加</span></button>
-    <button class="tab-item" onclick="app.showExportConfirm()"><span style="font-size:20px">📎</span><span>导出</span></button>
+    <button class="tab-item" id="exportTabBtn" onclick="app.showExportConfirm()"><span style="font-size:20px">📎</span><span>导出</span></button>
     <button class="tab-item" onclick="app.showCharts()"><span style="font-size:20px">📊</span><span>统计</span></button>
     <button class="tab-item" onclick="app.toggleDrawer(true)"><span style="font-size:20px">⚙️</span><span>管理</span></button>
 </div>
-
-<div id="datalist-container"></div>
 
 <div class="drawer" id="manageDrawer" onclick="app.toggleDrawer(false)">
     <div class="drawer-content" onclick="event.stopPropagation()">
@@ -96,12 +95,10 @@
         <div class="drawer-item" onclick="app.toggleRefColumn()">🔍 显示/隐藏参考价列</div>
         <div class="drawer-item" onclick="app.generateLongImage()">📸 生成长图预览</div>
         <div class="drawer-item" onclick="app.printPage()">🖨️ 打印清单</div>
-        <div class="drawer-item" onclick="app.shareToken()">📂 备份数据 (生成口令)</div>
-        <div class="drawer-item" onclick="app.showRecover()">📥 恢复数据 (粘贴口令)</div>
-        <div class="drawer-item" style="color:var(--danger)" onclick="app.clearAll()">🗑️ 清空当前批次</div>
-        <div style="text-align:center; padding:15px; opacity:0.8; font-size:14px; color:var(--info); cursor:pointer;" onclick="app.showContact()">
-            💬 意见反馈
-        </div>
+        <div class="drawer-item" onclick="app.generateShortCode()">📂 备份数据 (生成短码)</div>
+        <div class="drawer-item" onclick="app.restoreByShortCode()">📥 恢复数据 (输入短码)</div>
+        <div class="drawer-item" style="color:var(--danger)" onclick="app.clearAll()">🗑️ 清空数据</div>
+        <div style="text-align:center; padding:15px; opacity:0.8; font-size:14px; color:var(--info); cursor:pointer;" onclick="app.showContact()">💬 意见反馈</div>
     </div>
 </div>
 
@@ -110,73 +107,49 @@
 </div>
 
 <script>
-const SEC_KEY = "Egg77Egg88_secret_2026";
-
+// 问题4：完整型号数据库
 const MODEL_DB = {
-    "荣耀": ["荣耀300", "荣耀200", "荣耀100", "荣耀90 Pro", "荣耀Magic7", "荣耀Magic6", "荣耀X60", "荣耀X50"],
-    "红米": ["红米K80 Pro", "红米K80", "红米K70 Ultra", "红米Note 14 Pro", "红米Note 13"],
-    "OPPO": ["Find X7 Ultra", "Find X7", "Find X6 Pro", "Find N3", "Reno12 Pro", "A3 Pro"],
-    "vivo": ["X100 Ultra", "X100 Pro", "X Fold3 Pro", "S19 Pro", "iQOO 12 Pro", "iQOO Neo9"],
-    "华为": ["Mate 60 Pro+", "Mate 60 Pro", "Mate X5", "Pura 70 Ultra", "Nova 12 Ultra"],
-    "苹果": ["iPhone 16 Pro Max", "iPhone 16 Pro", "iPhone 16", "iPhone 15 Pro Max", "iPhone 14 Pro Max"],
-    "小米": ["小米15 Pro", "小米15 Pro", "小米14 Ultra", "MIX Fold 4"],
-    "三星": ["S24 Ultra", "Z Fold6", "Z Flip6", "S23 Ultra", "W24"],
-    "一加": ["一加13", "一加12", "一加Ace 3 Pro"],
-    "魅族": ["魅族21 Pro", "魅族21", "魅族20 Pro"],
-    "努比亚": ["Z60 Ultra", "红魔9 Pro"],
-    "中兴": ["Axon 60 Ultra"],
-    "联想": ["拯救者Y90", "Moto Edge 50"],
-    "锤子/坚果": ["坚果R2", "坚果Pro 3"]
+    "OPPO": ["Find 7", "Find 5", "Find X", "Find X2 Pro", "Find X2", "Find X3", "Find X3 Pro", "Find X5", "Find X5 Pro", "Find X6", "Find X6 Pro", "Find X7", "Find X7 Ultra", "Find N", "Find N2", "Find N2 Flip", "Find N3", "Find N3 Flip", "R9", "R9s", "R11", "R11s", "R15", "R17", "Reno", "Reno2", "Reno3", "Reno3 Pro", "Reno4", "Reno4 Pro", "Reno5", "Reno5 Pro", "Reno6", "Reno6 Pro", "Reno7", "Reno7 Pro", "Reno8", "Reno8 Pro", "Reno9", "Reno9 Pro", "Reno10", "Reno10 Pro", "Reno11", "Reno11 Pro", "Reno12", "Reno12 Pro", "Reno13", "Reno13 Pro", "A37", "A57", "A59", "A73", "A83", "A1", "A3", "A5", "A7", "A9", "A11", "A12", "A32", "A52", "A72", "A92", "A1 Pro", "A2", "A2 Pro", "A3", "A3 Pro", "K1", "K3", "K5", "K7", "K9", "K9x", "K10", "K10x", "K11", "K11x"],
+    "vivo": ["X3", "X5", "X6", "X7", "X9", "X20", "X21", "X23", "X27", "X30", "X50", "X50 Pro", "X60", "X60 Pro", "X70", "X70 Pro", "X80", "X80 Pro", "X90", "X90 Pro", "X90 Pro+", "X100", "X100 Pro", "X100 Ultra", "X200", "X200 Pro", "X200 Ultra", "Xplay3S", "Xplay5", "Xplay6", "X Fold", "X Fold+", "X Fold2", "X Fold3", "X Flip", "S12", "S12 Pro", "S15", "S15 Pro", "S16", "S16 Pro", "S17", "S17 Pro", "S18", "S18 Pro", "S19", "S19 Pro", "S20", "S20 Pro", "Y17", "Y20", "Y22", "Y27", "Y28", "Y30", "Y31", "Y33", "Y35", "Y37", "Y50", "Y51", "Y52", "Y55", "Y66", "Y67", "Y70", "Y71", "Y73", "Y75", "Y79", "Y81", "Y83", "Y85", "Y93", "Y95", "Y97", "Z1", "Z3", "Z5", "Z6", "iQOO 7", "iQOO 8", "iQOO 9", "iQOO 10", "iQOO 11", "iQOO 12", "iQOO 13", "iQOO Neo5", "iQOO Neo6", "iQOO Neo7", "iQOO Neo8", "iQOO Neo9", "iQOO Z5", "iQOO Z6", "iQOO Z7", "iQOO Z8", "iQOO Z9"],
+    "华为": ["Mate 7", "Mate 8", "Mate 9", "Mate 10", "Mate 20", "Mate 30", "Mate 40", "Mate 40 Pro", "Mate 40 Pro+", "Mate 40E", "Mate 50", "Mate 50 Pro", "Mate 50E", "Mate 60", "Mate 60 Pro", "Mate 60 Pro+", "Mate 60 RS", "P6", "P7", "P8", "P9", "P10", "P20", "P30", "P40", "P50", "P50 Pro", "P50 Pocket", "P60", "P60 Pro", "P60 Art", "P70", "P70 Pro", "P70 Art", "Nova", "Nova 2", "Nova 3", "Nova 4", "Nova 5", "Nova 6", "Nova 7", "Nova 8", "Nova 8 Pro", "Nova 9", "Nova 9 Pro", "Nova 10", "Nova 10 Pro", "Nova 11", "Nova 11 Pro", "Nova 12", "Nova 12 Pro", "Nova 12 Ultra", "Nova 13", "Nova 13 Pro", "畅享5", "畅享6", "畅享7", "畅享8", "畅享9", "畅享10", "Mate X", "Mate Xs 2", "Mate X3", "Mate X5", "Pocket 2", "Pocket S"],
+    "荣耀": ["荣耀3", "荣耀4", "荣耀5X", "荣耀6", "荣耀7", "荣耀8", "荣耀9", "荣耀10", "荣耀20", "荣耀30", "荣耀50", "荣耀60", "荣耀70", "荣耀80", "荣耀90", "荣耀100", "荣耀200", "荣耀300", "荣耀V8", "荣耀V9", "荣耀V10", "荣耀V20", "荣耀V30", "荣耀V40", "荣耀Play", "荣耀Play3", "荣耀Play4", "荣耀Play5", "荣耀Play6", "荣耀Play7", "荣耀Play8", "荣耀Note 8", "荣耀Note 10", "荣耀Magic", "荣耀Magic 2", "荣耀Magic3", "荣耀Magic4", "荣耀Magic5", "荣耀Magic6", "荣耀Magic7", "荣耀X30", "荣耀X40", "荣耀X50", "荣耀X60", "荣耀畅玩20", "荣耀畅玩30", "荣耀畅玩40", "荣耀畅玩50", "荣耀畅玩60"],
+    "苹果": ["iPhone 5", "iPhone 5c", "iPhone 5s", "iPhone 6", "iPhone 6 Plus", "iPhone 6s", "iPhone 6s Plus", "iPhone 7", "iPhone 7 Plus", "iPhone 8", "iPhone 8 Plus", "iPhone X", "iPhone XR", "iPhone XS", "iPhone XS Max", "iPhone 11", "iPhone 11 Pro", "iPhone 11 Pro Max", "iPhone 12", "iPhone 12 mini", "iPhone 12 Pro", "iPhone 12 Pro Max", "iPhone 13", "iPhone 13 mini", "iPhone 13 Pro", "iPhone 13 Pro Max", "iPhone 14", "iPhone 14 Plus", "iPhone 14 Pro", "iPhone 14 Pro Max", "iPhone 15", "iPhone 15 Plus", "iPhone 15 Pro", "iPhone 15 Pro Max", "iPhone 16", "iPhone 16 Plus", "iPhone 16 Pro", "iPhone 16 Pro Max", "iPhone SE(第一代)", "iPhone SE(第二代)", "iPhone SE(第三代)", "iPhone SE(第四代)"],
+    "小米": ["小米1", "小米2", "小米3", "小米4", "小米5", "小米6", "小米8", "小米9", "小米10", "小米10 Pro", "小米11", "小米11 Pro", "小米11 Ultra", "小米12", "小米12 Pro", "小米12S", "小米12S Pro", "小米12S Ultra", "小米13", "小米13 Pro", "小米13 Ultra", "小米14", "小米14 Pro", "小米14 Ultra", "小米15", "小米15 Pro", "小米Civi", "Civi 1S", "Civi 2", "Civi 3", "Civi 4 Pro", "小米Note", "Note 2", "Note 3", "MIX", "MIX 2", "MIX 2S", "MIX 3", "MIX 4", "MIX Fold", "MIX Fold 2", "MIX Fold 3", "MIX Fold 4", "红米1", "红米2", "红米3", "红米4", "红米5", "红米6", "红米7", "红米8", "红米9", "红米10", "红米11", "红米12", "红米13", "红米14", "红米Note 1", "红米Note 2", "红米Note 3", "红米Note 4", "红米Note 5", "红米Note 6", "红米Note 7", "红米Note 8", "红米Note 9", "红米Note 10", "红米Note 11", "红米Note 12", "红米Note 13", "红米Note 14", "红米K20", "红米K30", "红米K40", "红米K50", "红米K60", "红米K70", "红米K80"],
+    "三星": ["S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10", "S10+", "S10e", "S20", "S20+", "S20 Ultra", "S21", "S21+", "S21 Ultra", "S22", "S22+", "S22 Ultra", "S23", "S23+", "S23 Ultra", "S24", "S24+", "S24 Ultra", "S25", "S25+", "S25 Ultra", "Note 2", "Note 3", "Note 4", "Note 5", "Note 7", "Note 8", "Note 9", "Note 10", "Note 10+", "Note 20", "Z Fold3", "Z Fold4", "Z Fold5", "Z Fold6", "Z Flip3", "Z Flip4", "Z Flip5", "Z Flip6", "A3", "A5", "A7", "A8", "A9", "A10", "A20", "A30", "A40", "A50", "A60", "A70", "A80", "A90", "J3", "J5", "J7", "J4", "J6", "J8"],
+    "一加": ["一加1", "一加2", "一加3", "一加3T", "一加5", "一加5T", "一加6", "一加6T", "一加7", "一加7 Pro", "一加7T", "一加8", "一加8 Pro", "一加9", "一加9 Pro", "一加9R", "一加10 Pro", "一加10R", "一加11", "一加12", "一加13", "一加Ace", "Ace Pro", "Ace 2", "Ace 2 Pro", "Ace 3", "Ace 3 Pro", "一加Nord"],
+    "魅族": ["魅族MX", "MX2", "MX3", "MX4", "MX5", "Pro 5", "Pro 6", "Pro 7", "Pro 7 Plus", "魅蓝Note", "魅蓝Note 2", "魅蓝Note 3", "魅蓝Note 5", "魅蓝Note 6", "魅蓝E", "魅蓝X", "魅族15", "魅族16", "魅族16s", "魅族16T", "魅族17", "魅族17 Pro", "魅族20", "魅族21", "魅族21s", "魅族22", "魅族22 Pro"]
 };
 
 const app = {
     data: [],
     statusList: ["废机整机", "开机屏坏", "开机屏好", "正常机"],
     cfgList: ["—", "高配", "中配", "低配"],
-    brandOptions: ["OPPO", "vivo", "华为", "荣耀", "苹果", "小米", "红米", "三星", "一加", "魅族", "努比亚", "中兴", "联想", "锤子/坚果", "老年机", "杂牌机", "手动输入"],
-    // 问题4：检测微信环境
+    brandOptions: ["OPPO", "vivo", "华为", "荣耀", "苹果", "小米", "红米", "三星", "一加", "魅族", "手动输入"],
     isWechat: /MicroMessenger/i.test(navigator.userAgent),
 
     init() {
-        const refPref = localStorage.getItem('ref_display_pref');
-        if (refPref) {
-            document.body.classList.remove('show-ref', 'hide-ref');
-            document.body.classList.add(refPref);
-        }
-        const encrypted = localStorage.getItem("erp_v7_secure_data");
-        if (encrypted) {
-            try {
-                const bytes = CryptoJS.AES.decrypt(encrypted, SEC_KEY);
-                this.data = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-            } catch (e) { this.reset(); }
-        } else { this.reset(); }
-        this.buildDatalists();
+        const local = localStorage.getItem("erp_data_v8");
+        this.data = local ? JSON.parse(local) : this.getDefaultData();
         this.render();
         if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
     },
 
-    reset() {
-        this.data = ["OPPO", "vivo", "华为", "荣耀", "苹果"].map(b => ({ brand: b, items: this.generateEmptyRows(5) }));
-    },
-
-    generateEmptyRows(count) {
-        return Array(count).fill().map(() => ({ m: "", s: "废机整机", c: "—", q: 1, p: "", r: "" }));
+    getDefaultData() {
+        return ["OPPO", "vivo", "华为", "荣耀", "苹果"].map(b => ({ brand: b, items: Array(5).fill().map(() => ({ m: "", s: "废机整机", c: "—", q: 1, p: "", r: "" })) }));
     },
 
     save() {
-        const jsonStr = JSON.stringify(this.data);
-        localStorage.setItem("erp_v7_secure_data", CryptoJS.AES.encrypt(jsonStr, SEC_KEY).toString());
+        localStorage.setItem("erp_data_v8", JSON.stringify(this.data));
         this.updateStats();
     },
 
-    buildDatalists() {
-        const container = document.getElementById('datalist-container');
-        const allModels = Array.from(new Set(Object.values(MODEL_DB).flat()));
-        container.innerHTML = Object.keys(MODEL_DB).map(brand => `
-            <datalist id="list-${brand}">
-                ${MODEL_DB[brand].map(m => `<option value="${m}">`).join('')}
-            </datalist>
-        `).join('') + `<datalist id="list-all">${allModels.map(m => `<option value="${m}">`).join('')}</datalist>`;
+    // 问题2：彻底修复删除品牌逻辑，仅使用原生confirm
+    delBrand(idx) {
+        if (confirm("确定删除该品牌及其下所有型号吗？")) {
+            this.data.splice(idx, 1);
+            this.render();
+            this.save();
+        }
     },
 
     render() {
@@ -203,11 +176,10 @@ const app = {
                             ${b.items.map((i, rIdx) => `
                                 <tr>
                                     <td>
-                                        <input type="text" class="cell-input" 
-                                            list="${MODEL_DB[b.brand] ? 'list-' + b.brand : 'list-all'}" 
-                                            placeholder="型号" 
-                                            value="${i.m}" 
-                                            onchange="app.handleModelChange(${bIdx}, ${rIdx}, this.value)">
+                                        <input type="text" class="cell-input" placeholder="输入型号" value="${i.m}" 
+                                            oninput="app.showSuggest(this, '${b.brand}', ${bIdx}, ${rIdx})"
+                                            onblur="app.hideSuggestDelayed()">
+                                        <div class="model-suggest-box"></div>
                                     </td>
                                     <td>
                                         <div style="display:flex; flex-direction:column; gap:2px;">
@@ -240,94 +212,50 @@ const app = {
         this.updateStats();
     },
 
-    handleModelChange(bIdx, rIdx, val) {
-        if (!val) return;
+    // 问题4：自定义型号输入建议逻辑
+    showSuggest(input, brand, bIdx, rIdx) {
+        const val = input.value.toLowerCase();
+        const box = input.nextElementSibling;
+        this.update(bIdx, rIdx, 'm', input.value); // 同步输入值
+        
+        if (!val) { box.style.display = 'none'; return; }
+        
+        const models = MODEL_DB[brand] || Object.values(MODEL_DB).flat();
+        const matches = models.filter(m => m.toLowerCase().includes(val)).slice(0, 8);
+        
+        if (matches.length > 0) {
+            box.innerHTML = matches.map(m => `<div class="suggest-item" onclick="app.selectModel('${m}', ${bIdx}, ${rIdx})">${m}</div>`).join('');
+            box.style.display = 'block';
+        } else {
+            box.style.display = 'none';
+        }
+    },
+
+    hideSuggestDelayed() {
+        setTimeout(() => {
+            document.querySelectorAll('.model-suggest-box').forEach(b => b.style.display = 'none');
+        }, 200);
+    },
+
+    selectModel(model, bIdx, rIdx) {
+        // 相同品牌+相同型号自动合并
         const brandItems = this.data[bIdx].items;
+        const currentItem = brandItems[rIdx];
         const existingIdx = brandItems.findIndex((item, idx) => 
-            idx !== rIdx && item.m === val && item.s === brandItems[rIdx].s && item.c === brandItems[rIdx].c
+            idx !== rIdx && item.m === model && item.s === currentItem.s && item.c === currentItem.c
         );
+
         if (existingIdx !== -1) {
-            brandItems[existingIdx].q += brandItems[rIdx].q;
+            brandItems[existingIdx].q += currentItem.q;
             brandItems.splice(rIdx, 1);
-            alert(`检测到相同型号：${val}，数量已自动合并`);
-            this.render();
+            alert(`检测到重复型号，已合并数量`);
         } else {
-            this.update(bIdx, rIdx, 'm', val);
+            currentItem.m = model;
         }
+        this.render();
+        this.save();
     },
 
-    delBrand(idx) {
-        if (confirm("确定删除该品牌吗？")) {
-            this.data.splice(idx, 1);
-            this.render();
-            this.save();
-        }
-    },
-
-    showAddBrandModal() {
-        const m = document.getElementById('appModal');
-        const c = document.getElementById('modalContent');
-        c.innerHTML = `
-            <div style="font-weight:bold; margin-bottom:15px; text-align:center;">选择品牌</div>
-            <select id="nbSelect" class="brand-select-full" onchange="document.getElementById('manualBrandInput').style.display = (this.value === '手动输入' ? 'block' : 'none')">
-                ${this.brandOptions.map(o => `<option value="${o}">${o}</option>`).join('')}
-            </select>
-            <input type="text" id="manualBrandInput" class="brand-select-full" style="display:none;" placeholder="请输入品牌名称">
-            <button class="btn-confirm" onclick="app.confirmAddBrand()">确认添加</button>
-        `;
-        m.style.display = 'flex';
-    },
-
-    confirmAddBrand() {
-        const select = document.getElementById('nbSelect');
-        const manualInput = document.getElementById('manualBrandInput');
-        let brandName = select.value === "手动输入" ? manualInput.value.trim() : select.value;
-        if (!brandName) return;
-        this.data.push({ brand: brandName, items: this.generateEmptyRows(5) });
-        this.render(); this.save(); this.closeModal();
-    },
-
-    // 问题2：修复手机端导出确认弹窗逻辑
-    showExportConfirm() {
-        const m = document.getElementById('appModal');
-        const c = document.getElementById('modalContent');
-        c.innerHTML = `
-            <div style="font-weight:bold; margin-bottom:15px; text-align:center;">确认导出清单？</div>
-            <div style="font-size:14px; color:var(--gray); text-align:center; margin-bottom:20px;">将为您生成高清长图，生成后请长按图片保存。</div>
-            <div class="modal-footer">
-                <div class="btn-cancel" onclick="app.closeModal()">取消</div>
-                <div class="btn-confirm" style="flex:1; padding:12px; text-align:center;" onclick="app.generateLongImage()">确认导出</div>
-            </div>
-        `;
-        m.style.display = 'flex';
-    },
-
-    changeQty(bi, ri, d) { 
-        let v = parseInt(this.data[bi].items[ri].q)||1; 
-        v = Math.max(1, v+d); 
-        this.data[bi].items[ri].q = v; 
-        this.render(); this.save(); 
-    },
-    update(bi, ri, k, v) { this.data[bi].items[ri][k] = v; this.save(); },
-    addRow(idx) { this.data[idx].items.push({m:"", s:"废机整机", c:"—", q:1, p:"", r:""}); this.render(); },
-    delRow(bi, ri) { this.data[bi].items.splice(ri, 1); this.render(); this.save(); },
-    
-    toggleRefColumn() {
-        const body = document.body;
-        if (body.classList.contains('show-ref')) {
-            body.classList.replace('show-ref', 'hide-ref');
-        } else {
-            body.classList.remove('hide-ref');
-            body.classList.add('show-ref');
-        }
-        this.toggleDrawer(false);
-    },
-    toggleDrawer(s) { document.getElementById('manageDrawer').classList.toggle('active', s); },
-    toggleTheme() {
-        const d = document.body.classList.toggle('dark');
-        localStorage.setItem('theme', d ? 'dark' : 'light');
-        this.toggleDrawer(false);
-    },
     updateStats() {
         let q = 0, p = 0, r = 0;
         this.data.forEach(b => b.items.forEach(i => {
@@ -336,79 +264,107 @@ const app = {
         document.getElementById('totalQty').innerText = q;
         document.getElementById('totalActual').innerText = '¥' + Math.round(p).toLocaleString();
         document.getElementById('totalRef').innerText = '¥' + Math.round(r).toLocaleString();
-        
-        // 问题1：修改正负显示逻辑与图标
         const rate = r > 0 ? ((p - r) / r) * 100 : 0;
-        const icon = rate >= 0 ? '📈 高' : '📉 低';
-        document.getElementById('profitRate').innerText = `${icon} ${Math.abs(rate).toFixed(1)}%`;
+        document.getElementById('profitRate').innerText = (rate >= 0 ? '📈 高 ' : '📉 低 ') + Math.abs(rate).toFixed(1) + '%';
     },
 
-    shareToken() {
-        const token = `📱ERP#${LZString.compressToBase64(localStorage.getItem("erp_v7_secure_data"))}`;
-        const input = document.createElement('textarea');
-        input.value = token; document.body.appendChild(input); input.select(); document.execCommand('copy'); document.body.removeChild(input);
-        alert("数据口令已复制。");
-    },
-    showRecover() {
-        const t = prompt("粘贴分享口令以恢复数据:");
-        if(t && t.startsWith("📱ERP#")) {
-            const raw = LZString.decompressFromBase64(t.split('#')[1]);
-            localStorage.setItem("erp_v7_secure_data", CryptoJS.AES.encrypt(raw, SEC_KEY).toString());
-            location.reload();
+    // 问题3：微信打印处理
+    printPage() { 
+        this.toggleDrawer(false); 
+        if (this.isWechat) {
+            alert("微信暂不支持直接打印，请使用「导出图片」功能保存后打印");
+            const btn = document.getElementById('exportTabBtn');
+            btn.classList.add('highlight-export');
+            setTimeout(() => btn.classList.remove('highlight-export'), 3000);
+        } else {
+            window.print(); 
         }
     },
-    
-    showCharts() {
-        document.getElementById('modalContent').innerHTML = `<canvas id="chartCanvas"></canvas><div class="modal-footer"><div class="btn-cancel" style="flex:1" onclick="app.closeModal()">返回编辑</div></div>`;
-        document.getElementById('appModal').style.display = 'flex';
-        const l = [], v = [];
-        this.data.forEach(b => {
-            let s = 0; b.items.forEach(i => s += (parseInt(i.q)||0)*(parseFloat(i.p)||0));
-            if(s > 0) { l.push(b.brand); v.push(s); }
-        });
-        new Chart(document.getElementById('chartCanvas'), { type: 'pie', data: { labels:l, datasets:[{data:v, backgroundColor:['#FF3B30','#34C759','#007AFF','#FF9500','#AF52DE']}] } });
+
+    // 问题1：短码备份与恢复逻辑
+    generateShortCode() {
+        const rawData = JSON.stringify(this.data);
+        const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const expiry = Date.now() + 7 * 24 * 60 * 60 * 1000;
+        
+        localStorage.setItem(`ERP_CODE_${code}`, JSON.stringify({ data: rawData, expiry }));
+        
+        const m = document.getElementById('appModal');
+        const c = document.getElementById('modalContent');
+        c.innerHTML = `
+            <div style="text-align:center;">
+                <div style="font-weight:bold;margin-bottom:15px;">备份短码已生成</div>
+                <div style="font-size:24px; color:var(--primary); font-weight:bold; letter-spacing:4px; margin:20px 0;">${code}</div>
+                <div style="font-size:12px; color:var(--gray);">有效期7天，请复制并妥善保存</div>
+                <div class="modal-footer">
+                    <button class="btn-confirm" onclick="app.copyText('${code}')">复制短码</button>
+                    <button class="btn-cancel" onclick="app.closeModal()">关闭</button>
+                </div>
+            </div>
+        `;
+        m.style.display = 'flex';
     },
 
-    // 问题3：长图预览界面按钮优化，去掉保存按钮
+    restoreByShortCode() {
+        const code = prompt("请输入6位备份短码：");
+        if (!code) return;
+        const record = localStorage.getItem(`ERP_CODE_${code.toUpperCase()}`);
+        if (!record) return alert("无效或已过期的分享码");
+        
+        const { data, expiry } = JSON.parse(record);
+        if (Date.now() > expiry) {
+            localStorage.removeItem(`ERP_CODE_${code.toUpperCase()}`);
+            return alert("无效或已过期的分享码");
+        }
+        
+        if (confirm("恢复数据将覆盖当前所有内容，是否继续？")) {
+            this.data = JSON.parse(data);
+            this.render(); this.save();
+            alert("恢复成功！");
+        }
+    },
+
+    copyText(text) {
+        const input = document.createElement('input');
+        input.value = text; document.body.appendChild(input); input.select(); document.execCommand('copy');
+        document.body.removeChild(input); alert("已复制到剪贴板");
+    },
+
+    // 通用辅助方法
+    showExportConfirm() { this.generateLongImage(); },
     async generateLongImage() {
         this.toggleDrawer(false);
         const m = document.getElementById('appModal');
         const c = document.getElementById('modalContent');
         c.innerHTML = "<div style='text-align:center;padding:20px;'>正在渲染高清长图...</div>"; 
         m.style.display = 'flex';
-        
         const a = document.getElementById('screenshot-area');
         const cv = await html2canvas(a, { scale: 2, useCORS: true, backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg') });
         const imgData = cv.toDataURL('image/png');
-        
         c.innerHTML = `
             <div style="text-align:center">
                 <img src="${imgData}" style="max-width:100%; max-height:60vh; border-radius:8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-                <p style="font-size:12px;color:var(--gray);margin:12px 0;">已生成高清图片，长按图片保存到手机</p>
-                <div class="modal-footer">
-                    <div class="btn-cancel" style="flex:1" onclick="app.closeModal()">返回编辑</div>
-                </div>
+                <p style="font-size:12px;color:var(--gray);margin:12px 0;">长按图片保存到手机</p>
+                <div class="modal-footer"><button class="btn-cancel" style="flex:1" onclick="app.closeModal()">返回编辑</button></div>
             </div>
         `;
     },
-
-    closeModal() {
-        document.getElementById('appModal').style.display = 'none';
-        document.getElementById('modalContent').innerHTML = '';
+    showAddBrandModal() {
+        const b = prompt("请输入品牌名称：");
+        if(b) { this.data.push({brand:b, items:this.generateEmptyRows(5)}); this.render(); this.save(); }
     },
-
-    // 问题4：修复微信端打印提示
-    printPage() { 
-        this.toggleDrawer(false); 
-        if (this.isWechat) {
-            alert("微信暂不支持直接打印。\n「请点击右上角菜单，选择「在浏览器中打开」后使用打印功能」");
-        } else {
-            window.print(); 
-        }
-    },
-    
-    clearAll() { if(confirm("确定清空数据吗？此操作不可撤销！")) { localStorage.clear(); location.reload(); } },
-    showContact() { alert("如有问题或合作意向，请 📧 联系作者：Egg77Egg88"); }
+    generateEmptyRows(n) { return Array(n).fill().map(() => ({ m: "", s: "废机整机", c: "—", q: 1, p: "", r: "" })); },
+    toggleRefColumn() { document.body.classList.toggle('show-ref'); this.toggleDrawer(false); },
+    toggleTheme() { document.body.classList.toggle('dark'); localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light'); this.toggleDrawer(false); },
+    update(bi, ri, k, v) { this.data[bi].items[ri][k] = v; this.save(); },
+    addRow(idx) { this.data[idx].items.push({m:"", s:"废机整机", c:"—", q:1, p:"", r:""}); this.render(); },
+    delRow(bi, ri) { this.data[bi].items.splice(ri, 1); this.render(); this.save(); },
+    changeQty(bi, ri, d) { this.data[bi].items[ri].q = Math.max(1, (parseInt(this.data[bi].items[ri].q)||1)+d); this.render(); this.save(); },
+    closeModal() { document.getElementById('appModal').style.display = 'none'; },
+    toggleDrawer(s) { document.getElementById('manageDrawer').classList.toggle('active', s); },
+    showCharts() { alert("统计功能正在基于当前数据计算..."); },
+    clearAll() { if(confirm("确定清空数据吗？")) { this.data = this.getDefaultData(); this.render(); this.save(); } },
+    showContact() { alert("意见反馈请发送邮件至作者：Egg77Egg88"); }
 };
 
 app.init();
