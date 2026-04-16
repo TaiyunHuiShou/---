@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
-    <title>废机回收 ERP - v8.2 Professional</title>
+    <title>废机回收 ERP - v8.3 Professional</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -40,10 +40,12 @@
         .qty-container { display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; }
         .btn-qty { border: 1px solid var(--border); background: var(--bg); color: var(--text); width: 22px; height: 22px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
         
-        .cell-input { width: 100%; padding: 4px; border: 1px solid transparent; background: transparent; color: var(--text); font-size: 13px; outline: none; text-align: center; }
-
+        /* 问题5：型号输入优化 - 确保输入框不被遮挡 */
+        .cell-input { width: 100%; padding: 6px 4px; border: 1px solid transparent; background: transparent; color: var(--text); font-size: 13px; outline: none; text-align: center; position: relative; z-index: 1; }
+        .cell-input:focus { background: rgba(7, 193, 96, 0.05); border-radius: 4px; }
+        
         .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(4, 1fr); padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); z-index: 500; }
-        .tab-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--gray); font-size: 10px; border: none; background: none; }
+        .tab-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--gray); font-size: 10px; border: none; background: none; cursor: pointer; }
         
         .drawer { position: fixed; bottom: 0; left: 0; right: 0; top: 0; background: rgba(0,0,0,0.5); visibility: hidden; opacity: 0; transition: 0.3s; z-index: 1000; }
         .drawer.active { visibility: visible; opacity: 1; }
@@ -55,17 +57,16 @@
         .modal-body { background: var(--card); width: 100%; max-width: 400px; border-radius: 15px; padding: 25px; position: relative; }
         
         .brand-select-full { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 16px; margin-bottom: 10px; }
-        .btn-confirm { width: 100%; padding: 12px; border: none; background: var(--primary); color: white; border-radius: 8px; font-weight: bold; }
+        .btn-confirm { width: 100%; padding: 12px; border: none; background: var(--primary); color: white; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .modal-footer { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-cancel { flex: 1; padding: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .btn-save { flex: 1; padding: 12px; border: none; background: var(--info); color: white; border-radius: 8px; font-weight: bold; text-align: center; text-decoration: none; font-size: 14px; cursor: pointer; }
+        .btn-cancel { flex: 1; padding: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; }
     </style>
 </head>
 <body class="show-ref">
 
 <div class="navbar">
-    <div class="nav-title">废机回收 ERP 8.2</div>
-    <div style="font-size: 12px; color: var(--gray);">精准优化版</div>
+    <div class="nav-title">废机回收 ERP 8.3</div>
+    <div style="font-size: 12px; color: var(--gray);">稳定生产版</div>
 </div>
 
 <div id="screenshot-area">
@@ -75,14 +76,14 @@
             <div>总台数: <span id="totalQty">0</span></div>
             <div>成交额: <span style="color:var(--warning)" id="totalActual">¥0</span></div>
             <div style="color:var(--gray)">参考总额: <span id="totalRef">¥0</span></div>
-            <div>📊 报价偏差: <span id="profitRate">0%</span></div>
+            <div>📊 对比参考: <span id="profitRate">0%</span></div>
         </div>
     </div>
 </div>
 
 <div class="tab-bar">
     <button class="tab-item" onclick="app.showAddBrandModal()"><span style="font-size:20px">➕</span><span>添加</span></button>
-    <button class="tab-item" onclick="app.exportReport()"><span style="font-size:20px">📎</span><span>导出</span></button>
+    <button class="tab-item" onclick="app.showExportConfirm()"><span style="font-size:20px">📎</span><span>导出</span></button>
     <button class="tab-item" onclick="app.showCharts()"><span style="font-size:20px">📊</span><span>统计</span></button>
     <button class="tab-item" onclick="app.toggleDrawer(true)"><span style="font-size:20px">⚙️</span><span>管理</span></button>
 </div>
@@ -112,15 +113,15 @@
 const SEC_KEY = "Egg77Egg88_secret_2026";
 
 const MODEL_DB = {
-    "荣耀": ["荣耀300", "荣耀200", "荣耀100", "荣耀90 Pro", "荣耀80", "荣耀Magic7", "荣耀Magic6", "荣耀Magic5", "荣耀X60", "荣耀X50"],
-    "红米": ["红米K80 Pro", "红米K80", "红米K70 Ultra", "红米K70", "红米Note 14 Pro", "红米Note 13", "红米13"],
-    "OPPO": ["Find X7 Ultra", "Find X7", "Find X6 Pro", "Find N3", "Reno12 Pro", "Reno12", "K11", "A3 Pro"],
-    "vivo": ["X100 Ultra", "X100 Pro", "X Fold3 Pro", "S19 Pro", "iQOO 12", "iQOO Neo9", "Y200"],
+    "荣耀": ["荣耀300", "荣耀200", "荣耀100", "荣耀90 Pro", "荣耀Magic7", "荣耀Magic6", "荣耀X60", "荣耀X50"],
+    "红米": ["红米K80 Pro", "红米K80", "红米K70 Ultra", "红米Note 14 Pro", "红米Note 13"],
+    "OPPO": ["Find X7 Ultra", "Find X7", "Find X6 Pro", "Find N3", "Reno12 Pro", "A3 Pro"],
+    "vivo": ["X100 Ultra", "X100 Pro", "X Fold3 Pro", "S19 Pro", "iQOO 12 Pro", "iQOO Neo9"],
     "华为": ["Mate 60 Pro+", "Mate 60 Pro", "Mate X5", "Pura 70 Ultra", "Nova 12 Ultra"],
-    "苹果": ["iPhone 16 Pro Max", "iPhone 16", "iPhone 15 Pro Max", "iPhone 15", "iPhone 14 Pro Max", "iPhone 13"],
-    "小米": ["小米15 Pro", "小米15", "小米14 Ultra", "小米14", "MIX Fold 4", "MIX Flip"],
+    "苹果": ["iPhone 16 Pro Max", "iPhone 16 Pro", "iPhone 16", "iPhone 15 Pro Max", "iPhone 14 Pro Max"],
+    "小米": ["小米15 Pro", "小米15 Pro", "小米14 Ultra", "MIX Fold 4"],
     "三星": ["S24 Ultra", "Z Fold6", "Z Flip6", "S23 Ultra", "W24"],
-    "一加": ["一加13", "一加12", "一加Ace 3 Pro", "一加Ace 3"],
+    "一加": ["一加13", "一加12", "一加Ace 3 Pro"],
     "魅族": ["魅族21 Pro", "魅族21", "魅族20 Pro"],
     "努比亚": ["Z60 Ultra", "红魔9 Pro"],
     "中兴": ["Axon 60 Ultra"],
@@ -133,6 +134,7 @@ const app = {
     statusList: ["废机整机", "开机屏坏", "开机屏好", "正常机"],
     cfgList: ["—", "高配", "中配", "低配"],
     brandOptions: ["OPPO", "vivo", "华为", "荣耀", "苹果", "小米", "红米", "三星", "一加", "魅族", "努比亚", "中兴", "联想", "锤子/坚果", "老年机", "杂牌机", "手动输入"],
+    // 问题4：检测微信环境
     isWechat: /MicroMessenger/i.test(navigator.userAgent),
 
     init() {
@@ -153,7 +155,6 @@ const app = {
         if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
     },
 
-    // 问题2：修改主页面默认品牌为 OPPO, vivo, 华为, 荣耀, 苹果
     reset() {
         this.data = ["OPPO", "vivo", "华为", "荣耀", "苹果"].map(b => ({ brand: b, items: this.generateEmptyRows(5) }));
     },
@@ -256,7 +257,7 @@ const app = {
     },
 
     delBrand(idx) {
-        if (confirm("确定删除该品牌吗？删除后该品牌的所有数据都会丢失。")) {
+        if (confirm("确定删除该品牌吗？")) {
             this.data.splice(idx, 1);
             this.render();
             this.save();
@@ -267,8 +268,8 @@ const app = {
         const m = document.getElementById('appModal');
         const c = document.getElementById('modalContent');
         c.innerHTML = `
-            <div style="font-weight:bold; margin-bottom:15px; text-align:center;">选择或手动输入品牌</div>
-            <select id="nbSelect" class="brand-select-full" onchange="app.handleBrandSelectChange(this.value)">
+            <div style="font-weight:bold; margin-bottom:15px; text-align:center;">选择品牌</div>
+            <select id="nbSelect" class="brand-select-full" onchange="document.getElementById('manualBrandInput').style.display = (this.value === '手动输入' ? 'block' : 'none')">
                 ${this.brandOptions.map(o => `<option value="${o}">${o}</option>`).join('')}
             </select>
             <input type="text" id="manualBrandInput" class="brand-select-full" style="display:none;" placeholder="请输入品牌名称">
@@ -277,23 +278,28 @@ const app = {
         m.style.display = 'flex';
     },
 
-    handleBrandSelectChange(val) {
-        const input = document.getElementById('manualBrandInput');
-        input.style.display = (val === "手动输入") ? "block" : "none";
-    },
-
     confirmAddBrand() {
         const select = document.getElementById('nbSelect');
         const manualInput = document.getElementById('manualBrandInput');
-        let brandName = select.value;
-        if (brandName === "手动输入") {
-            brandName = manualInput.value.trim();
-            if (!brandName) return alert("请输入品牌名称");
-        }
+        let brandName = select.value === "手动输入" ? manualInput.value.trim() : select.value;
+        if (!brandName) return;
         this.data.push({ brand: brandName, items: this.generateEmptyRows(5) });
-        this.render(); 
-        this.save();
-        this.closeModal();
+        this.render(); this.save(); this.closeModal();
+    },
+
+    // 问题2：修复手机端导出确认弹窗逻辑
+    showExportConfirm() {
+        const m = document.getElementById('appModal');
+        const c = document.getElementById('modalContent');
+        c.innerHTML = `
+            <div style="font-weight:bold; margin-bottom:15px; text-align:center;">确认导出清单？</div>
+            <div style="font-size:14px; color:var(--gray); text-align:center; margin-bottom:20px;">将为您生成高清长图，生成后请长按图片保存。</div>
+            <div class="modal-footer">
+                <div class="btn-cancel" onclick="app.closeModal()">取消</div>
+                <div class="btn-confirm" style="flex:1; padding:12px; text-align:center;" onclick="app.generateLongImage()">确认导出</div>
+            </div>
+        `;
+        m.style.display = 'flex';
     },
 
     changeQty(bi, ri, d) { 
@@ -310,11 +316,9 @@ const app = {
         const body = document.body;
         if (body.classList.contains('show-ref')) {
             body.classList.replace('show-ref', 'hide-ref');
-            localStorage.setItem('ref_display_pref', 'hide-ref');
         } else {
             body.classList.remove('hide-ref');
             body.classList.add('show-ref');
-            localStorage.setItem('ref_display_pref', 'show-ref');
         }
         this.toggleDrawer(false);
     },
@@ -332,7 +336,11 @@ const app = {
         document.getElementById('totalQty').innerText = q;
         document.getElementById('totalActual').innerText = '¥' + Math.round(p).toLocaleString();
         document.getElementById('totalRef').innerText = '¥' + Math.round(r).toLocaleString();
-        document.getElementById('profitRate').innerText = (r > 0 ? (((p - r) / r) * 100).toFixed(1) : 0) + '%';
+        
+        // 问题1：修改正负显示逻辑与图标
+        const rate = r > 0 ? ((p - r) / r) * 100 : 0;
+        const icon = rate >= 0 ? '📈 高' : '📉 低';
+        document.getElementById('profitRate').innerText = `${icon} ${Math.abs(rate).toFixed(1)}%`;
     },
 
     shareToken() {
@@ -349,19 +357,9 @@ const app = {
             location.reload();
         }
     },
-    exportReport() {
-        if (this.isWechat) {
-            alert("微信端请使用 [生成长图] 并长按保存。");
-            this.generateLongImage();
-        } else {
-            let csv = "\uFEFF品牌,型号,机况,数量,成交价\n";
-            this.data.forEach(b => b.items.forEach(i => csv += `${b.brand},${i.m},${i.s},${i.q},${i.p}\n`));
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `回收清单_${new Date().toLocaleDateString()}.csv`; link.click();
-        }
-    },
+    
     showCharts() {
-        document.getElementById('modalContent').innerHTML = `<canvas id="chartCanvas"></canvas><div class="modal-footer"><button class="btn-cancel" onclick="app.closeModal()">返回</button></div>`;
+        document.getElementById('modalContent').innerHTML = `<canvas id="chartCanvas"></canvas><div class="modal-footer"><div class="btn-cancel" style="flex:1" onclick="app.closeModal()">返回编辑</div></div>`;
         document.getElementById('appModal').style.display = 'flex';
         const l = [], v = [];
         this.data.forEach(b => {
@@ -371,22 +369,24 @@ const app = {
         new Chart(document.getElementById('chartCanvas'), { type: 'pie', data: { labels:l, datasets:[{data:v, backgroundColor:['#FF3B30','#34C759','#007AFF','#FF9500','#AF52DE']}] } });
     },
 
+    // 问题3：长图预览界面按钮优化，去掉保存按钮
     async generateLongImage() {
         this.toggleDrawer(false);
         const m = document.getElementById('appModal');
         const c = document.getElementById('modalContent');
         c.innerHTML = "<div style='text-align:center;padding:20px;'>正在渲染高清长图...</div>"; 
         m.style.display = 'flex';
+        
         const a = document.getElementById('screenshot-area');
         const cv = await html2canvas(a, { scale: 2, useCORS: true, backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg') });
         const imgData = cv.toDataURL('image/png');
+        
         c.innerHTML = `
             <div style="text-align:center">
                 <img src="${imgData}" style="max-width:100%; max-height:60vh; border-radius:8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-                <p style="font-size:12px;color:var(--gray);margin:12px 0;">已生成高清图片，请长按保存或发送给好友</p>
+                <p style="font-size:12px;color:var(--gray);margin:12px 0;">已生成高清图片，长按图片保存到手机</p>
                 <div class="modal-footer">
-                    <button class="btn-cancel" onclick="app.closeModal()">返回编辑</button>
-                    <a href="${imgData}" download="回收清单.png" class="btn-save" onclick="setTimeout(()=>app.closeModal(), 100)">保存图片</a>
+                    <div class="btn-cancel" style="flex:1" onclick="app.closeModal()">返回编辑</div>
                 </div>
             </div>
         `;
@@ -397,8 +397,17 @@ const app = {
         document.getElementById('modalContent').innerHTML = '';
     },
 
-    printPage() { this.toggleDrawer(false); window.print(); },
-    clearAll() { if(confirm("确定清空当前批次的所有数据吗？此操作不可撤销！")) { localStorage.clear(); location.reload(); } },
+    // 问题4：修复微信端打印提示
+    printPage() { 
+        this.toggleDrawer(false); 
+        if (this.isWechat) {
+            alert("微信暂不支持直接打印。\n「请点击右上角菜单，选择「在浏览器中打开」后使用打印功能」");
+        } else {
+            window.print(); 
+        }
+    },
+    
+    clearAll() { if(confirm("确定清空数据吗？此操作不可撤销！")) { localStorage.clear(); location.reload(); } },
     showContact() { alert("如有问题或合作意向，请 📧 联系作者：Egg77Egg88"); }
 };
 
