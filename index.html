@@ -141,7 +141,6 @@
         <div class="drawer-item" onclick="app.toggleRefColumn()">🔍 显示/隐藏参考价列</div>
         <div class="drawer-item" onclick="app.generateLongImage()">📸 生成长图预览</div>
         <div class="drawer-item" onclick="app.printPage()">🖨️ 打印清单</div>
-        <!-- 问题1：移除旧的分享口令，新增备份短码功能 -->
         <div class="drawer-item" onclick="app.showBackupCode()">📂 备份数据 (生成短码)</div>
         <div class="drawer-item" onclick="app.showRecoverByCode()">📥 恢复数据 (输入短码)</div>
         <div class="drawer-item" style="color:var(--danger)" onclick="app.clearAll()">🗑️ 清空当前批次</div>
@@ -153,6 +152,7 @@
 <div class="modal" id="appModal" onclick="app.closeModal()">
     <div class="modal-body" onclick="event.stopPropagation()" id="modalContent"></div>
 </div>
+
 <script>
 const SEC_KEY = "Egg77Egg88_secret_2026";
 // 完整型号数据库 (2012-2026)
@@ -167,15 +167,15 @@ const FULL_MODEL_MAP = {
     "一加": ["一加1","一加2","一加3","一加3T","一加5","一加5T","一加6","一加6T","一加7","一加7 Pro","一加7T","一加8","一加8 Pro","一加9","一加9 Pro","一加9R","一加10 Pro","一加10R","一加11","一加12","一加13","一加Ace","Ace Pro","Ace 2","Ace 2 Pro","Ace 3","Ace 3 Pro","一加Nord"],
     "魅族": ["魅族MX","MX2","MX3","MX4","MX5","Pro 5","Pro 6","Pro 7","Pro 7 Plus","魅蓝Note","魅蓝Note 2","魅蓝Note 3","魅蓝Note 5","魅蓝Note 6","魅蓝E","魅蓝X","魅族15","魅族16","魅族16s","魅族16T","魅族17","魅族17 Pro","魅族20","魅族21","魅族21s","魅族22","魅族22 Pro"]
 };
-// 全局所有型号列表 (用于建议)
-const ALL_MODELS_LIST = Object.values(FULL_MODEL_MAP).flat();
+
 const app = {
     data: [],
     statusList: ["废机整机", "开机屏坏", "开机屏好", "正常机"],
     cfgList: ["—", "高配", "中配", "低配"],
     brandOptions: ["OPPO", "vivo", "华为", "荣耀", "苹果", "小米", "红米", "三星", "一加", "魅族", "努比亚", "中兴", "联想", "锤子/坚果", "老年机", "杂牌机", "手动输入"],
     isWechat: /MicroMessenger/i.test(navigator.userAgent),
-    activeSuggest: null, // 当前打开的建议框品牌索引行索引
+    activeSuggest: null,
+
     init() {
         const refPref = localStorage.getItem('ref_display_pref');
         if (refPref) {
@@ -230,8 +230,22 @@ const app = {
                                     </td>
                                     <td><div style="display:flex; flex-direction:column; gap:2px;"><select class="cell-input" onchange="app.update(${bIdx}, ${rIdx}, 's', this.value)">${this.statusList.map(s => `<option value="${s}" ${i.s === s ? 'selected' : ''}>${s}</option>`).join('')}</select><select class="cell-input" style="color:var(--gray); font-size:11px" onchange="app.update(${bIdx}, ${rIdx}, 'c', this.value)">${this.cfgList.map(c => `<option value="${c}" ${i.c === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div></td>
                                     <td><div class="qty-container"><div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},-1)">-</div><div style="font-weight:bold">${i.q}</div><div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},1)">+</div></div></td>
-                                    <td><input type="number" class="cell-input" style="color:var(--primary);font-weight:bold" value="${i.p}" oninput="app.update(${bIdx}, ${rIdx}, 'p', this.value)"></td>
-                                    <td class="ref-column"><input type="number" class="cell-input" value="${i.r}" oninput="app.update(${bIdx}, ${rIdx}, 'r', this.value)"></td>
+                                    <!-- 问题1修复：加强数字输入过滤 -->
+                                    <td>
+                                        <input type="text" inputmode="decimal" 
+                                               class="cell-input" style="color:var(--primary);font-weight:bold" 
+                                               value="${i.p}" 
+                                               oninput="app.filterPriceInput(this, ${bIdx}, ${rIdx}, 'p')"
+                                               onkeypress="return app.blockNonNumeric(event)"
+                                               onpaste="app.handlePaste(event, this, ${bIdx}, ${rIdx}, 'p')">
+                                    </td>
+                                    <td class="ref-column">
+                                        <input type="text" inputmode="decimal" 
+                                               class="cell-input" value="${i.r}" 
+                                               oninput="app.filterPriceInput(this, ${bIdx}, ${rIdx}, 'r')"
+                                               onkeypress="return app.blockNonNumeric(event)"
+                                               onpaste="app.handlePaste(event, this, ${bIdx}, ${rIdx}, 'r')">
+                                    </td>
                                     <td><button onclick="app.delRow(${bIdx}, ${rIdx})" style="border:none;background:none;color:var(--gray)">✕</button></td>
                                 </tr>
                             `).join('')}
@@ -244,7 +258,29 @@ const app = {
         this.updateStats();
     },
     escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); },
-    // 动态建议核心逻辑
+
+    // ==================== 问题1：加强数字输入过滤 ====================
+    filterPriceInput(input, bIdx, rIdx, key) {
+        let val = input.value.replace(/[^0-9.]/g, '');
+        const parts = val.split('.');
+        if (parts.length > 2) val = parts[0] + '.' + parts[1];
+        if (parts[1] && parts[1].length > 2) val = parts[0] + '.' + parts[1].slice(0,2);
+        input.value = val;
+        this.data[bIdx].items[rIdx][key] = val;
+        this.save();
+    },
+    blockNonNumeric(e) {
+        if (e.key === '.' || (e.key >= '0' && e.key <= '9')) return true;
+        return false;
+    },
+    handlePaste(e, input, bIdx, rIdx, key) {
+        setTimeout(() => {
+            this.filterPriceInput(input, bIdx, rIdx, key);
+        }, 10);
+    },
+    // =================================================================
+
+    // ==================== 问题3：按品牌隔离型号建议 ====================
     showSuggestions(bIdx, rIdx, currentVal) {
         this.filterSuggestions(bIdx, rIdx, currentVal);
     },
@@ -253,10 +289,16 @@ const app = {
         if (!wrapper) return;
         const existingList = wrapper.querySelector('.suggest-list');
         if(existingList) existingList.remove();
-        if(!keyword.trim()) return;
+        if(!keyword || !keyword.trim()) return;
+
+        const brand = this.data[bIdx].brand;
+        let modelList = FULL_MODEL_MAP[brand] || [];
+        if (modelList.length === 0) modelList = Object.values(FULL_MODEL_MAP).flat(); // 未知品牌显示全部
+
         const lowerKw = keyword.toLowerCase();
-        let matches = ALL_MODELS_LIST.filter(m => m.toLowerCase().includes(lowerKw)).slice(0,8);
+        let matches = modelList.filter(m => m.toLowerCase().includes(lowerKw)).slice(0,8);
         if(matches.length === 0) return;
+
         const ul = document.createElement('ul');
         ul.className = 'suggest-list';
         matches.forEach(model => {
@@ -289,7 +331,6 @@ const app = {
         const currentRow = brandObj.items[rIdx];
         const oldModel = currentRow.m;
         if(oldModel === newModel) return;
-        // 合并逻辑: 相同品牌+相同型号+相同机况+相同配置合并数量
         const sameIdx = brandObj.items.findIndex((item, idx) => idx !== rIdx && item.m === newModel && item.s === currentRow.s && item.c === currentRow.c);
         if(sameIdx !== -1) {
             brandObj.items[sameIdx].q += currentRow.q;
@@ -299,14 +340,31 @@ const app = {
             this.update(bIdx, rIdx, 'm', newModel);
         }
     },
+    // =================================================================
+
+    // ==================== 问题2：彻底使用自定义 Modal 删除品牌 ====================
     delBrand(idx) {
-        // 问题2：完全使用原生confirm，确保无自定义弹窗
-        if (confirm("确定删除该品牌吗？")) {
-            this.data.splice(idx, 1);
-            this.render();
-            this.save();
-        }
+        const m = document.getElementById('appModal');
+        const c = document.getElementById('modalContent');
+        c.innerHTML = `
+            <div style="text-align:center; font-weight:bold; margin-bottom:20px; color:var(--danger);">确定删除该品牌吗？</div>
+            <div style="font-size:14px; color:var(--gray); text-align:center; margin-bottom:25px;">删除后该品牌下的所有数据将消失，此操作不可撤销。</div>
+            <div class="modal-footer">
+                <div class="btn-cancel" onclick="app.closeModal()">取消</div>
+                <div class="btn-confirm" style="flex:1; background:var(--danger);" onclick="app.confirmDeleteBrand(${idx})">确认删除</div>
+            </div>
+        `;
+        m.style.display = 'flex';
     },
+
+    confirmDeleteBrand(idx) {
+        this.data.splice(idx, 1);
+        this.render();
+        this.save();
+        this.closeModal();
+    },
+    // =================================================================
+
     showAddBrandModal() {
         const m = document.getElementById('appModal');
         const c = document.getElementById('modalContent');
@@ -359,7 +417,6 @@ const app = {
         const icon = rate >= 0 ? '📈 高' : '📉 低';
         document.getElementById('profitRate').innerHTML = `${icon} ${Math.abs(rate).toFixed(1)}%`;
     },
-    // ==================== 全新跨设备短码分享（仅修改此处） ====================
     showBackupCode() {
         const dataStr = JSON.stringify(this.data);
         const compressed = LZString.compressToBase64(dataStr);
@@ -413,7 +470,6 @@ const app = {
         this.closeModal();
         alert("数据恢复成功！");
     },
-    // =================================================================
     showCharts() {
         document.getElementById('modalContent').innerHTML = `<canvas id="chartCanvas"></canvas><div class="modal-footer"><div class="btn-cancel" style="flex:1" onclick="app.closeModal()">返回编辑</div></div>`;
         document.getElementById('appModal').style.display = 'flex';
@@ -432,13 +488,14 @@ const app = {
         const imgData = cv.toDataURL('image/png');
         c.innerHTML = `<div style="text-align:center"><img src="${imgData}" style="max-width:100%; max-height:60vh; border-radius:8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"><p style="font-size:12px;color:var(--gray);margin:12px 0;">已生成高清图片，长按图片保存到手机</p><div class="modal-footer"><div class="btn-cancel" style="flex:1" onclick="app.closeModal()">返回编辑</div></div></div>`;
     },
-    closeModal() { document.getElementById('appModal').style.display = 'none'; document.getElementById('modalContent').innerHTML = ''; },
-    // 问题3：微信环境打印提示 + 高亮导出图片
+    closeModal() { 
+        document.getElementById('appModal').style.display = 'none'; 
+        document.getElementById('modalContent').innerHTML = ''; 
+    },
     printPage() {
         this.toggleDrawer(false);
         if (this.isWechat) {
             alert("微信暂不支持直接打印。\n「请使用「导出图片」功能保存后打印」");
-            // 高亮导出按钮 (tab-bar 第二个)
             const exportBtn = document.querySelector('.tab-bar .tab-item:nth-child(2)');
             if(exportBtn) {
                 exportBtn.classList.add('highlight-export');
@@ -452,6 +509,7 @@ const app = {
     clearAll() { if(confirm("确定清空数据吗？此操作不可撤销！")) { localStorage.clear(); location.reload(); } },
     showContact() { alert("如有问题或合作意向，请 📧 联系作者：Egg77Egg88"); }
 };
+
 app.init();
 </script>
 </body>
