@@ -3,147 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>太云数码-极速回收报货清单</title>
+    <title>太云数码-报价管理系统</title>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
-        :root { --primary: #e11d48; --bg: #f8fafc; --text: #1e293b; }
-        * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); padding: 12px; margin: 0; }
+        :root { --primary: #e11d48; --dark: #0f172a; }
+        * { box-sizing: border-box; font-family: -apple-system, sans-serif; }
+        body { background: #f1f5f9; margin: 0; padding: 10px; color: #334155; }
         
-        /* 顶部操作栏 */
-        .header-tools { background: white; padding: 15px; border-radius: 16px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: sticky; top: 10px; z-index: 100; border: 1px solid #e2e8f0; }
-        .logo-box h2 { margin: 0; font-size: 18px; color: var(--primary); }
-        .logo-box p { margin: 2px 0 0; font-size: 11px; color: #64748b; }
+        /* 顶部操作面板 */
+        .admin-panel { background: white; padding: 15px; border-radius: 16px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .flex-row { display: flex; gap: 8px; margin-top: 10px; }
         
-        .btn-group { display: flex; gap: 8px; }
-        .btn { border: none; padding: 8px 14px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s; }
+        .btn { border: none; padding: 10px 16px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.2s; }
         .btn-main { background: var(--primary); color: white; }
-        .btn-second { background: #f1f5f9; color: #475569; }
-        .btn:active { transform: scale(0.95); }
+        .btn-outline { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+        .btn-sm { padding: 4px 8px; font-size: 11px; }
 
-        /* 清单主体 */
-        #poster-area { background: white; padding: 20px; border-radius: 4px; position: relative; }
-        .brand-block { margin-bottom: 20px; border: 1px solid #f1f5f9; border-radius: 8px; overflow: hidden; }
-        .brand-title { background: #f8fafc; padding: 10px 15px; font-weight: bold; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; color: #334155; }
-        
+        /* 清单区域 */
+        #poster-area { background: white; padding: 15px; border-radius: 4px; }
+        .brand-card { margin-bottom: 20px; border: 1px solid #f1f5f9; border-radius: 12px; overflow: hidden; background: #fff; }
+        .brand-header { background: #f8fafc; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e11d48; }
+        .brand-name { font-weight: 800; font-size: 16px; color: var(--dark); }
+
         table { width: 100%; border-collapse: collapse; }
-        th { font-size: 11px; color: #94a3b8; padding: 10px 8px; text-align: left; background: white; text-transform: uppercase; }
-        td { padding: 6px 8px; border-bottom: 1px solid #f8fafc; }
-        
-        /* 输入框样式定制：去掉所有花里胡哨 */
-        input { border: 1px solid transparent; background: #f8fafc; border-radius: 6px; padding: 10px; font-size: 14px; width: 100%; transition: 0.2s; }
-        input:focus { background: white; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.1); outline: none; }
-        .price-input { font-weight: bold; color: var(--primary); text-align: right; background: #fff1f2; }
-        
-        /* 统计栏 */
-        .summary-box { margin-top: 20px; padding: 20px; background: var(--text); color: white; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .summary-box .total-num { font-size: 24px; font-weight: 800; color: #fbbf24; }
-        
-        /* 隐藏元素 */
-        .no-export { width: 40px; text-align: center; }
-        .btn-add { background: #f1f5f9; color: #3b82f6; border: none; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
-        .btn-del { border: none; background: none; color: #cbd5e1; font-size: 18px; cursor: pointer; }
+        th { font-size: 11px; color: #94a3b8; padding: 8px; text-align: left; }
+        td { padding: 6px; border-bottom: 1px solid #f8fafc; }
 
-        /* 图片预览层 */
-        #mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:1000; overflow-y:auto; padding:20px; }
+        input, select { border: 1px solid transparent; background: #f8fafc; border-radius: 6px; padding: 10px 6px; font-size: 14px; width: 100%; outline: none; }
+        input:focus { background: white; border-color: var(--primary); }
+        .price-input { font-weight: bold; color: var(--primary); background: #fff1f2; text-align: right; }
+
+        .summary { background: var(--dark); color: white; padding: 20px; border-radius: 12px; margin-top: 15px; display: flex; justify-content: space-between; }
+        .summary b { color: #fbbf24; font-size: 20px; }
+
+        /* 隐藏区 */
+        #mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:1000; overflow-y:auto; padding:15px; text-align:center; }
+        .no-export { width: 35px; }
     </style>
 </head>
 <body>
 
-<div class="header-tools">
-    <div class="logo-box">
-        <h2>太云数码报价系统</h2>
-        <p>微信：Egg77Egg88 | 极速收货</p>
+<div class="admin-panel">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <b style="color:var(--primary)">太云数码-业务后台</b>
+        <button class="btn btn-main" onclick="makeImage()">📸 生成报价图</button>
     </div>
-    <div class="btn-group">
-        <button class="btn btn-second" onclick="clearAll()">清空</button>
-        <button class="btn btn-main" onclick="makeImage()">生成报货图</button>
+    <div class="flex-row">
+        <input type="text" id="new-brand-name" placeholder="新增品牌/分类名称" style="flex:1; background:#f1f5f9">
+        <button class="btn btn-outline" onclick="addBrand()">添加品牌</button>
     </div>
 </div>
 
 <div id="poster-area">
-    <div id="render-target"></div>
-
-    <div class="summary-box">
-        <div style="text-align: left;">
-            <p style="margin:0; opacity:0.6; font-size:12px;">已录入数量</p>
-            <div id="total-qty" class="total-num">0</div>
-        </div>
-        <div style="text-align: right;">
-            <p style="margin:0; opacity:0.6; font-size:12px;">估算总价值</p>
-            <div id="total-money" class="total-num">¥ 0</div>
-        </div>
+    <div id="content-list"></div>
+    <div class="summary">
+        <div>数量：<b id="total-qty">0</b> 台</div>
+        <div>总价：<b id="total-money">¥ 0</b></div>
     </div>
-    <p style="text-align: center; color: #94a3b8; font-size: 10px; margin-top: 15px;">清单生成时间：<span id="time-stamp"></span></p>
+    <p style="text-align:center; font-size:10px; color:#94a3b8; margin-top:10px;">清单生成：<span id="ts"></span></p>
 </div>
 
 <div id="mask">
-    <p style="color:white; text-align:center;">长按下方图片保存，发送给客户/老板</p>
-    <div id="img-container"></div>
-    <div style="text-align:center; margin-top:20px;">
-        <button class="btn" style="background:white;" onclick="closeMask()">返回修改</button>
-    </div>
+    <p style="color:white">长按图片保存或转发给客户</p>
+    <div id="img-out"></div>
+    <button class="btn btn-outline" style="margin-top:20px" onclick="closeMask()">关闭返回</button>
 </div>
 
 <script>
-    const brands = ['苹果', '华为', '小米', 'OPPO', 'vivo', '平板/电脑', '其他'];
-    const KEY = 'taiyun_clean_v1';
-    
-    // 初始化数据结构
-    let data = JSON.parse(localStorage.getItem(KEY)) || 
-               brands.map(name => ({ name, rows: [{ m:'', q:1, p:'' }] }));
+    const KEY = 'taiyun_pro_v1';
+    // 默认初始品牌
+    let data = JSON.parse(localStorage.getItem(KEY)) || [
+        { name: '苹果', rows: [{m:'', c:'-', q:1, p:''}] },
+        { name: '华为', rows: [{m:'', c:'-', q:1, p:''}] }
+    ];
 
-    function draw() {
-        const target = document.getElementById('render-target');
-        target.innerHTML = data.map((b, bIdx) => `
-            <div class="brand-block">
-                <div class="brand-title">
-                    <span>${b.name}</span>
-                    <button class="btn-add" onclick="addRow(${bIdx})">＋ 加行</button>
+    function render() {
+        const list = document.getElementById('content-list');
+        list.innerHTML = data.map((b, bIdx) => `
+            <div class="brand-card">
+                <div class="brand-header">
+                    <span class="brand-name">${b.name}</span>
+                    <div>
+                        <button class="btn btn-outline btn-sm" onclick="addRow(${bIdx})">＋行</button>
+                        <button class="btn btn-outline btn-sm" onclick="delBrand(${bIdx})" style="color:#ef4444">删品牌</button>
+                    </div>
                 </div>
                 <table>
                     <thead>
                         <tr>
-                            <th>手机型号 / 详细配置描述</th>
-                            <th width="70">数量</th>
-                            <th width="100" style="text-align:right">老板报价</th>
-                            <th class="no-export" width="40"></th>
+                            <th>型号/描述</th>
+                            <th width="70">配置</th>
+                            <th width="50">数量</th>
+                            <th width="90">报价</th>
+                            <th class="no-export"></th>
                         </tr>
                     </thead>
                     <tbody>
                         ${b.rows.map((r, rIdx) => `
                             <tr>
-                                <td><input type="text" value="${r.m}" oninput="val(${bIdx}, ${rIdx}, 'm', this.value)" placeholder="型号、成色、损耗..."></td>
-                                <td><input type="number" value="${r.q}" oninput="val(${bIdx}, ${rIdx}, 'q', this.value)"></td>
-                                <td><input type="number" class="price-input" value="${r.p}" oninput="val(${bIdx}, ${rIdx}, 'p', this.value)" placeholder="¥ 待填"></td>
-                                <td class="no-export"><button class="btn-del" onclick="delRow(${bIdx}, ${rIdx})">×</button></td>
+                                <td><input type="text" value="${r.m}" oninput="val(${bIdx},${rIdx},'m',this.value)" placeholder="型号..."></td>
+                                <td>
+                                    <select onchange="val(${bIdx},${rIdx},'c',this.value)">
+                                        <option value="-" ${r.c==='-'?'selected':''}>-</option>
+                                        <option value="高配" ${r.c==='高配'?'selected':''}>高配</option>
+                                        <option value="中配" ${r.c==='中配'?'selected':''}>中配</option>
+                                        <option value="低配" ${r.c==='低配'?'selected':''}>低配</option>
+                                    </select>
+                                </td>
+                                <td><input type="number" value="${r.q}" oninput="val(${bIdx},${rIdx},'q',this.value)"></td>
+                                <td><input type="number" class="price-input" value="${r.p}" oninput="val(${bIdx},${rIdx},'p',this.value)" placeholder="¥"></td>
+                                <td class="no-export"><button onclick="delRow(${bIdx},${rIdx})" style="border:none;background:none;color:#cbd5e1;font-size:16px">×</button></td>
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
             </div>
         `).join('');
-        
-        document.getElementById('time-stamp').innerText = new Date().toLocaleString();
+        document.getElementById('ts').innerText = new Date().toLocaleString();
         count();
     }
 
     function val(bi, ri, k, v) {
         data[bi].rows[ri][k] = v;
-        localStorage.setItem(KEY, JSON.stringify(data));
+        save();
         count();
     }
 
+    // 品牌管理
+    function addBrand() {
+        const name = document.getElementById('new-brand-name').value.trim();
+        if(name) {
+            data.push({ name, rows: [{m:'', c:'-', q:1, p:''}] });
+            document.getElementById('new-brand-name').value = '';
+            render();
+            save();
+        }
+    }
+
+    function delBrand(bi) {
+        if(confirm(`确定删除 [${data[bi].name}] 整个品牌块吗？`)) {
+            data.splice(bi, 1);
+            render();
+            save();
+        }
+    }
+
+    // 行管理
     function addRow(bi) {
-        data[bi].rows.push({ m:'', q:1, p:'' });
-        draw();
+        data[bi].rows.push({ m:'', c:'-', q:1, p:'' });
+        render();
+        save();
     }
 
     function delRow(bi, ri) {
         data[bi].rows.splice(ri, 1);
-        if(data[bi].rows.length === 0) data[bi].rows.push({ m:'', q:1, p:'' });
-        draw();
-        localStorage.setItem(KEY, JSON.stringify(data));
+        if(data[bi].rows.length === 0) data[bi].rows.push({m:'', c:'-', q:1, p:''});
+        render();
+        save();
     }
 
     function count() {
@@ -152,47 +168,30 @@
             b.rows.forEach(r => {
                 const q = parseFloat(r.q) || 0;
                 const p = parseFloat(r.p) || 0;
-                tq += q;
-                tm += (q * p);
+                tq += q; tm += (q * p);
             });
         });
         document.getElementById('total-qty').innerText = tq;
         document.getElementById('total-money').innerText = '¥ ' + tm.toLocaleString();
     }
 
-    async function makeImage() {
-        // 1. 清理空行：导出图片前，不显示型号为空的行
-        // (可选：如果想保持原样则跳过此步)
+    function save() { localStorage.setItem(KEY, JSON.stringify(data)); }
 
-        // 2. 隐藏操作按钮
-        document.querySelectorAll('.no-export, .btn-add').forEach(el => el.style.visibility = 'hidden');
-        
-        const area = document.getElementById('poster-area');
-        const canvas = await html2canvas(area, { scale: 2, backgroundColor: '#f8fafc' });
-        
+    async function makeImage() {
+        document.querySelectorAll('.no-export, .admin-panel, .btn-sm').forEach(el => el.style.display = 'none');
+        const canvas = await html2canvas(document.getElementById('poster-area'), { scale: 2 });
         const img = new Image();
         img.src = canvas.toDataURL("image/png");
         img.style.width = "100%";
-        img.style.borderRadius = "12px";
-        
-        document.getElementById('img-container').innerHTML = '';
-        document.getElementById('img-container').appendChild(img);
+        document.getElementById('img-out').innerHTML = '';
+        document.getElementById('img-out').appendChild(img);
         document.getElementById('mask').style.display = 'block';
-
-        // 还原显示
-        document.querySelectorAll('.no-export, .btn-add').forEach(el => el.style.visibility = 'visible');
+        document.querySelectorAll('.no-export, .admin-panel, .btn-sm').forEach(el => el.style.display = '');
     }
 
     function closeMask() { document.getElementById('mask').style.display = 'none'; }
 
-    function clearAll() {
-        if(confirm('清空所有清单？')) {
-            localStorage.removeItem(KEY);
-            location.reload();
-        }
-    }
-
-    draw();
+    render();
 </script>
 </body>
 </html>
