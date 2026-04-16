@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>批量回收清单助手</title>
+    <title>批量回收助手</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: system-ui, -apple-system, sans-serif; background: #f4f7f6; padding: 10px; margin: 0; transition: 0.3s; }
-        .container { max-width: 1200px; margin: 0 auto; }
+        .container { max-width: 1400px; margin: 0 auto; }
         
-        /* 顶部操作区 */
+        /* 顶部工具栏 */
         .header-tools { background: white; padding: 15px; border-radius: 15px; margin-bottom: 15px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .btn { border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; transition: 0.2s; color: white; }
+        .btn { border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; transition: 0.2s; color: white; display: inline-flex; align-items: center; gap: 5px; }
         .btn:active { transform: scale(0.95); }
         .btn-green { background: #10b981; }
         .btn-blue { background: #3b82f6; }
@@ -20,72 +20,71 @@
         .btn-red { background: #ef4444; }
         .btn-gray { background: #64748b; }
 
-        /* 搜索与品牌管理 */
-        .search-brand-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-        .input-box { flex: 1; min-width: 200px; padding: 10px 15px; border-radius: 8px; border: 1px solid #ddd; outline: none; }
+        /* 保存成功提示 */
+        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 10px 30px; border-radius: 50px; display: none; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+
+        .search-brand-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .input-box { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #ddd; outline: none; }
 
         /* 品牌卡片 */
-        .brand-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 15px; }
-        .brand-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .brand-name { font-size: 16px; font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .brand-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 15px; }
+        .brand-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        .brand-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; }
+        .brand-name { font-size: 16px; font-weight: bold; color: #1e293b; }
         
         /* 表格样式 */
         .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 450px; }
         th, td { border: 1px solid #edf2f7; padding: 8px 4px; text-align: center; }
         th { background: #f8fafc; color: #4a5568; }
-        .row-input { border: none; width: 100%; text-align: center; font-size: 13px; padding: 4px; outline: none; }
-        .row-input:focus { background: #f0f9ff; }
-        
-        /* 参考价显隐控制 */
-        .ref-col { display: none; background: #fff7ed; }
-        body.show-ref .ref-col { display: table-cell; }
+        .row-input { border: 1px solid transparent; width: 100%; text-align: center; font-size: 13px; padding: 6px; outline: none; border-radius: 4px; }
+        .row-input:focus { border-color: #3b82f6; background: #fff; }
+        .del-row-btn { background: #fee2e2; color: #ef4444; border: none; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; }
 
-        /* 底部汇总 */
-        .footer-total { position: sticky; bottom: 10px; background: #1e293b; color: white; padding: 15px 25px; border-radius: 50px; display: flex; justify-content: center; gap: 30px; margin-top: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); z-index: 100; }
-        
+        /* 汇总栏 */
+        .footer-total { position: sticky; bottom: 10px; background: #1e293b; color: white; padding: 15px 30px; border-radius: 50px; display: flex; justify-content: center; gap: 25px; margin-top: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.4); z-index: 1000; flex-wrap: wrap; }
+        .stat-item { display: flex; align-items: center; gap: 5px; }
+        .stat-val { font-weight: bold; font-size: 16px; color: #34d399; }
+        .diff-val { color: #fbbf24; }
+
         /* 暗色模式 */
         body.dark { background: #0f172a; color: #e2e8f0; }
-        body.dark .header-tools, body.dark .brand-card { background: #1e293b; border: 1px solid #334155; }
-        body.dark .input-box { background: #334155; color: white; border-color: #475569; }
+        body.dark .header-tools, body.dark .brand-card { background: #1e293b; border-color: #334155; }
+        body.dark .input-box, body.dark .row-input { background: #334155; color: white; border-color: #475569; }
         body.dark th { background: #334155; color: #cbd5e1; }
-        body.dark .row-input { background: transparent; color: white; }
-
-        @media (max-width: 480px) {
-            .brand-grid { grid-template-columns: 1fr; }
-            .btn { flex: 1; text-align: center; }
-        }
     </style>
 </head>
-<body class="">
+<body>
+
+<div id="toast">✅ 数据已安全保存</div>
 
 <div class="container">
     <div class="header-tools">
         <button onclick="exportExcel()" class="btn btn-green">📤 导出清单</button>
-        <button onclick="toggleRef()" class="btn btn-orange">⚖️ 显/隐参考价</button>
-        <button onclick="saveData()" class="btn btn-blue">💾 手动保存</button>
+        <button onclick="saveData(true)" class="btn btn-blue">💾 手动保存</button>
         <button onclick="clearData()" class="btn btn-red">🗑️ 清空内容</button>
-        <button onclick="toggleTheme()" class="btn btn-gray">🌙 切换模式</button>
+        <button onclick="toggleTheme()" class="btn btn-gray">🌙 模式</button>
     </div>
 
     <div class="search-brand-row">
-        <input type="text" id="brandInput" class="input-box" placeholder="输入新品牌名，回车添加...">
-        <input type="text" id="searchInput" class="input-box" placeholder="搜索型号..." oninput="filterModels()">
+        <input type="text" id="brandInput" class="input-box" placeholder="添加新品牌（如：三星），按回车确认">
+        <input type="text" id="searchInput" class="input-box" placeholder="🔍 搜索型号..." oninput="filterModels()">
     </div>
 
     <div id="brandGrid" class="brand-grid"></div>
 
     <div class="footer-total">
-        <span>已收台数：<b id="totalQty">0</b></span>
-        <span>结算总额：<b id="totalMoney">0</b> 元</span>
+        <div class="stat-item">台数：<span id="totalQty" class="stat-val">0</span></div>
+        <div class="stat-item">结算总额：<span id="totalMoney" class="stat-val">0</span> 元</div>
+        <div class="stat-item">参考总额：<span id="totalRef" class="stat-val" style="color:#fbbf24">0</span> 元</div>
+        <div class="stat-item">利润差：<span id="totalDiff" class="stat-val diff-val">0</span> 元</div>
     </div>
 </div>
 
 <script>
-    let brands = JSON.parse(localStorage.getItem('brands_v3')) || ["苹果", "华为", "小米", "OPPO", "VIVO", "荣耀"];
-    let mainData = JSON.parse(localStorage.getItem('data_v3')) || {};
+    let brands = JSON.parse(localStorage.getItem('brands_v4')) || ["苹果", "华为", "小米", "OPPO", "VIVO"];
+    let mainData = JSON.parse(localStorage.getItem('data_v4')) || {};
 
-    // 渲染页面
     function render() {
         const grid = document.getElementById('brandGrid');
         grid.innerHTML = '';
@@ -93,24 +92,30 @@
             const card = document.createElement('div');
             card.className = 'brand-card';
             card.innerHTML = `
-                <div class="brand-name">
-                    <span>${name}</span>
-                    <button onclick="removeBrand('${name}')" style="background:none; border:none; color:#ef4444; cursor:pointer;">× 移除</button>
+                <div class="brand-header">
+                    <span class="brand-name">品牌：${name}</span>
+                    <button onclick="removeBrand('${name}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:12px;">移除品牌</button>
                 </div>
                 <div class="table-container">
                     <table>
                         <thead>
-                            <tr><th style="width:40%">型号</th><th>配置</th><th>台数</th><th>单价</th><th class="ref-col">参考</th></tr>
+                            <tr>
+                                <th style="width:30%">型号</th>
+                                <th style="width:20%">配置</th>
+                                <th>数量</th>
+                                <th>单价</th>
+                                <th style="background:#fff7ed">参考价</th>
+                                <th style="width:35px">删</th>
+                            </tr>
                         </thead>
                         <tbody id="body-${name}"></tbody>
                     </table>
-                    <button onclick="addRow('${name}')" style="width:100%; padding:8px; margin-top:8px; border:1px dashed #ccc; background:none; cursor:pointer;">+ 添加型号</button>
+                    <button onclick="addRow('${name}')" style="width:100%; padding:8px; margin-top:8px; border:1px dashed #3b82f6; color:#3b82f6; background:none; cursor:pointer; border-radius:6px;">+ 添加新行</button>
                 </div>
             `;
             grid.appendChild(card);
             
-            // 填充数据
-            const rows = mainData[name] || [{}, {}, {}]; // 默认三行
+            const rows = mainData[name] || [{}, {}, {}];
             rows.forEach(rowData => addRow(name, rowData));
         });
         updateTotal();
@@ -121,109 +126,145 @@
         const tr = document.createElement('tr');
         tr.className = 'data-row';
         tr.innerHTML = `
-            <td><input type="text" class="row-input model-in" value="${data.m||''}" placeholder="..."></td>
-            <td><input type="text" class="row-input config-in" value="${data.c||''}" placeholder="..."></td>
+            <td><input type="text" class="row-input model-in" value="${data.m||''}" placeholder="输入型号"></td>
+            <td><input type="text" class="row-input config-in" value="${data.c||''}" placeholder="配置"></td>
             <td><input type="number" class="row-input qty-in" value="${data.q||1}"></td>
-            <td><input type="number" class="row-input price-in" value="${data.p||''}"></td>
-            <td class="ref-col"><input type="number" class="row-input ref-in" value="${data.r||''}"></td>
+            <td><input type="number" class="row-input price-in" value="${data.p||''}" placeholder="价格"></td>
+            <td style="background:#fff7ed"><input type="number" class="row-input ref-in" value="${data.r||''}" placeholder="参考"></td>
+            <td><button class="del-row-btn" onclick="removeRow(this)">×</button></td>
         `;
         tbody.appendChild(tr);
         
-        // 绑定自动保存和计算
         tr.querySelectorAll('input').forEach(input => {
             input.oninput = () => { updateTotal(); autoSave(); };
         });
     }
 
+    function removeRow(btn) {
+        const row = btn.closest('tr');
+        if (confirm('确定删除这一行吗？')) {
+            row.remove();
+            updateTotal();
+            autoSave();
+        }
+    }
+
     function updateTotal() {
-        let totalQ = 0, totalM = 0;
+        let totalQ = 0, totalM = 0, totalR = 0;
         document.querySelectorAll('.data-row').forEach(row => {
-            const q = parseFloat(row.querySelector('.qty-in').value) || 0;
-            const p = parseFloat(row.querySelector('.price-in').value) || 0;
             const m = row.querySelector('.model-in').value;
             if(m) {
+                const q = parseFloat(row.querySelector('.qty-in').value) || 0;
+                const p = parseFloat(row.querySelector('.price-in').value) || 0;
+                const r = parseFloat(row.querySelector('.ref-in').value) || 0;
                 totalQ += q;
                 totalM += (q * p);
+                totalR += (q * r);
             }
         });
         document.getElementById('totalQty').innerText = totalQ;
         document.getElementById('totalMoney').innerText = Math.round(totalM);
+        document.getElementById('totalRef').innerText = Math.round(totalR);
+        document.getElementById('totalDiff').innerText = Math.round(totalM - totalR);
     }
 
-    function autoSave() {
+    function saveData(isManual = false) {
         const newData = {};
         brands.forEach(name => {
             const rows = [];
-            document.querySelectorAll(`#body-${name} .data-row`).forEach(row => {
-                const m = row.querySelector('.model-in').value;
-                if(m || row.querySelector('.price-in').value) {
-                    rows.push({
-                        m: m,
-                        c: row.querySelector('.config-in').value,
-                        q: row.querySelector('.qty-in').value,
-                        p: row.querySelector('.price-in').value,
-                        r: row.querySelector('.ref-in').value
-                    });
-                }
-            });
+            const tbody = document.getElementById(`body-${name}`);
+            if(tbody) {
+                tbody.querySelectorAll('.data-row').forEach(row => {
+                    const m = row.querySelector('.model-in').value;
+                    const p = row.querySelector('.price-in').value;
+                    if(m || p) {
+                        rows.push({
+                            m: m,
+                            c: row.querySelector('.config-in').value,
+                            q: row.querySelector('.qty-in').value,
+                            p: p,
+                            r: row.querySelector('.ref-in').value
+                        });
+                    }
+                });
+            }
             newData[name] = rows;
         });
         mainData = newData;
-        localStorage.setItem('data_v3', JSON.stringify(mainData));
-        localStorage.setItem('brands_v3', JSON.stringify(brands));
+        localStorage.setItem('data_v4', JSON.stringify(mainData));
+        localStorage.setItem('brands_v4', JSON.stringify(brands));
+        
+        if(isManual) {
+            const toast = document.getElementById('toast');
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2000);
+        }
     }
 
-    // 功能函数
-    function toggleRef() { document.body.classList.toggle('show-ref'); }
-    function toggleTheme() { document.body.classList.toggle('dark'); }
-    
+    function autoSave() { saveData(false); }
+
+    function toggleTheme() {
+        document.body.classList.toggle('dark');
+        localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+    }
+
     document.getElementById('brandInput').onkeydown = (e) => {
         if(e.key === 'Enter' && e.target.value) {
-            brands.push(e.target.value);
+            const name = e.target.value.trim();
+            if(!brands.includes(name)) {
+                brands.push(name);
+                render();
+                saveData();
+            }
             e.target.value = '';
-            render();
-            autoSave();
         }
     };
 
     function removeBrand(name) {
-        if(confirm(`删除品牌 ${name} 吗？`)) {
+        if(confirm(`确定移除【${name}】品牌及其所有型号吗？`)) {
             brands = brands.filter(b => b !== name);
+            delete mainData[name];
             render();
-            autoSave();
+            saveData();
         }
     }
 
     function clearData() {
-        if(confirm('确定清空所有内容吗？')) {
-            localStorage.removeItem('data_v3');
-            location.reload();
+        if(confirm('警告：将清空所有已填写的型号和价格，是否继续？')) {
+            mainData = {};
+            localStorage.removeItem('data_v4');
+            render();
         }
     }
 
     function exportExcel() {
-        const sheetData = [["品牌", "型号", "配置", "台数", "单价", "小计", "参考价"]];
+        const sheetData = [["品牌", "型号", "配置", "数量", "单价", "小计", "参考单价", "差额"]];
         brands.forEach(b => {
             (mainData[b] || []).forEach(r => {
-                const sub = (parseFloat(r.q)||0) * (parseFloat(r.p)||0);
-                sheetData.push([b, r.m, r.c, r.q, r.p, sub, r.r]);
+                const q = parseFloat(r.q)||0;
+                const p = parseFloat(r.p)||0;
+                const ref = parseFloat(r.r)||0;
+                sheetData.push([b, r.m, r.c, q, p, q*p, ref, (p-ref)*q]);
             });
         });
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.aoa_to_sheet(sheetData);
-        XLSX.utils.book_append_sheet(wb, ws, "清单");
-        XLSX.writeFile(wb, `回收清单_${new Date().toLocaleDateString()}.xlsx`);
+        XLSX.utils.book_append_sheet(wb, ws, "清单汇总");
+        XLSX.writeFile(wb, `回收清单_${new Date().toISOString().slice(0,10)}.xlsx`);
     }
 
     function filterModels() {
         const kw = document.getElementById('searchInput').value.toLowerCase();
         document.querySelectorAll('.data-row').forEach(row => {
             const m = row.querySelector('.model-in').value.toLowerCase();
-            row.style.display = (m.includes(kw) || kw === '') ? '' : 'none';
+            row.style.display = m.includes(kw) ? '' : 'none';
         });
     }
 
-    window.onload = render;
+    window.onload = () => {
+        if(localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
+        render();
+    };
 </script>
 </body>
 </html>
