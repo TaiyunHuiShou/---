@@ -10,7 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
         :root {
-            --primary: #07c160; --danger: #fa5151; --warning: #ff9500; 
+            --primary: #07c160; --danger: #fa5151; --warning: #ff9500;
             --info: #2782D7; --gray: #8e8e93; --bg: #f2f2f7;
             --card: #ffffff; --text: #1c1c1e; --border: #e5e5ea;
             --suggest-bg: #ffffff;
@@ -19,29 +19,26 @@
             --bg: #000000; --card: #1c1c1e; --text: #f2f2f7; --border: #38383a;
             --suggest-bg: #2c2c2e;
         }
-
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 100px; transition: 0.3s; }
-
-        .ref-column { display: none; } 
+        .ref-column { display: none; }
         body.show-ref .ref-column { display: table-cell !important; }
         @media (min-width: 768px) {
             body:not(.hide-ref) .ref-column { display: table-cell; }
         }
-
         .navbar { background: var(--card); padding: 12px 15px; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 5px rgba(0,0,0,0.05); }
         .brand-card { background: var(--card); margin: 12px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); position: relative; }
         .brand-header { padding: 10px 15px; background: rgba(0,0,0,0.02); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .brand-name { font-weight: bold; color: var(--primary); }
-        
+       
         .table-wrapper { width: 100%; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
         th { padding: 8px 4px; text-align: center; color: #8e8e93; border-bottom: 1px solid var(--border); }
         td { padding: 6px 4px; border-bottom: 1px solid var(--border); vertical-align: top; position: relative; }
-        
+       
         .qty-container { display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; }
         .btn-qty { border: 1px solid var(--border); background: var(--bg); color: var(--text); width: 22px; height: 22px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
-        
+       
         /* 问题4：型号输入框 + 浮动建议列表样式 (不遮挡) */
         .model-input-wrapper {
             position: relative;
@@ -90,19 +87,18 @@
         .suggest-list li:hover, .suggest-list li.active {
             background: rgba(7, 193, 96, 0.1);
         }
-        
+       
         .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(4, 1fr); padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); z-index: 500; }
         .tab-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--gray); font-size: 10px; border: none; background: none; cursor: pointer; }
-        
+       
         .drawer { position: fixed; bottom: 0; left: 0; right: 0; top: 0; background: rgba(0,0,0,0.5); visibility: hidden; opacity: 0; transition: 0.3s; z-index: 1000; }
         .drawer.active { visibility: visible; opacity: 1; }
         .drawer-content { position: absolute; bottom: 0; left: 0; right: 0; background: var(--card); border-radius: 20px 20px 0 0; padding: 20px 15px; transform: translateY(100%); transition: 0.3s; max-height: 80vh; overflow-y: auto; }
         .drawer.active .drawer-content { transform: translateY(0); }
         .drawer-item { display: flex; align-items: center; gap: 12px; padding: 15px; border-bottom: 1px solid var(--border); font-size: 15px; color: var(--text); }
-
         .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: none; z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
         .modal-body { background: var(--card); width: 100%; max-width: 400px; border-radius: 15px; padding: 25px; position: relative; }
-        
+       
         .brand-select-full { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 16px; margin-bottom: 10px; }
         .btn-confirm { width: 100%; padding: 12px; border: none; background: var(--primary); color: white; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .modal-footer { display: flex; gap: 10px; margin-top: 15px; }
@@ -115,15 +111,17 @@
             50% { transform: scale(1.05); background: rgba(7, 193, 96, 0.3); border-radius: 20px; }
             100% { transform: scale(1); background: transparent; }
         }
+        /* 删除确认专用按钮 - 红色危险按钮 */
+        .btn-danger {
+            background: var(--danger) !important;
+        }
     </style>
 </head>
 <body class="show-ref">
-
 <div class="navbar">
     <div class="nav-title">废机回收 ERP 8.5</div>
     <div style="font-size: 12px; color: var(--gray);">专业版</div>
 </div>
-
 <div id="screenshot-area">
     <div id="brand-container"></div>
     <div class="summary-card" style="padding:15px; margin:12px; background:var(--card); border-radius:12px; border:1px dashed var(--border);">
@@ -135,16 +133,13 @@
         </div>
     </div>
 </div>
-
 <div class="tab-bar">
     <button class="tab-item" onclick="app.showAddBrandModal()"><span style="font-size:20px">➕</span><span>添加</span></button>
     <button class="tab-item" onclick="app.showExportConfirm()"><span style="font-size:20px">📎</span><span>导出</span></button>
     <button class="tab-item" onclick="app.showCharts()"><span style="font-size:20px">📊</span><span>统计</span></button>
     <button class="tab-item" onclick="app.toggleDrawer(true)"><span style="font-size:20px">⚙️</span><span>管理</span></button>
 </div>
-
 <div id="datalist-container" style="display:none;"></div>
-
 <div class="drawer" id="manageDrawer" onclick="app.toggleDrawer(false)">
     <div class="drawer-content" onclick="event.stopPropagation()">
         <div class="drawer-item" onclick="app.toggleTheme()">🌓 切换亮/暗模式</div>
@@ -160,14 +155,11 @@
         </div>
     </div>
 </div>
-
 <div class="modal" id="appModal" onclick="app.closeModal()">
     <div class="modal-body" onclick="event.stopPropagation()" id="modalContent"></div>
 </div>
-
 <script>
 const SEC_KEY = "Egg77Egg88_secret_2026";
-
 // 完整型号数据库 (2012-2026)
 const FULL_MODEL_MAP = {
     "OPPO": ["Find 7","Find 5","Find X","Find X2 Pro","Find X2","Find X3","Find X3 Pro","Find X5","Find X5 Pro","Find X6","Find X6 Pro","Find X7","Find X7 Ultra","Find N","Find N2","Find N2 Flip","Find N3","Find N3 Flip","R9","R9s","R11","R11s","R15","R17","Reno","Reno2","Reno3","Reno3 Pro","Reno4","Reno4 Pro","Reno5","Reno5 Pro","Reno6","Reno6 Pro","Reno7","Reno7 Pro","Reno8","Reno8 Pro","Reno9","Reno9 Pro","Reno10","Reno10 Pro","Reno11","Reno11 Pro","Reno12","Reno12 Pro","Reno13","Reno13 Pro","A37","A57","A59","A73","A83","A1","A3","A5","A7","A9","A11","A12","A32","A52","A72","A92","A1 Pro","A2","A2 Pro","A3 Pro","K1","K3","K5","K7","K9","K9x","K10","K10x","K11","K11x"],
@@ -180,18 +172,18 @@ const FULL_MODEL_MAP = {
     "一加": ["一加1","一加2","一加3","一加3T","一加5","一加5T","一加6","一加6T","一加7","一加7 Pro","一加7T","一加8","一加8 Pro","一加9","一加9 Pro","一加9R","一加10 Pro","一加10R","一加11","一加12","一加13","一加Ace","Ace Pro","Ace 2","Ace 2 Pro","Ace 3","Ace 3 Pro","一加Nord"],
     "魅族": ["魅族MX","MX2","MX3","MX4","MX5","Pro 5","Pro 6","Pro 7","Pro 7 Plus","魅蓝Note","魅蓝Note 2","魅蓝Note 3","魅蓝Note 5","魅蓝Note 6","魅蓝E","魅蓝X","魅族15","魅族16","魅族16s","魅族16T","魅族17","魅族17 Pro","魅族20","魅族21","魅族21s","魅族22","魅族22 Pro"]
 };
-
 // 全局所有型号列表 (用于建议)
 const ALL_MODELS_LIST = Object.values(FULL_MODEL_MAP).flat();
-
 const app = {
     data: [],
     statusList: ["废机整机", "开机屏坏", "开机屏好", "正常机"],
     cfgList: ["—", "高配", "中配", "低配"],
     brandOptions: ["OPPO", "vivo", "华为", "荣耀", "苹果", "小米", "红米", "三星", "一加", "魅族", "努比亚", "中兴", "联想", "锤子/坚果", "老年机", "杂牌机", "手动输入"],
     isWechat: /MicroMessenger/i.test(navigator.userAgent),
-    activeSuggest: null,  // 当前打开的建议框品牌索引行索引
-
+    activeSuggest: null, // 当前打开的建议框品牌索引行索引
+    // 存储待删除的品牌索引（用于自定义模态框回调）
+    pendingDeleteBrandIdx: null,
+    
     init() {
         const refPref = localStorage.getItem('ref_display_pref');
         if (refPref) {
@@ -210,21 +202,17 @@ const app = {
         // 清理过期短码备份
         this.cleanExpiredCodes();
     },
-
     reset() {
         this.data = ["OPPO", "vivo", "华为", "荣耀", "苹果"].map(b => ({ brand: b, items: this.generateEmptyRows(5) }));
     },
-
     generateEmptyRows(count) {
         return Array(count).fill().map(() => ({ m: "", s: "废机整机", c: "—", q: 1, p: "", r: "" }));
     },
-
     save() {
         const jsonStr = JSON.stringify(this.data);
         localStorage.setItem("erp_v7_secure_data", CryptoJS.AES.encrypt(jsonStr, SEC_KEY).toString());
         this.updateStats();
     },
-
     render() {
         const container = document.getElementById('brand-container');
         container.innerHTML = this.data.map((b, bIdx) => `
@@ -243,20 +231,20 @@ const app = {
                                 <tr>
                                     <td>
                                         <div class="model-input-wrapper" id="model-wrapper-${bIdx}-${rIdx}">
-                                            <input type="text" class="cell-input" placeholder="型号" value="${this.escapeHtml(i.m)}" 
+                                            <input type="text" class="cell-input" placeholder="型号" value="${this.escapeHtml(i.m)}"
                                                 autocomplete="off"
                                                 onfocus="app.showSuggestions(${bIdx}, ${rIdx}, this.value)"
                                                 oninput="app.filterSuggestions(${bIdx}, ${rIdx}, this.value)"
                                                 onblur="app.hideSuggestionsDelayed(${bIdx}, ${rIdx})">
                                         </div>
-                                    </td>
-                                    <td><div style="display:flex; flex-direction:column; gap:2px;"><select class="cell-input" onchange="app.update(${bIdx}, ${rIdx}, 's', this.value)">${this.statusList.map(s => `<option value="${s}" ${i.s === s ? 'selected' : ''}>${s}</option>`).join('')}</select><select class="cell-input" style="color:var(--gray); font-size:11px" onchange="app.update(${bIdx}, ${rIdx}, 'c', this.value)">${this.cfgList.map(c => `<option value="${c}" ${i.c === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div></td>
-                                    <td><div class="qty-container"><div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},-1)">-</div><div style="font-weight:bold">${i.q}</div><div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},1)">+</div></div></td>
-                                    <td><input type="number" class="cell-input" style="color:var(--primary);font-weight:bold" value="${i.p}" oninput="app.update(${bIdx}, ${rIdx}, 'p', this.value)"></td>
-                                    <td class="ref-column"><input type="number" class="cell-input" value="${i.r}" oninput="app.update(${bIdx}, ${rIdx}, 'r', this.value)"></td>
-                                    <td><button onclick="app.delRow(${bIdx}, ${rIdx})" style="border:none;background:none;color:var(--gray)">✕</button></td>
-                                </tr>
-                            `).join('')}
+                                     </div>
+                                    <td><div style="display:flex; flex-direction:column; gap:2px;"><select class="cell-input" onchange="app.update(${bIdx}, ${rIdx}, 's', this.value)">${this.statusList.map(s => `<option value="${s}" ${i.s === s ? 'selected' : ''}>${s}</option>`).join('')}</select><select class="cell-input" style="color:var(--gray); font-size:11px" onchange="app.update(${bIdx}, ${rIdx}, 'c', this.value)">${this.cfgList.map(c => `<option value="${c}" ${i.c === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div> </div>
+                                    <td><div class="qty-container"><div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},-1)">-</div><div style="font-weight:bold">${i.q}</div><div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},1)">+</div></div> </div>
+                                    <td><input type="number" class="cell-input" style="color:var(--primary);font-weight:bold" value="${i.p}" oninput="app.update(${bIdx}, ${rIdx}, 'p', this.value)"> </div>
+                                    <td class="ref-column"><input type="number" class="cell-input" value="${i.r}" oninput="app.update(${bIdx}, ${rIdx}, 'r', this.value)"> </div>
+                                    <td><button onclick="app.delRow(${bIdx}, ${rIdx})" style="border:none;background:none;color:var(--gray)">✕</button> </div>
+                                 `
+                            ).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -265,9 +253,7 @@ const app = {
         `).join('');
         this.updateStats();
     },
-
     escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); },
-
     // 动态建议核心逻辑
     showSuggestions(bIdx, rIdx, currentVal) {
         this.filterSuggestions(bIdx, rIdx, currentVal);
@@ -323,16 +309,65 @@ const app = {
             this.update(bIdx, rIdx, 'm', newModel);
         }
     },
-
+    
+    // ==================== 修复点：删除品牌 - 使用自定义Modal替代原生confirm ====================
     delBrand(idx) {
-        // 问题2：完全使用原生confirm，确保无自定义弹窗
-        if (confirm("确定删除该品牌吗？")) {
-            this.data.splice(idx, 1);
-            this.render();
-            this.save();
-        }
+        // 获取品牌名称用于提示
+        const brandName = this.data[idx] ? this.data[idx].brand : '';
+        // 存储待删除索引
+        this.pendingDeleteBrandIdx = idx;
+        
+        // 使用自定义模态框（复用页面已有的 #appModal）
+        const modal = document.getElementById('appModal');
+        const content = document.getElementById('modalContent');
+        
+        // 构建确认删除弹窗 - 左边取消(.btn-cancel)，右边确认删除(红色 .btn-confirm .btn-danger)
+        content.innerHTML = `
+            <div style="text-align:center;">
+                <div style="font-weight:bold; margin-bottom:12px; font-size:18px;">删除品牌</div>
+                <div style="font-size:15px; color:var(--gray); margin-bottom:24px; line-height:1.4;">确定要删除品牌“${this.escapeHtml(brandName)}”吗？该品牌下所有型号将被移除。</div>
+                <div class="modal-footer" style="display:flex; gap:12px;">
+                    <button class="btn-cancel" id="deleteConfirmCancel" style="flex:1; font-size:16px;">取消</button>
+                    <button class="btn-confirm btn-danger" id="deleteConfirmOk" style="flex:1; font-size:16px; background:var(--danger);">确认删除</button>
+                </div>
+            </div>
+        `;
+        
+        // 显示模态框
+        modal.style.display = 'flex';
+        
+        // 绑定取消按钮事件
+        const cancelBtn = document.getElementById('deleteConfirmCancel');
+        const confirmBtn = document.getElementById('deleteConfirmOk');
+        
+        // 清理事件监听器（避免重复绑定）
+        const cleanup = () => {
+            if (cancelBtn) cancelBtn.onclick = null;
+            if (confirmBtn) confirmBtn.onclick = null;
+        };
+        
+        cancelBtn.onclick = () => {
+            cleanup();
+            modal.style.display = 'none';
+            content.innerHTML = '';
+            this.pendingDeleteBrandIdx = null;
+        };
+        
+        confirmBtn.onclick = () => {
+            cleanup();
+            modal.style.display = 'none';
+            content.innerHTML = '';
+            // 执行删除逻辑（与原来完全一致）
+            if (this.pendingDeleteBrandIdx !== null && this.data[this.pendingDeleteBrandIdx]) {
+                this.data.splice(this.pendingDeleteBrandIdx, 1);
+                this.render();
+                this.save();
+            }
+            this.pendingDeleteBrandIdx = null;
+        };
     },
-
+    // ==================== 修复结束 ====================
+    
     showAddBrandModal() {
         const m = document.getElementById('appModal');
         const c = document.getElementById('modalContent');
@@ -346,7 +381,6 @@ const app = {
         `;
         m.style.display = 'flex';
     },
-
     confirmAddBrand() {
         const select = document.getElementById('nbSelect');
         const manualInput = document.getElementById('manualBrandInput');
@@ -355,7 +389,6 @@ const app = {
         this.data.push({ brand: brandName, items: this.generateEmptyRows(5) });
         this.render(); this.save(); this.closeModal();
     },
-
     showExportConfirm() {
         const m = document.getElementById('appModal');
         const c = document.getElementById('modalContent');
@@ -369,12 +402,11 @@ const app = {
         `;
         m.style.display = 'flex';
     },
-
     changeQty(bi, ri, d) { let v = parseInt(this.data[bi].items[ri].q)||1; v = Math.max(1, v+d); this.data[bi].items[ri].q = v; this.render(); this.save(); },
     update(bi, ri, k, v) { this.data[bi].items[ri][k] = v; this.save(); },
     addRow(idx) { this.data[idx].items.push({m:"", s:"废机整机", c:"—", q:1, p:"", r:""}); this.render(); },
     delRow(bi, ri) { this.data[bi].items.splice(ri, 1); this.render(); this.save(); },
-    
+   
     toggleRefColumn() { const body = document.body; if (body.classList.contains('show-ref')) body.classList.replace('show-ref', 'hide-ref'); else { body.classList.remove('hide-ref'); body.classList.add('show-ref'); } this.toggleDrawer(false); },
     toggleDrawer(s) { document.getElementById('manageDrawer').classList.toggle('active', s); },
     toggleTheme() { const d = document.body.classList.toggle('dark'); localStorage.setItem('theme', d ? 'dark' : 'light'); this.toggleDrawer(false); },
@@ -388,7 +420,6 @@ const app = {
         const icon = rate >= 0 ? '📈 高' : '📉 低';
         document.getElementById('profitRate').innerHTML = `${icon} ${Math.abs(rate).toFixed(1)}%`;
     },
-
     // 问题1：短码备份 (6-8位，7天有效期)
     showBackupCode() {
         const currentData = localStorage.getItem("erp_v7_secure_data");
@@ -431,7 +462,6 @@ const app = {
         alert("数据恢复成功！页面将刷新。");
         location.reload();
     },
-
     showCharts() {
         document.getElementById('modalContent').innerHTML = `<canvas id="chartCanvas"></canvas><div class="modal-footer"><div class="btn-cancel" style="flex:1" onclick="app.closeModal()">返回编辑</div></div>`;
         document.getElementById('appModal').style.display = 'flex';
@@ -439,21 +469,18 @@ const app = {
         this.data.forEach(b => { let s = 0; b.items.forEach(i => s += (parseInt(i.q)||0)*(parseFloat(i.p)||0)); if(s > 0) { l.push(b.brand); v.push(s); } });
         new Chart(document.getElementById('chartCanvas'), { type: 'pie', data: { labels:l, datasets:[{data:v, backgroundColor:['#FF3B30','#34C759','#007AFF','#FF9500','#AF52DE']}] } });
     },
-
     async generateLongImage() {
         this.toggleDrawer(false);
         const m = document.getElementById('appModal');
         const c = document.getElementById('modalContent');
-        c.innerHTML = "<div style='text-align:center;padding:20px;'>正在渲染高清长图...</div>"; 
+        c.innerHTML = "<div style='text-align:center;padding:20px;'>正在渲染高清长图...</div>";
         m.style.display = 'flex';
         const a = document.getElementById('screenshot-area');
         const cv = await html2canvas(a, { scale: 2, useCORS: true, backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg') });
         const imgData = cv.toDataURL('image/png');
         c.innerHTML = `<div style="text-align:center"><img src="${imgData}" style="max-width:100%; max-height:60vh; border-radius:8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"><p style="font-size:12px;color:var(--gray);margin:12px 0;">已生成高清图片，长按图片保存到手机</p><div class="modal-footer"><div class="btn-cancel" style="flex:1" onclick="app.closeModal()">返回编辑</div></div></div>`;
     },
-
     closeModal() { document.getElementById('appModal').style.display = 'none'; document.getElementById('modalContent').innerHTML = ''; },
-
     // 问题3：微信环境打印提示 + 高亮导出图片
     printPage() {
         this.toggleDrawer(false);
@@ -469,11 +496,10 @@ const app = {
             window.print();
         }
     },
-    
+    // 清空批次保留原生confirm（按需求不变）
     clearAll() { if(confirm("确定清空数据吗？此操作不可撤销！")) { localStorage.clear(); location.reload(); } },
     showContact() { alert("如有问题或合作意向，请 📧 联系作者：Egg77Egg88"); }
 };
-
 app.init();
 </script>
 </body>
