@@ -39,7 +39,6 @@
         .qty-container { display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; }
         .btn-qty { border: 1px solid var(--border); background: var(--bg); color: var(--text); width: 22px; height: 22px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
        
-        /* 问题4：型号输入框 + 浮动建议列表样式 (不遮挡) */
         .model-input-wrapper {
             position: relative;
             width: 100%;
@@ -111,10 +110,6 @@
             50% { transform: scale(1.05); background: rgba(7, 193, 96, 0.3); border-radius: 20px; }
             100% { transform: scale(1); background: transparent; }
         }
-        /* 删除确认专用按钮 - 红色危险按钮 */
-        .btn-danger {
-            background: var(--danger) !important;
-        }
     </style>
 </head>
 <body class="show-ref">
@@ -146,7 +141,6 @@
         <div class="drawer-item" onclick="app.toggleRefColumn()">🔍 显示/隐藏参考价列</div>
         <div class="drawer-item" onclick="app.generateLongImage()">📸 生成长图预览</div>
         <div class="drawer-item" onclick="app.printPage()">🖨️ 打印清单</div>
-        <!-- 问题1：移除旧的分享口令，新增备份短码功能 -->
         <div class="drawer-item" onclick="app.showBackupCode()">📂 备份数据 (生成短码)</div>
         <div class="drawer-item" onclick="app.showRecoverByCode()">📥 恢复数据 (输入短码)</div>
         <div class="drawer-item" style="color:var(--danger)" onclick="app.clearAll()">🗑️ 清空当前批次</div>
@@ -181,9 +175,6 @@ const app = {
     brandOptions: ["OPPO", "vivo", "华为", "荣耀", "苹果", "小米", "红米", "三星", "一加", "魅族", "努比亚", "中兴", "联想", "锤子/坚果", "老年机", "杂牌机", "手动输入"],
     isWechat: /MicroMessenger/i.test(navigator.userAgent),
     activeSuggest: null, // 当前打开的建议框品牌索引行索引
-    // 存储待删除的品牌索引（用于自定义模态框回调）
-    pendingDeleteBrandIdx: null,
-    
     init() {
         const refPref = localStorage.getItem('ref_display_pref');
         if (refPref) {
@@ -237,14 +228,14 @@ const app = {
                                                 oninput="app.filterSuggestions(${bIdx}, ${rIdx}, this.value)"
                                                 onblur="app.hideSuggestionsDelayed(${bIdx}, ${rIdx})">
                                         </div>
-                                     </div>
-                                    <td><div style="display:flex; flex-direction:column; gap:2px;"><select class="cell-input" onchange="app.update(${bIdx}, ${rIdx}, 's', this.value)">${this.statusList.map(s => `<option value="${s}" ${i.s === s ? 'selected' : ''}>${s}</option>`).join('')}</select><select class="cell-input" style="color:var(--gray); font-size:11px" onchange="app.update(${bIdx}, ${rIdx}, 'c', this.value)">${this.cfgList.map(c => `<option value="${c}" ${i.c === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div> </div>
-                                    <td><div class="qty-container"><div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},-1)">-</div><div style="font-weight:bold">${i.q}</div><div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},1)">+</div></div> </div>
-                                    <td><input type="number" class="cell-input" style="color:var(--primary);font-weight:bold" value="${i.p}" oninput="app.update(${bIdx}, ${rIdx}, 'p', this.value)"> </div>
-                                    <td class="ref-column"><input type="number" class="cell-input" value="${i.r}" oninput="app.update(${bIdx}, ${rIdx}, 'r', this.value)"> </div>
-                                    <td><button onclick="app.delRow(${bIdx}, ${rIdx})" style="border:none;background:none;color:var(--gray)">✕</button> </div>
-                                 `
-                            ).join('')}
+                                    </td>
+                                    <td><div style="display:flex; flex-direction:column; gap:2px;"><select class="cell-input" onchange="app.update(${bIdx}, ${rIdx}, 's', this.value)">${this.statusList.map(s => `<option value="${s}" ${i.s === s ? 'selected' : ''}>${s}</option>`).join('')}</select><select class="cell-input" style="color:var(--gray); font-size:11px" onchange="app.update(${bIdx}, ${rIdx}, 'c', this.value)">${this.cfgList.map(c => `<option value="${c}" ${i.c === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div></td>
+                                    <td><div class="qty-container"><div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},-1)">-</div><div style="font-weight:bold">${i.q}</div><div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},1)">+</div></div></td>
+                                    <td><input type="number" class="cell-input" style="color:var(--primary);font-weight:bold" value="${i.p}" oninput="app.update(${bIdx}, ${rIdx}, 'p', this.value)"></td>
+                                    <td class="ref-column"><input type="number" class="cell-input" value="${i.r}" oninput="app.update(${bIdx}, ${rIdx}, 'r', this.value)"></td>
+                                    <td><button onclick="app.delRow(${bIdx}, ${rIdx})" style="border:none;background:none;color:var(--gray)">✕</button></td>
+                                </tr>
+                            `).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -309,65 +300,25 @@ const app = {
             this.update(bIdx, rIdx, 'm', newModel);
         }
     },
-    
-    // ==================== 修复点：删除品牌 - 使用自定义Modal替代原生confirm ====================
     delBrand(idx) {
-        // 获取品牌名称用于提示
-        const brandName = this.data[idx] ? this.data[idx].brand : '';
-        // 存储待删除索引
-        this.pendingDeleteBrandIdx = idx;
-        
-        // 使用自定义模态框（复用页面已有的 #appModal）
-        const modal = document.getElementById('appModal');
-        const content = document.getElementById('modalContent');
-        
-        // 构建确认删除弹窗 - 左边取消(.btn-cancel)，右边确认删除(红色 .btn-confirm .btn-danger)
-        content.innerHTML = `
-            <div style="text-align:center;">
-                <div style="font-weight:bold; margin-bottom:12px; font-size:18px;">删除品牌</div>
-                <div style="font-size:15px; color:var(--gray); margin-bottom:24px; line-height:1.4;">确定要删除品牌“${this.escapeHtml(brandName)}”吗？该品牌下所有型号将被移除。</div>
-                <div class="modal-footer" style="display:flex; gap:12px;">
-                    <button class="btn-cancel" id="deleteConfirmCancel" style="flex:1; font-size:16px;">取消</button>
-                    <button class="btn-confirm btn-danger" id="deleteConfirmOk" style="flex:1; font-size:16px; background:var(--danger);">确认删除</button>
-                </div>
+        const m = document.getElementById('appModal');
+        const c = document.getElementById('modalContent');
+        c.innerHTML = `
+            <div style="text-align:center; font-weight:bold; margin-bottom:15px;">确定删除该品牌吗？</div>
+            <div style="font-size:14px; color:var(--gray); text-align:center; margin-bottom:20px;">此操作不可撤销</div>
+            <div class="modal-footer">
+                <div class="btn-cancel" onclick="app.closeModal()">取消</div>
+                <div class="btn-confirm" style="flex:1; background:var(--danger);" onclick="app.confirmDeleteBrand(${idx})">确认删除</div>
             </div>
         `;
-        
-        // 显示模态框
-        modal.style.display = 'flex';
-        
-        // 绑定取消按钮事件
-        const cancelBtn = document.getElementById('deleteConfirmCancel');
-        const confirmBtn = document.getElementById('deleteConfirmOk');
-        
-        // 清理事件监听器（避免重复绑定）
-        const cleanup = () => {
-            if (cancelBtn) cancelBtn.onclick = null;
-            if (confirmBtn) confirmBtn.onclick = null;
-        };
-        
-        cancelBtn.onclick = () => {
-            cleanup();
-            modal.style.display = 'none';
-            content.innerHTML = '';
-            this.pendingDeleteBrandIdx = null;
-        };
-        
-        confirmBtn.onclick = () => {
-            cleanup();
-            modal.style.display = 'none';
-            content.innerHTML = '';
-            // 执行删除逻辑（与原来完全一致）
-            if (this.pendingDeleteBrandIdx !== null && this.data[this.pendingDeleteBrandIdx]) {
-                this.data.splice(this.pendingDeleteBrandIdx, 1);
-                this.render();
-                this.save();
-            }
-            this.pendingDeleteBrandIdx = null;
-        };
+        m.style.display = 'flex';
     },
-    // ==================== 修复结束 ====================
-    
+    confirmDeleteBrand(idx) {
+        this.data.splice(idx, 1);
+        this.render();
+        this.save();
+        this.closeModal();
+    },
     showAddBrandModal() {
         const m = document.getElementById('appModal');
         const c = document.getElementById('modalContent');
@@ -496,7 +447,7 @@ const app = {
             window.print();
         }
     },
-    // 清空批次保留原生confirm（按需求不变）
+   
     clearAll() { if(confirm("确定清空数据吗？此操作不可撤销！")) { localStorage.clear(); location.reload(); } },
     showContact() { alert("如有问题或合作意向，请 📧 联系作者：Egg77Egg88"); }
 };
