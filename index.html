@@ -152,7 +152,6 @@
 <div class="modal" id="appModal" onclick="app.closeModal()">
     <div class="modal-body" onclick="event.stopPropagation()" id="modalContent"></div>
 </div>
-
 <script>
 const SEC_KEY = "Egg77Egg88_secret_2026";
 // 完整型号数据库 (2012-2026)
@@ -167,8 +166,8 @@ const FULL_MODEL_MAP = {
     "一加": ["一加1","一加2","一加3","一加3T","一加5","一加5T","一加6","一加6T","一加7","一加7 Pro","一加7T","一加8","一加8 Pro","一加9","一加9 Pro","一加9R","一加10 Pro","一加10R","一加11","一加12","一加13","一加Ace","Ace Pro","Ace 2","Ace 2 Pro","Ace 3","Ace 3 Pro","一加Nord"],
     "魅族": ["魅族MX","MX2","MX3","MX4","MX5","Pro 5","Pro 6","Pro 7","Pro 7 Plus","魅蓝Note","魅蓝Note 2","魅蓝Note 3","魅蓝Note 5","魅蓝Note 6","魅蓝E","魅蓝X","魅族15","魅族16","魅族16s","魅族16T","魅族17","魅族17 Pro","魅族20","魅族21","魅族21s","魅族22","魅族22 Pro"]
 };
+// 全局所有型号列表 (用于建议)
 const ALL_MODELS_LIST = Object.values(FULL_MODEL_MAP).flat();
-
 const app = {
     data: [],
     statusList: ["废机整机", "开机屏坏", "开机屏好", "正常机"],
@@ -176,7 +175,6 @@ const app = {
     brandOptions: ["OPPO", "vivo", "华为", "荣耀", "苹果", "小米", "红米", "三星", "一加", "魅族", "努比亚", "中兴", "联想", "锤子/坚果", "老年机", "杂牌机", "手动输入"],
     isWechat: /MicroMessenger/i.test(navigator.userAgent),
     activeSuggest: null,
-
     init() {
         const refPref = localStorage.getItem('ref_display_pref');
         if (refPref) {
@@ -192,7 +190,8 @@ const app = {
         } else { this.reset(); }
         this.render();
         if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
-        this.cleanExpiredCodes();
+        // 清理过期的分享码
+        this.cleanExpiredShareCodes();
     },
     reset() {
         this.data = ["OPPO", "vivo", "华为", "荣耀", "苹果"].map(b => ({ brand: b, items: this.generateEmptyRows(5) }));
@@ -221,34 +220,11 @@ const app = {
                         <tbody>
                             ${b.items.map((i, rIdx) => `
                                 <tr>
-                                    <td>
-                                        <div class="model-input-wrapper" id="model-wrapper-${bIdx}-${rIdx}">
-                                            <input type="text" class="cell-input" placeholder="型号" value="${this.escapeHtml(i.m)}"
-                                                autocomplete="off"
-                                                onfocus="app.showSuggestions(${bIdx}, ${rIdx}, this.value)"
-                                                oninput="app.filterSuggestions(${bIdx}, ${rIdx}, this.value)"
-                                                onblur="app.hideSuggestionsDelayed(${bIdx}, ${rIdx})">
-                                        </div>
-                                    </td>
+                                    <td><div class="model-input-wrapper" id="model-wrapper-${bIdx}-${rIdx}"><input type="text" class="cell-input" placeholder="型号" value="${this.escapeHtml(i.m)}" autocomplete="off" onfocus="app.showSuggestions(${bIdx}, ${rIdx}, this.value)" oninput="app.filterSuggestions(${bIdx}, ${rIdx}, this.value)" onblur="app.hideSuggestionsDelayed(${bIdx}, ${rIdx})"></div></td>
                                     <td><div style="display:flex; flex-direction:column; gap:2px;"><select class="cell-input" onchange="app.update(${bIdx}, ${rIdx}, 's', this.value)">${this.statusList.map(s => `<option value="${s}" ${i.s === s ? 'selected' : ''}>${s}</option>`).join('')}</select><select class="cell-input" style="color:var(--gray); font-size:11px" onchange="app.update(${bIdx}, ${rIdx}, 'c', this.value)">${this.cfgList.map(c => `<option value="${c}" ${i.c === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div></td>
-                                    <td>
-                                        <div class="qty-container">
-                                            <div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},-1)">-</div>
-                                            <div style="font-weight:bold">${i.q}</div>
-                                            <div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},1)">+</div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*" 
-                                               class="cell-input" style="color:var(--primary);font-weight:bold" 
-                                               value="${i.p}" 
-                                               oninput="app.handleNumberInput(this, ${bIdx}, ${rIdx}, 'p', true)">
-                                    </td>
-                                    <td class="ref-column">
-                                        <input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*" 
-                                               class="cell-input" value="${i.r}" 
-                                               oninput="app.handleNumberInput(this, ${bIdx}, ${rIdx}, 'r', true)">
-                                    </td>
+                                    <td><div class="qty-container"><div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},-1)">-</div><div style="font-weight:bold">${i.q}</div><div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},1)">+</div></div></td>
+                                    <td><input type="number" class="cell-input" style="color:var(--primary);font-weight:bold" value="${i.p}" oninput="app.update(${bIdx}, ${rIdx}, 'p', this.value)"></td>
+                                    <td class="ref-column"><input type="number" class="cell-input" value="${i.r}" oninput="app.update(${bIdx}, ${rIdx}, 'r', this.value)"></td>
                                     <td><button onclick="app.delRow(${bIdx}, ${rIdx})" style="border:none;background:none;color:var(--gray)">✕</button></td>
                                 </tr>
                             `).join('')}
@@ -261,28 +237,7 @@ const app = {
         this.updateStats();
     },
     escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); },
-
-    // 新增：统一的数字输入处理函数（只修改此处，其他保持不变）
-    handleNumberInput(input, bIdx, rIdx, key, allowDecimal) {
-        let value = input.value;
-        if (allowDecimal) {
-            // 允许小数（最多两位）
-            value = value.replace(/[^0-9.]/g, '');
-            const parts = value.split('.');
-            if (parts.length > 2) value = parts[0] + '.' + parts.slice(1).join('');
-            if (parts[1] && parts[1].length > 2) value = parts[0] + '.' + parts[1].substring(0, 2);
-        } else {
-            // 只允许整数
-            value = value.replace(/[^0-9]/g, '');
-        }
-        input.value = value;
-        this.data[bIdx].items[rIdx][key] = value;
-        this.save();
-    },
-
-    showSuggestions(bIdx, rIdx, currentVal) {
-        this.filterSuggestions(bIdx, rIdx, currentVal);
-    },
+    showSuggestions(bIdx, rIdx, currentVal) { this.filterSuggestions(bIdx, rIdx, currentVal); },
     filterSuggestions(bIdx, rIdx, keyword) {
         const wrapper = document.getElementById(`model-wrapper-${bIdx}-${rIdx}`);
         if (!wrapper) return;
@@ -310,20 +265,13 @@ const app = {
     },
     hideSuggestions(bIdx, rIdx) {
         const wrapper = document.getElementById(`model-wrapper-${bIdx}-${rIdx}`);
-        if(wrapper) {
-            const list = wrapper.querySelector('.suggest-list');
-            if(list) list.remove();
-        }
+        if(wrapper) { const list = wrapper.querySelector('.suggest-list'); if(list) list.remove(); }
     },
-    hideSuggestionsDelayed(bIdx, rIdx) {
-        setTimeout(() => this.hideSuggestions(bIdx, rIdx), 200);
-    },
+    hideSuggestionsDelayed(bIdx, rIdx) { setTimeout(() => this.hideSuggestions(bIdx, rIdx), 200); },
     updateModelAndMerge(bIdx, rIdx, newModel) {
         if(!newModel) return;
         const brandObj = this.data[bIdx];
         const currentRow = brandObj.items[rIdx];
-        const oldModel = currentRow.m;
-        if(oldModel === newModel) return;
         const sameIdx = brandObj.items.findIndex((item, idx) => idx !== rIdx && item.m === newModel && item.s === currentRow.s && item.c === currentRow.c);
         if(sameIdx !== -1) {
             brandObj.items[sameIdx].q += currentRow.q;
@@ -374,51 +322,16 @@ const app = {
         `;
         m.style.display = 'flex';
     },
-    changeQty(bi, ri, d) { 
-        let v = parseInt(this.data[bi].items[ri].q) || 1; 
-        v = Math.max(1, v + d); 
-        this.data[bi].items[ri].q = v; 
-        this.render(); 
-        this.save(); 
-    },
-    update(bi, ri, k, v) { 
-        this.data[bi].items[ri][k] = v; 
-        this.save(); 
-    },
-    addRow(idx) { 
-        this.data[idx].items.push({m:"", s:"废机整机", c:"—", q:1, p:"", r:""}); 
-        this.render(); 
-    },
-    delRow(bi, ri) { 
-        this.data[bi].items.splice(ri, 1); 
-        this.render(); 
-        this.save(); 
-    },
-   
-    toggleRefColumn() { 
-        const body = document.body; 
-        if (body.classList.contains('show-ref')) 
-            body.classList.replace('show-ref', 'hide-ref'); 
-        else { 
-            body.classList.remove('hide-ref'); 
-            body.classList.add('show-ref'); 
-        } 
-        this.toggleDrawer(false); 
-    },
+    changeQty(bi, ri, d) { let v = parseInt(this.data[bi].items[ri].q)||1; v = Math.max(1, v+d); this.data[bi].items[ri].q = v; this.render(); this.save(); },
+    update(bi, ri, k, v) { this.data[bi].items[ri][k] = v; this.save(); },
+    addRow(idx) { this.data[idx].items.push({m:"", s:"废机整机", c:"—", q:1, p:"", r:""}); this.render(); },
+    delRow(bi, ri) { this.data[bi].items.splice(ri, 1); this.render(); this.save(); },
+    toggleRefColumn() { const body = document.body; if (body.classList.contains('show-ref')) body.classList.replace('show-ref', 'hide-ref'); else { body.classList.remove('hide-ref'); body.classList.add('show-ref'); } this.toggleDrawer(false); },
     toggleDrawer(s) { document.getElementById('manageDrawer').classList.toggle('active', s); },
-    toggleTheme() { 
-        const d = document.body.classList.toggle('dark'); 
-        localStorage.setItem('theme', d ? 'dark' : 'light'); 
-        this.toggleDrawer(false); 
-    },
+    toggleTheme() { const d = document.body.classList.toggle('dark'); localStorage.setItem('theme', d ? 'dark' : 'light'); this.toggleDrawer(false); },
     updateStats() {
         let q = 0, p = 0, r = 0;
-        this.data.forEach(b => b.items.forEach(i => { 
-            const n = parseInt(i.q)||0; 
-            q += n; 
-            p += n*(parseFloat(i.p)||0); 
-            r += n*(parseFloat(i.r)||0); 
-        }));
+        this.data.forEach(b => b.items.forEach(i => { const n = parseInt(i.q)||0; q += n; p += n*(parseFloat(i.p)||0); r += n*(parseFloat(i.r)||0); }));
         document.getElementById('totalQty').innerText = q;
         document.getElementById('totalActual').innerText = '¥' + Math.round(p).toLocaleString();
         document.getElementById('totalRef').innerText = '¥' + Math.round(r).toLocaleString();
@@ -426,83 +339,190 @@ const app = {
         const icon = rate >= 0 ? '📈 高' : '📉 低';
         document.getElementById('profitRate').innerHTML = `${icon} ${Math.abs(rate).toFixed(1)}%`;
     },
-    showBackupCode() {
-        const currentData = localStorage.getItem("erp_v7_secure_data");
-        if(!currentData) { alert("无数据可备份"); return; }
-        const hash = this.simpleHash(currentData);
-        const randomPart = Math.random().toString(36).substring(2,6).toUpperCase();
-        let shortCode = (hash.substring(0,4) + randomPart).slice(0,8).toUpperCase();
-        const key = `share_code_${shortCode}`;
-        const expireTime = Date.now() + 7 * 24 * 3600 * 1000;
-        const backupData = { code: shortCode, data: currentData, expireTime: expireTime };
-        localStorage.setItem(key, JSON.stringify(backupData));
-        let codes = JSON.parse(localStorage.getItem("share_codes") || "[]");
-        if (!codes.includes(shortCode)) {
-            codes.push(shortCode);
-            localStorage.setItem("share_codes", JSON.stringify(codes));
+    
+    // ========== 短码备份与恢复（修复版） ==========
+    // 生成6-8位安全短码（只包含大写字母和数字，排除0/O/1/I易混淆字符）
+    generateSafeCode() {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 排除0/O/1/I
+        let code = '';
+        const length = 6 + Math.floor(Math.random() * 3); // 6-8位
+        for (let i = 0; i < length; i++) {
+            code += chars[Math.floor(Math.random() * chars.length)];
         }
-        console.log(`[备份成功] 生成短码: ${shortCode}, 存储Key: ${key}`);
-        this.closeModal();
-        const m = document.getElementById('appModal');
-        const c = document.getElementById('modalContent');
-        c.innerHTML = `<div style="text-align:center"><div style="font-weight:bold">备份短码</div><div style="font-size:28px;margin:20px 0;letter-spacing:2px">${shortCode}</div><div style="font-size:12px;color:var(--gray)">有效期7天，请妥善保存</div><div class="modal-footer"><div class="btn-confirm" onclick="navigator.clipboard.writeText('${shortCode}');alert('已复制短码');app.closeModal();">复制短码</div><div class="btn-cancel" onclick="app.closeModal()">关闭</div></div></div>`;
-        m.style.display = 'flex';
+        return code;
     },
-    simpleHash(str) { let h=0; for(let i=0;i<str.length;i++) h=((h<<5)-h)+str.charCodeAt(i)|0; return Math.abs(h).toString(36).toUpperCase(); },
-    cleanExpiredCodes() {
-        const codes = JSON.parse(localStorage.getItem("share_codes") || "[]");
+    
+    // 清理过期的分享码
+    cleanExpiredShareCodes() {
         const now = Date.now();
-        const remaining = [];
-        for(let code of codes) {
-            const key = `share_code_${code}`;
-            const str = localStorage.getItem(key);
-            if(str) {
+        const shareCodes = JSON.parse(localStorage.getItem('share_codes_list') || '[]');
+        const newShareCodes = [];
+        for (const code of shareCodes) {
+            const recordKey = `share_code_${code}`;
+            const recordStr = localStorage.getItem(recordKey);
+            if (recordStr) {
                 try {
-                    const record = JSON.parse(str);
-                    if(record.expireTime < now) {
-                        localStorage.removeItem(key);
+                    const record = JSON.parse(recordStr);
+                    if (record.expireTime && record.expireTime > now) {
+                        newShareCodes.push(code);
                     } else {
-                        remaining.push(code);
+                        localStorage.removeItem(recordKey);
+                        console.log(`[清理] 已删除过期短码: ${code}`);
                     }
                 } catch(e) {
-                    localStorage.removeItem(key);
+                    localStorage.removeItem(recordKey);
                 }
             }
         }
-        localStorage.setItem("share_codes", JSON.stringify(remaining));
+        localStorage.setItem('share_codes_list', JSON.stringify(newShareCodes));
     },
+    
+    showBackupCode() {
+        const encryptedData = localStorage.getItem("erp_v7_secure_data");
+        if (!encryptedData) {
+            alert("无数据可备份");
+            return;
+        }
+        
+        // 生成唯一短码（确保不重复）
+        let shortCode = this.generateSafeCode();
+        let shareCodes = JSON.parse(localStorage.getItem('share_codes_list') || '[]');
+        while (shareCodes.includes(shortCode)) {
+            shortCode = this.generateSafeCode();
+        }
+        
+        // 存储数据：key = share_code_XXXX
+        const storageKey = `share_code_${shortCode}`;
+        const backupRecord = {
+            code: shortCode,
+            data: encryptedData,  // 存储加密后的完整数据
+            expireTime: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7天后过期
+            createdAt: Date.now()
+        };
+        
+        localStorage.setItem(storageKey, JSON.stringify(backupRecord));
+        
+        // 更新短码列表
+        shareCodes.push(shortCode);
+        localStorage.setItem('share_codes_list', JSON.stringify(shareCodes));
+        
+        // 调试信息
+        console.log('[备份成功] 生成短码:', shortCode);
+        console.log('[备份成功] 存储Key:', storageKey);
+        console.log('[备份成功] 有效期至:', new Date(backupRecord.expireTime).toLocaleString());
+        console.log('[备份成功] 当前所有短码列表:', shareCodes);
+        
+        this.closeModal();
+        const m = document.getElementById('appModal');
+        const c = document.getElementById('modalContent');
+        c.innerHTML = `
+            <div style="text-align:center">
+                <div style="font-weight:bold; font-size:18px; margin-bottom:10px;">✅ 备份成功</div>
+                <div style="font-size:13px; color:var(--gray); margin-bottom:8px;">分享短码（有效期7天）</div>
+                <div style="font-size:32px; font-weight:bold; letter-spacing:4px; margin:15px 0; background:var(--bg); padding:12px; border-radius:12px; font-family:monospace;">${shortCode}</div>
+                <div style="font-size:12px; color:var(--gray); margin-bottom:20px;">请妥善保管此短码，7天内可凭此码恢复数据</div>
+                <div class="modal-footer" style="display:flex; gap:12px;">
+                    <div class="btn-confirm" style="flex:1;" onclick="navigator.clipboard.writeText('${shortCode}');alert('短码已复制');app.closeModal();">📋 复制短码</div>
+                    <div class="btn-cancel" style="flex:1;" onclick="app.closeModal()">关闭</div>
+                </div>
+            </div>
+        `;
+        m.style.display = 'flex';
+    },
+    
     showRecoverByCode() {
         this.closeModal();
         const m = document.getElementById('appModal');
         const c = document.getElementById('modalContent');
-        c.innerHTML = `<div style="text-align:center"><div style="font-weight:bold">输入备份短码</div><input id="recoverCodeInput" class="brand-select-full" placeholder="例如 A3B9K2" style="margin:15px 0"><div class="modal-footer"><div class="btn-confirm" onclick="app.recoverWithCode()">恢复数据</div><div class="btn-cancel" onclick="app.closeModal()">取消</div></div></div>`;
+        c.innerHTML = `
+            <div style="text-align:center">
+                <div style="font-weight:bold; font-size:18px; margin-bottom:15px;">📥 恢复数据</div>
+                <div style="font-size:13px; color:var(--gray); margin-bottom:12px;">请输入备份时生成的短码</div>
+                <input id="recoverCodeInput" class="brand-select-full" placeholder="例如 A3B9K2" style="margin:10px 0; text-align:center; font-size:18px; letter-spacing:2px; font-family:monospace;">
+                <div class="modal-footer" style="display:flex; gap:12px; margin-top:20px;">
+                    <div class="btn-confirm" style="flex:1;" onclick="app.recoverWithCode()">确认恢复</div>
+                    <div class="btn-cancel" style="flex:1;" onclick="app.closeModal()">取消</div>
+                </div>
+            </div>
+        `;
         m.style.display = 'flex';
+        // 自动聚焦输入框
+        setTimeout(() => {
+            const input = document.getElementById('recoverCodeInput');
+            if (input) input.focus();
+        }, 100);
     },
+    
     recoverWithCode() {
-        const codeInput = document.getElementById('recoverCodeInput')?.value.trim().toUpperCase();
-        if(!codeInput) { alert("请输入短码"); return; }
-        const key = `share_code_${codeInput}`;
-        const recordStr = localStorage.getItem(key);
-        if(!recordStr) { 
-            alert("无效或已过期的分享码"); 
-            return; 
-        }
-        let record;
-        try {
-            record = JSON.parse(recordStr);
-        } catch(e) {
-            alert("无效或已过期的分享码"); 
+        const codeInput = document.getElementById('recoverCodeInput');
+        const shortCode = codeInput ? codeInput.value.trim().toUpperCase() : '';
+        
+        console.log('[恢复尝试] 输入短码:', shortCode);
+        
+        if (!shortCode) {
+            alert("请输入短码");
             return;
         }
-        if(record.expireTime < Date.now()) { 
-            alert("短码已过期"); 
-            localStorage.removeItem(key);
-            return; 
+        
+        // 验证短码格式（6-8位，只包含大写字母和数字）
+        if (!/^[A-Z0-9]{6,8}$/.test(shortCode)) {
+            alert("短码格式不正确（应为6-8位大写字母和数字组合）");
+            return;
         }
-        localStorage.setItem("erp_v7_secure_data", record.data);
-        alert("数据恢复成功！页面将刷新。");
-        location.reload();
+        
+        // 查找存储记录
+        const storageKey = `share_code_${shortCode}`;
+        const recordStr = localStorage.getItem(storageKey);
+        
+        console.log('[恢复尝试] 查找Key:', storageKey);
+        console.log('[恢复尝试] 是否存在:', !!recordStr);
+        
+        if (!recordStr) {
+            // 检查是否在短码列表中但数据丢失
+            const shareCodes = JSON.parse(localStorage.getItem('share_codes_list') || '[]');
+            console.log('[恢复尝试] 当前有效短码列表:', shareCodes);
+            alert("无效或已过期的分享码\n\n请确认短码是否正确，或短码已超过7天有效期");
+            return;
+        }
+        
+        try {
+            const record = JSON.parse(recordStr);
+            const now = Date.now();
+            
+            console.log('[恢复尝试] 记录详情:', {
+                code: record.code,
+                expireTime: record.expireTime,
+                expireDate: new Date(record.expireTime).toLocaleString(),
+                now: new Date(now).toLocaleString(),
+                isExpired: record.expireTime < now
+            });
+            
+            // 检查是否过期
+            if (record.expireTime < now) {
+                alert("短码已过期（超过7天有效期）\n请重新备份数据");
+                // 清理过期记录
+                localStorage.removeItem(storageKey);
+                const shareCodes = JSON.parse(localStorage.getItem('share_codes_list') || '[]');
+                const newList = shareCodes.filter(c => c !== shortCode);
+                localStorage.setItem('share_codes_list', JSON.stringify(newList));
+                return;
+            }
+            
+            // 恢复数据
+            if (record.data) {
+                localStorage.setItem("erp_v7_secure_data", record.data);
+                alert("✅ 数据恢复成功！页面将刷新。");
+                console.log('[恢复成功] 数据已恢复，刷新页面');
+                location.reload();
+            } else {
+                alert("备份数据无效，请重新备份");
+            }
+        } catch (e) {
+            console.error('[恢复失败] 解析错误:', e);
+            alert("恢复失败：数据格式错误");
+        }
     },
+    
     showCharts() {
         document.getElementById('modalContent').innerHTML = `<canvas id="chartCanvas"></canvas><div class="modal-footer"><div class="btn-cancel" style="flex:1" onclick="app.closeModal()">返回编辑</div></div>`;
         document.getElementById('appModal').style.display = 'flex';
@@ -521,10 +541,7 @@ const app = {
         const imgData = cv.toDataURL('image/png');
         c.innerHTML = `<div style="text-align:center"><img src="${imgData}" style="max-width:100%; max-height:60vh; border-radius:8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"><p style="font-size:12px;color:var(--gray);margin:12px 0;">已生成高清图片，长按图片保存到手机</p><div class="modal-footer"><div class="btn-cancel" style="flex:1" onclick="app.closeModal()">返回编辑</div></div></div>`;
     },
-    closeModal() { 
-        document.getElementById('appModal').style.display = 'none'; 
-        document.getElementById('modalContent').innerHTML = ''; 
-    },
+    closeModal() { document.getElementById('appModal').style.display = 'none'; document.getElementById('modalContent').innerHTML = ''; },
     printPage() {
         this.toggleDrawer(false);
         if (this.isWechat) {
@@ -541,7 +558,6 @@ const app = {
     clearAll() { if(confirm("确定清空数据吗？此操作不可撤销！")) { localStorage.clear(); location.reload(); } },
     showContact() { alert("如有问题或合作意向，请 📧 联系作者：Egg77Egg88"); }
 };
-
 app.init();
 </script>
 </body>
