@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
-    <title>废机回收 ERP - v7.7 Stable</title>
+    <title>废机回收 ERP - v7.9 Professional</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -42,7 +42,8 @@
         
         .cell-input { width: 100%; padding: 4px; border: 1px solid transparent; background: transparent; color: var(--text); font-size: 13px; outline: none; text-align: center; }
 
-        .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(5, 1fr); padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); z-index: 500; }
+        /* 问题2：底部工具栏修改为4等分布局 */
+        .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(4, 1fr); padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); z-index: 500; }
         .tab-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--gray); font-size: 10px; border: none; background: none; }
         
         .drawer { position: fixed; bottom: 0; left: 0; right: 0; top: 0; background: rgba(0,0,0,0.5); visibility: hidden; opacity: 0; transition: 0.3s; z-index: 1000; }
@@ -61,8 +62,8 @@
 <body class="show-ref">
 
 <div class="navbar">
-    <div class="nav-title">废机回收 ERP 7.7</div>
-    <div style="font-size: 12px; color: var(--gray);">稳定版</div>
+    <div class="nav-title">废机回收 ERP 7.9</div>
+    <div style="font-size: 12px; color: var(--gray);">专业版</div>
 </div>
 
 <div id="screenshot-area">
@@ -79,7 +80,6 @@
 
 <div class="tab-bar">
     <button class="tab-item" onclick="app.showAddBrandModal()"><span style="font-size:20px">➕</span><span>添加</span></button>
-    <button class="tab-item" onclick="app.shareToken()"><span style="font-size:20px">📤</span><span>分享口令</span></button>
     <button class="tab-item" onclick="app.exportReport()"><span style="font-size:20px">📎</span><span>导出</span></button>
     <button class="tab-item" onclick="app.showCharts()"><span style="font-size:20px">📊</span><span>统计</span></button>
     <button class="tab-item" onclick="app.toggleDrawer(true)"><span style="font-size:20px">⚙️</span><span>管理</span></button>
@@ -93,10 +93,13 @@
         <div class="drawer-item" onclick="app.toggleRefColumn()">🔍 显示/隐藏参考价列</div>
         <div class="drawer-item" onclick="app.generateLongImage()">📸 生成长图预览</div>
         <div class="drawer-item" onclick="app.printPage()">🖨️ 打印清单</div>
-        <div class="drawer-item" onclick="app.shareToken()">📤 备份数据 (生成口令)</div>
+        <div class="drawer-item" onclick="app.shareToken()">📂 备份数据 (生成口令)</div>
         <div class="drawer-item" onclick="app.showRecover()">📥 恢复数据 (粘贴口令)</div>
         <div class="drawer-item" style="color:var(--danger)" onclick="app.clearAll()">🗑️ 清空所有数据</div>
-        <div style="text-align:center; padding:15px; opacity:0.7; font-size:12px; color:var(--info); cursor:pointer;" onclick="app.showContact()">💬 意见反馈 | 合作交流</div>
+        
+        <div style="text-align:center; padding:15px; opacity:0.7; font-size:12px; color:var(--info); cursor:pointer;" onclick="app.showContact()">
+            如有问题或合作意向，请联系 📧 联系作者：Egg77Egg88
+        </div>
     </div>
 </div>
 
@@ -106,21 +109,27 @@
 
 <script>
 const SEC_KEY = "Egg77Egg88_secret_2026";
+
 const MODEL_DB = {
-    "OPPO": ["Find X7 Ultra", "Find X7", "Find X6 Pro", "Find X6", "Find N3", "Find N2 Flip", "Reno11 Pro", "Reno11", "Reno10 Pro+", "Reno10 Pro", "Reno10", "Reno9 Pro+", "Reno9", "K11", "K11x", "K10x", "K10", "A3 Pro", "A3x", "A2 Pro", "A2x", "A2", "A1 Pro", "A1x"],
-    "vivo": ["X100 Ultra", "X100 Pro", "X100", "X90 Pro+", "X90 Pro", "X90", "X Fold3", "X Flip", "S18 Pro", "S18", "S17 Pro", "S17", "S16 Pro", "S16", "Y200", "Y100", "Y78", "Y77", "Y36", "Y35", "iQOO Neo9 Pro", "iQOO Neo9", "iQOO 12", "iQOO Z9", "iQOO Z8"],
-    "华为": ["Mate 60 Pro+", "Mate 60 Pro", "Mate 60", "Mate 50 Pro", "Mate 50", "Mate X5", "Mate X3", "P60 Pro", "P60", "P60 Art", "P50 Pro", "P50", "Nova 12 Ultra", "Nova 12 Pro", "Nova 12", "Nova 11 Pro", "Nova 11", "畅享70 Pro", "畅享70", "畅享60 Pro", "畅享60"],
-    "荣耀": ["Magic6 Pro", "Magic6", "Magic5 Pro", "Magic5", "Magic V2", "Magic Vs2", "100 Pro", "100", "90 Pro", "90", "80 Pro", "80", "70 Pro", "70", "X50 Pro", "X50", "X40 GT", "X40", "畅玩50 Plus", "畅玩50", "畅玩40 Plus"],
-    "苹果": ["iPhone 15 Pro Max", "iPhone 15 Pro", "iPhone 15 Plus", "iPhone 15", "iPhone 14 Pro Max", "iPhone 14 Pro", "iPhone 14 Plus", "iPhone 14", "iPhone 13 Pro Max", "iPhone 13 Pro", "iPhone 13", "iPhone 13 mini", "iPhone 12 Pro Max", "iPhone 12 Pro", "iPhone 12", "iPhone 12 mini", "iPhone SE 2022", "iPhone SE 2020"],
-    "小米": ["14 Ultra", "14 Pro", "14", "13 Ultra", "13 Pro", "13", "12S Ultra", "12S Pro", "Redmi K70 Pro", "Redmi K70", "Redmi K60 Ultra", "Redmi K60 Pro", "Redmi Note 13 Pro+", "Redmi Note 13 Pro", "Redmi Note 13", "MIX Fold 4", "MIX Fold 3"],
-    "三星": ["S24 Ultra", "S24+", "S24", "S23 Ultra", "S23+", "S23", "Z Fold6", "Z Fold5", "Z Flip6", "Z Flip5", "A55", "A54", "A35", "A34", "A25", "A24"]
+    "OPPO": ["Find 7", "Find 5", "Find X", "Find X2 Pro", "Find X2", "Find X3", "Find X3 Pro", "Find X5", "Find X5 Pro", "Find X6", "Find X6 Pro", "Find X7", "Find X7 Ultra", "Find N", "Find N2", "Find N2 Flip", "Find N3", "Find N3 Flip", "R9", "R9s", "R11", "R11s", "R15", "R17", "Reno", "Reno2", "Reno3", "Reno3 Pro", "Reno4", "Reno4 Pro", "Reno5", "Reno5 Pro", "Reno6", "Reno6 Pro", "Reno7", "Reno7 Pro", "Reno8", "Reno8 Pro", "Reno9", "Reno9 Pro", "Reno10", "Reno10 Pro", "Reno11", "Reno11 Pro", "Reno12", "Reno12 Pro", "Reno13", "Reno13 Pro", "A37", "A57", "A59", "A73", "A83", "A1", "A3", "A5", "A7", "A9", "A11", "A12", "A32", "A52", "A72", "A92", "A1 Pro", "A2", "A2 Pro", "A3", "A3 Pro", "K1", "K3", "K5", "K7", "K9", "K9x", "K10", "K10x", "K11", "K11x"],
+    "vivo": ["X3", "X5", "X6", "X7", "X9", "X20", "X21", "X23", "X27", "X30", "X50", "X50 Pro", "X60", "X60 Pro", "X70", "X70 Pro", "X80", "X80 Pro", "X90", "X90 Pro", "X90 Pro+", "X100", "X100 Pro", "X100 Ultra", "X200", "X200 Pro", "X200 Ultra", "Xplay3S", "Xplay5", "Xplay6", "X Fold", "X Fold+", "X Fold2", "X Fold3", "X Flip", "S12", "S12 Pro", "S15", "S15 Pro", "S16", "S16 Pro", "S17", "S17 Pro", "S18", "S18 Pro", "S19", "S19 Pro", "S20", "S20 Pro", "Y17", "Y20", "Y22", "Y27", "Y28", "Y30", "Y31", "Y33", "Y35", "Y37", "Y50", "Y51", "Y52", "Y55", "Y66", "Y67", "Y70", "Y71", "Y73", "Y75", "Y79", "Y81", "Y83", "Y85", "Y93", "Y95", "Y97", "Z1", "Z3", "Z5", "Z6", "iQOO 7", "iQOO 8", "iQOO 9", "iQOO 10", "iQOO 11", "iQOO 12", "iQOO 13", "iQOO Neo5", "iQOO Neo6", "iQOO Neo7", "iQOO Neo8", "iQOO Neo9", "iQOO Z5", "iQOO Z6", "iQOO Z7", "iQOO Z8", "iQOO Z9"],
+    "华为": ["Mate 7", "Mate 8", "Mate 9", "Mate 10", "Mate 20", "Mate 30", "Mate 40", "Mate 40 Pro", "Mate 40 Pro+", "Mate 40E", "Mate 50", "Mate 50 Pro", "Mate 50E", "Mate 60", "Mate 60 Pro", "Mate 60 Pro+", "Mate 60 RS", "P6", "P7", "P8", "P9", "P10", "P20", "P30", "P40", "P50", "P50 Pro", "P50 Pocket", "P60", "P60 Pro", "P60 Art", "P70", "P70 Pro", "P70 Art", "Nova", "Nova 2", "Nova 3", "Nova 4", "Nova 5", "Nova 6", "Nova 7", "Nova 8", "Nova 8 Pro", "Nova 9", "Nova 9 Pro", "Nova 10", "Nova 10 Pro", "Nova 11", "Nova 11 Pro", "Nova 12", "Nova 12 Pro", "Nova 12 Ultra", "Nova 13", "Nova 13 Pro", "畅享5", "畅享6", "畅享7", "畅享8", "畅享9", "畅享10", "荣耀3", "荣耀4", "荣耀5X", "荣耀6", "荣耀7", "荣耀8", "荣耀9", "荣耀10", "荣耀20", "荣耀V8", "荣耀V9", "荣耀V10", "荣耀V20", "荣耀Play", "荣耀Note 8", "荣耀Note 10", "荣耀Magic", "荣耀Magic 2", "Mate X", "Mate Xs 2", "Mate X3", "Mate X5", "Pocket 2", "Pocket S"],
+    "苹果": ["iPhone 5", "iPhone 5c", "iPhone 5s", "iPhone 6", "iPhone 6 Plus", "iPhone 6s", "iPhone 6s Plus", "iPhone 7", "iPhone 7 Plus", "iPhone 8", "iPhone 8 Plus", "iPhone X", "iPhone XR", "iPhone XS", "iPhone XS Max", "iPhone 11", "iPhone 11 Pro", "iPhone 11 Pro Max", "iPhone 12", "iPhone 12 mini", "iPhone 12 Pro", "iPhone 12 Pro Max", "iPhone 13", "iPhone 13 mini", "iPhone 13 Pro", "iPhone 13 Pro Max", "iPhone 14", "iPhone 14 Plus", "iPhone 14 Pro", "iPhone 14 Pro Max", "iPhone 15", "iPhone 15 Plus", "iPhone 15 Pro", "iPhone 15 Pro Max", "iPhone 16", "iPhone 16 Plus", "iPhone 16 Pro", "iPhone 16 Pro Max", "iPhone SE(第一代)", "iPhone SE(第二代)", "iPhone SE(第三代)", "iPhone SE(第四代)"],
+    "小米": ["小米1", "小米2", "小米3", "小米4", "小米5", "小米6", "小米8", "小米9", "小米10", "小米10 Pro", "小米11", "小米11 Pro", "小米11 Ultra", "小米12", "小米12 Pro", "小米12S", "小米12S Pro", "小米12S Ultra", "小米13", "小米13 Pro", "小米13 Ultra", "小米14", "小米14 Pro", "小米14 Ultra", "小米15", "小米15 Pro", "小米Civi", "Civi 1S", "Civi 2", "Civi 3", "Civi 4 Pro", "小米Note", "Note 2", "Note 3", "MIX", "MIX 2", "MIX 2S", "MIX 3", "MIX 4", "MIX Fold", "MIX Fold 2", "MIX Fold 3", "MIX Fold 4", "Redmi 1", "Redmi 2", "Redmi 3", "Redmi 4", "Redmi 5", "Redmi 6", "Redmi 7", "Redmi 8", "Redmi 9", "Redmi Note 1", "Redmi Note 2", "Redmi Note 3", "Redmi Note 4", "Redmi Note 5", "Redmi Note 7", "Redmi Note 8", "Redmi Note 10", "Redmi Note 11", "Redmi Note 12", "Redmi Note 13", "Redmi Note 14", "Redmi K20", "Redmi K30", "Redmi K40", "Redmi K50", "Redmi K60", "Redmi K70", "Redmi K80"],
+    "三星": ["S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10", "S10+", "S10e", "S20", "S20+", "S20 Ultra", "S21", "S21+", "S21 Ultra", "S22", "S22+", "S22 Ultra", "S23", "S23+", "S23 Ultra", "S24", "S24+", "S24 Ultra", "S25", "S25+", "S25 Ultra", "Note 2", "Note 3", "Note 4", "Note 5", "Note 7", "Note 8", "Note 9", "Note 10", "Note 10+", "Note 20", "Z Fold3", "Z Fold4", "Z Fold5", "Z Fold6", "Z Flip3", "Z Flip4", "Z Flip5", "Z Flip6", "A3", "A5", "A7", "A8", "A9", "A10", "A20", "A30", "A40", "A50", "A60", "A70", "A80", "A90", "J3", "J5", "J7", "J4", "J6", "J8"],
+    "一加": ["一加1", "一加2", "一加3", "一加3T", "一加5", "一加5T", "一加6", "一加6T", "一加7", "一加7 Pro", "一加7T", "一加8", "一加8 Pro", "一加9", "一加9 Pro", "一加9R", "一加10 Pro", "一加10R", "一加11", "一加12", "一加13", "一加Ace", "Ace Pro", "Ace 2", "Ace 2 Pro", "Ace 3", "Ace 3 Pro", "一加Nord"],
+    "魅族": ["MX", "MX2", "MX3", "MX4", "MX5", "Pro 5", "Pro 6", "Pro 7", "Pro 7 Plus", "魅蓝Note", "魅蓝Note 2", "魅蓝Note 3", "魅蓝Note 5", "魅蓝Note 6", "魅蓝E", "魅蓝X", "魅族15", "魅族16", "魅族16s", "魅族16T", "魅族17", "魅族17 Pro", "魅族20", "魅族21", "魅族21s", "魅族22", "魅族22 Pro"],
+    "努比亚": ["Z5", "Z7", "Z9", "Z11", "Z17", "Z18", "Z20", "Z60 Ultra", "Z70 Ultra", "红魔1", "红魔2", "红魔3"],
+    "中兴": ["Grand S", "天机7", "天机9", "Axon 7", "Axon 9", "Axon 10 Pro", "Axon 50 Ultra", "Axon 60 Ultra"],
+    "联想": ["K860", "K900", "ZUK Z1", "ZUK Z2", "ZUK Edge", "Moto Z", "Moto Z2", "拯救者Y90"],
+    "锤子/坚果": ["Smartisan T1", "T2", "M1", "M1L", "坚果Pro", "坚果Pro 2", "坚果Pro 2S", "坚果R1", "坚果3"]
 };
 
 const app = {
     data: [],
     statusList: ["废机整机", "开机屏坏", "开机屏好", "正常机"],
     cfgList: ["—", "高配", "中配", "低配"],
-    brandOptions: ["OPPO", "vivo", "华为", "荣耀", "苹果", "小米", "三星", "一加", "老年机", "杂牌机", "魅族", "锤子", "黑鲨", "努比亚", "联想", "中兴", "索尼", "谷歌", "摩托罗拉", "诺基亚"],
+    brandOptions: ["OPPO", "vivo", "华为", "苹果", "小米", "三星", "一加", "魅族", "努比亚", "中兴", "联想", "锤子/坚果", "老年机", "杂牌机"],
     isWechat: /MicroMessenger/i.test(navigator.userAgent),
 
     init() {
@@ -143,26 +152,17 @@ const app = {
     },
 
     reset() {
-        this.data = ["OPPO", "苹果"].map(b => ({ brand: b, items: [{ m: "", s: "废机整机", c: "—", q: 1, p: "", r: "" }] }));
+        this.data = ["OPPO", "华为"].map(b => ({ brand: b, items: this.generateEmptyRows(5) }));
+    },
+
+    generateEmptyRows(count) {
+        return Array(count).fill().map(() => ({ m: "", s: "废机整机", c: "—", q: 1, p: "", r: "" }));
     },
 
     save() {
         const jsonStr = JSON.stringify(this.data);
         localStorage.setItem("erp_v7_secure_data", CryptoJS.AES.encrypt(jsonStr, SEC_KEY).toString());
         this.updateStats();
-    },
-
-    toggleRefColumn() {
-        const body = document.body;
-        if (body.classList.contains('show-ref')) {
-            body.classList.replace('show-ref', 'hide-ref');
-            localStorage.setItem('ref_display_pref', 'hide-ref');
-        } else {
-            body.classList.remove('hide-ref');
-            body.classList.add('show-ref');
-            localStorage.setItem('ref_display_pref', 'show-ref');
-        }
-        this.toggleDrawer(false);
     },
 
     buildDatalists() {
@@ -180,7 +180,7 @@ const app = {
             <div class="brand-card">
                 <div class="brand-header">
                     <span class="brand-name">${b.brand}</span>
-                    <button onclick="app.delBrand(${bIdx})" style="color:var(--danger);border:none;background:none;font-size:12px">删除</button>
+                    <button onclick="app.delBrand(${bIdx})" style="color:var(--danger);border:none;background:none;font-size:12px">删除品牌</button>
                 </div>
                 <div class="table-wrapper">
                     <table>
@@ -198,8 +198,10 @@ const app = {
                             ${b.items.map((i, rIdx) => `
                                 <tr>
                                     <td>
-                                        <input type="text" class="cell-input" list="list-${b.brand}" 
-                                            placeholder="输入型号" value="${i.m}" 
+                                        <input type="text" class="cell-input" 
+                                            list="list-${b.brand}" 
+                                            placeholder="型号" 
+                                            value="${i.m}" 
                                             onchange="app.handleModelChange(${bIdx}, ${rIdx}, this.value)">
                                     </td>
                                     <td>
@@ -243,45 +245,19 @@ const app = {
         if (existingIdx !== -1) {
             brandItems[existingIdx].q += brandItems[rIdx].q;
             brandItems.splice(rIdx, 1);
-            alert(`检测到已录入 ${val}，数量已自动合并`);
+            alert(`检测到相同型号：${val}，数量已自动合并`);
             this.render();
         } else {
             this.update(bIdx, rIdx, 'm', val);
         }
     },
 
+    /* 问题1：修复后的删除品牌逻辑 */
     delBrand(idx) {
-        const name = this.data[idx].brand;
-        if (window.confirm(`确定要删除品牌「${name}」及其所有型号数据吗？此操作无法撤销。`)) {
+        if (confirm("确定删除该品牌吗？")) {
             this.data.splice(idx, 1);
             this.render();
             this.save();
-        }
-    },
-
-    shareToken() {
-        const token = `📱ERP#${LZString.compressToBase64(localStorage.getItem("erp_v7_secure_data"))}`;
-        const input = document.createElement('textarea');
-        input.value = token;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand('copy');
-        document.body.removeChild(input);
-        alert("口令已复制，可发送给微信好友！恢复时只需在“管理-恢复口令”中粘贴即可。");
-    },
-
-    exportReport() {
-        if (this.isWechat) {
-            alert("微信端即将生成预览图片，请长按保存图片或截图分享。");
-            this.generateLongImage();
-        } else {
-            let csv = "\uFEFF品牌,型号,机况,数量,成交价\n";
-            this.data.forEach(b => b.items.forEach(i => csv += `${b.brand},${i.m},${i.s},${i.q},${i.p}\n`));
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `回收清单_${new Date().toLocaleDateString()}.csv`;
-            link.click();
         }
     },
 
@@ -289,7 +265,7 @@ const app = {
         const m = document.getElementById('appModal');
         const c = document.getElementById('modalContent');
         c.innerHTML = `
-            <div style="font-weight:bold; margin-bottom:15px; text-align:center;">选择回收品牌</div>
+            <div style="font-weight:bold; margin-bottom:15px; text-align:center;">快速选择回收品牌</div>
             <select id="nbSelect" class="brand-select-full">
                 ${this.brandOptions.map(o => `<option value="${o}">${o}</option>`).join('')}
             </select>
@@ -297,12 +273,15 @@ const app = {
         `;
         m.style.display = 'flex';
     },
+
     confirmAddBrand() {
         const b = document.getElementById('nbSelect').value;
-        this.data.push({ brand: b, items: [{ m: "", s: "废机整机", c: "—", q: 1, p: "", r: "" }] });
-        this.render(); this.save();
+        this.data.push({ brand: b, items: this.generateEmptyRows(5) });
+        this.render(); 
+        this.save();
         document.getElementById('appModal').style.display = 'none';
     },
+
     changeQty(bi, ri, d) { 
         let v = parseInt(this.data[bi].items[ri].q)||1; 
         v = Math.max(1, v+d); 
@@ -312,6 +291,18 @@ const app = {
     update(bi, ri, k, v) { this.data[bi].items[ri][k] = v; this.save(); },
     addRow(idx) { this.data[idx].items.push({m:"", s:"废机整机", c:"—", q:1, p:"", r:""}); this.render(); },
     delRow(bi, ri) { this.data[bi].items.splice(ri, 1); this.render(); this.save(); },
+    toggleRefColumn() {
+        const body = document.body;
+        if (body.classList.contains('show-ref')) {
+            body.classList.replace('show-ref', 'hide-ref');
+            localStorage.setItem('ref_display_pref', 'hide-ref');
+        } else {
+            body.classList.remove('hide-ref');
+            body.classList.add('show-ref');
+            localStorage.setItem('ref_display_pref', 'show-ref');
+        }
+        this.toggleDrawer(false);
+    },
     toggleDrawer(s) { document.getElementById('manageDrawer').classList.toggle('active', s); },
     toggleTheme() {
         const d = document.body.classList.toggle('dark');
@@ -328,14 +319,15 @@ const app = {
         document.getElementById('totalRef').innerText = '¥' + Math.round(r).toLocaleString();
         document.getElementById('profitRate').innerText = (r > 0 ? (((p - r) / r) * 100).toFixed(1) : 0) + '%';
     },
-    async generateLongImage() {
-        this.toggleDrawer(false);
-        const m = document.getElementById('appModal');
-        const c = document.getElementById('modalContent');
-        c.innerHTML = "正在处理快照..."; m.style.display = 'flex';
-        const a = document.getElementById('screenshot-area');
-        const cv = await html2canvas(a, { scale: 2, useCORS: true, backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg') });
-        c.innerHTML = `<div style="text-align:center"><img src="${cv.toDataURL('image/png')}" style="max-width:100%; border-radius:8px; border:1px solid #ddd;"><p style="font-size:12px;color:var(--gray);margin-top:10px;">微信端请长按图片保存或发送</p></div>`;
+    shareToken() {
+        const token = `📱ERP#${LZString.compressToBase64(localStorage.getItem("erp_v7_secure_data"))}`;
+        const input = document.createElement('textarea');
+        input.value = token;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        alert("口令已复制，可发送给好友作为备份数据！");
     },
     showRecover() {
         const t = prompt("粘贴分享口令以恢复数据:");
@@ -345,9 +337,41 @@ const app = {
             location.reload();
         }
     },
+    exportReport() {
+        if (this.isWechat) {
+            alert("微信端建议使用 [生成长图] 功能保存数据。");
+            this.generateLongImage();
+        } else {
+            let csv = "\uFEFF品牌,型号,机况,数量,成交价\n";
+            this.data.forEach(b => b.items.forEach(i => csv += `${b.brand},${i.m},${i.s},${i.q},${i.p}\n`));
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `回收清单_${new Date().toLocaleDateString()}.csv`;
+            link.click();
+        }
+    },
+    showCharts() {
+        document.getElementById('modalContent').innerHTML = `<canvas id="chartCanvas"></canvas>`;
+        document.getElementById('appModal').style.display = 'flex';
+        const l = [], v = [];
+        this.data.forEach(b => {
+            let s = 0; b.items.forEach(i => s += (parseInt(i.q)||0)*(parseFloat(i.p)||0));
+            if(s > 0) { l.push(b.brand); v.push(s); }
+        });
+        new Chart(document.getElementById('chartCanvas'), { type: 'pie', data: { labels:l, datasets:[{data:v, backgroundColor:['#FF3B30','#34C759','#007AFF','#FF9500','#AF52DE']}] } });
+    },
+    async generateLongImage() {
+        this.toggleDrawer(false);
+        const m = document.getElementById('appModal');
+        const c = document.getElementById('modalContent');
+        c.innerHTML = "正在处理快照..."; m.style.display = 'flex';
+        const a = document.getElementById('screenshot-area');
+        const cv = await html2canvas(a, { scale: 2, backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg') });
+        c.innerHTML = `<div style="text-align:center"><img src="${cv.toDataURL('image/png')}" style="max-width:100%; border-radius:8px;"><p style="font-size:12px;color:var(--gray);margin-top:10px;">长按图片保存</p></div>`;
+    },
     printPage() { this.toggleDrawer(false); window.print(); },
     clearAll() { if(confirm("确定永久清空所有数据？")) { localStorage.clear(); location.reload(); } },
-    // 修改点：反馈弹出提示逻辑
     showContact() {
         alert("如有问题或合作意向，请联系\n微信：Egg77Egg88");
     }
