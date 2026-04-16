@@ -3,427 +3,411 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
-    <title>手机回收 ERP 6.8 - 专家修复版</title>
+    <title>废机回收 ERP - v7.3 Security Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
         :root {
-            --primary: #2563eb; --danger: #ef4444; --success: #10b981;
-            --warning: #f59e0b; --bg: #f1f5f9; --card: #ffffff;
-            --text: #1e293b; --border: #cbd5e1; --modal-overlay: rgba(0,0,0,0.6);
+            --primary: #07c160; --danger: #fa5151; --warning: #ff9500; 
+            --info: #2782D7; --gray: #8e8e93; --bg: #f2f2f7;
+            --card: #ffffff; --text: #1c1c1e; --border: #e5e5ea;
         }
         .dark {
-            --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --border: #334155; --modal-overlay: rgba(0,0,0,0.85);
+            --bg: #000000; --card: #1c1c1e; --text: #f2f2f7; --border: #38383a;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { 
             font-family: -apple-system, system-ui, sans-serif; 
             background: var(--bg); color: var(--text); margin: 0; 
-            padding-bottom: 240px; transition: background 0.3s; 
+            padding-bottom: 100px; transition: 0.3s;
+            user-select: none; /* 防止轻易复制 */
         }
 
-        /* 布局组件 */
-        .header { background: var(--card); padding: 10px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
-        .batch-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
-        .batch-bar::-webkit-scrollbar { display: none; }
-        .batch-tab { 
-            padding: 6px 12px; background: var(--bg); border: 1px solid var(--border); 
-            border-radius: 8px; font-size: 13px; white-space: nowrap; cursor: pointer; display: flex; align-items: center; gap: 5px;
-        }
-        .batch-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
-
-        .toolbar { display: flex; gap: 8px; padding: 10px; background: var(--card); overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .btn { padding: 8px 14px; border-radius: 8px; border: none; font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
-        .btn-add { background: var(--primary); color: white; }
-        .btn-outline { background: var(--card); border: 1px solid var(--border); color: var(--text); }
-        .btn-purple { background: #8b5cf6; color: white; }
-
-        /* 表格优化 */
-        .table-wrapper { 
-            width: 100%; overflow-x: auto; background: var(--card); 
-            border-top: 1px solid var(--border); -webkit-overflow-scrolling: touch; 
-        }
-        table { width: 100%; border-collapse: collapse; min-width: 950px; font-size: 14px; }
-        th { background: var(--bg); padding: 12px 8px; text-align: left; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
-        td { padding: 8px; border-bottom: 1px solid var(--border); }
+        /* UI 基础组件 (保持 v7.2 布局) */
+        .navbar { background: var(--card); padding: 12px 15px; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 5px rgba(0,0,0,0.05); }
+        .nav-title { font-weight: bold; font-size: 18px; }
+        .brand-card { background: var(--card); margin: 12px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid var(--border); }
+        .brand-header { padding: 10px 15px; background: rgba(0,0,0,0.02); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .brand-name { font-weight: bold; color: var(--primary); }
+        .table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; min-width: 580px; font-size: 13px; }
+        th { padding: 10px 5px; text-align: left; color: #8e8e93; border-bottom: 1px solid var(--border); }
+        td { padding: 6px 4px; border-bottom: 1px solid var(--border); }
+        .cell-input { width: 100%; padding: 6px 4px; border: 1px solid transparent; background: transparent; color: var(--text); font-size: 13px; outline: none; }
+        .cell-input:focus { border-bottom: 1px solid var(--primary); }
         
-        .cell-input { width: 100%; padding: 8px; border: 1px solid transparent; background: transparent; color: var(--text); border-radius: 4px; transition: 0.2s; }
-        .cell-input:focus { border-color: var(--primary); background: var(--bg); }
-        .cell-readonly { font-weight: bold; color: var(--primary); font-size: 13px; }
+        /* 统计与底部栏 */
+        .summary-card { padding: 15px; margin: 12px; background: var(--card); border-radius: 12px; border: 1px dashed var(--border); }
+        .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .sum-val { font-weight: bold; font-size: 15px; }
+        .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(5, 1fr); padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); z-index: 500; }
+        .tab-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--gray); font-size: 10px; border: none; background: none; }
+        .tab-icon { font-size: 20px; }
 
-        /* 品牌逻辑展示 */
-        .brand-cell { display: flex; flex-direction: column; gap: 4px; }
-        .other-input { border: 1px solid var(--warning) !important; font-size: 12px; background: var(--bg); }
+        /* 抽屉菜单 */
+        .drawer { position: fixed; bottom: 0; left: 0; right: 0; top: 0; background: rgba(0,0,0,0.5); visibility: hidden; opacity: 0; transition: 0.3s; z-index: 1000; }
+        .drawer.active { visibility: visible; opacity: 1; }
+        .drawer-content { position: absolute; bottom: 0; left: 0; right: 0; background: var(--card); border-radius: 20px 20px 0 0; padding: 20px 15px calc(20px + env(safe-area-inset-bottom)); transform: translateY(100%); transition: 0.3s; max-height: 85vh; overflow-y: auto; }
+        .drawer.active .drawer-content { transform: translateY(0); }
+        .drawer-item { display: flex; align-items: center; gap: 12px; padding: 15px; border-bottom: 1px solid var(--border); font-size: 15px; color: var(--text); }
+        .drawer-footer { text-align: center; font-size: 10px; color: #888; opacity: 0.5; margin-top: 20px; padding: 10px 0; border-top: 1px dashed var(--border); }
 
-        /* 固定底部面板 */
-        .footer { 
-            position: fixed; bottom: 0; left: 0; right: 0; 
-            background: #1e293b; color: white; padding: 20px 15px;
-            border-radius: 20px 20px 0 0; box-shadow: 0 -8px 25px rgba(0,0,0,0.3); z-index: 200;
-        }
-        .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .stat-label { font-size: 11px; opacity: 0.6; margin-bottom: 2px; }
-        .stat-val { font-size: 19px; font-weight: 800; }
+        /* 状态与加载 */
+        #loading-toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 15px 25px; border-radius: 10px; z-index: 3000; display: none; }
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: none; z-index: 2000; align-items: center; justify-content: center; }
+        .modal-body { background: var(--card); width: 85%; border-radius: 15px; padding: 20px; }
 
-        /* 模态框适配 */
-        .modal { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: var(--modal-overlay); display: none; align-items: center; 
-            justify-content: center; z-index: 1000; padding: 20px; backdrop-filter: blur(4px);
-        }
-        .modal-content { 
-            background: var(--card); color: var(--text); width: 100%; max-width: 450px; 
-            border-radius: 16px; padding: 24px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-        }
-        .modal-input { width: 100%; padding: 12px; margin: 12px 0; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); }
-
-        #undoBar { 
-            position: fixed; bottom: 250px; left: 50%; transform: translateX(-50%);
-            background: #334155; color: white; padding: 12px 24px; 
-            border-radius: 50px; display: none; justify-content: space-between; align-items: center; 
-            z-index: 300; width: 90%; max-width: 300px; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        @media print {
+            .tab-bar, .navbar, .drawer, .btn-del-brand, .btn-add-row, button { display: none !important; }
+            body { background: white; }
+            .brand-card { border: 1px solid #000; box-shadow: none; break-inside: avoid; }
+            table, th, td { border: 1px solid #000; color: black !important; }
         }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;"> <div id="loading-toast">处理中...</div>
 
-<div class="header">
-    <div class="batch-bar" id="batchBar"></div>
+<div class="navbar">
+    <div class="nav-title">废机回收 ERP 7.3 Sec</div>
+    <div style="font-size: 12px; color: var(--gray);" id="security-status">🔒 加密运行中</div>
 </div>
 
-<div class="toolbar">
-    <button class="btn btn-add" onclick="app.addRow()">➕ 添加行</button>
-    <button class="btn btn-purple" onclick="app.showShareModal()">📤 分享口令</button>
-    <button class="btn btn-outline" style="color:var(--primary)" onclick="app.showRecoverModal()">📥 恢复口令</button>
-    <button class="btn btn-outline" onclick="app.showCharts()">📊 统计图</button>
-    <button class="btn btn-outline" onclick="app.exportExcel()">📎 导出Excel</button>
-    <button class="btn btn-outline" onclick="app.toggleTheme()">🌓 主题</button>
-    <button class="btn btn-outline" style="color:var(--danger)" onclick="app.clearBatch()">🗑️ 清空</button>
-</div>
-
-<div id="undoBar">
-    <span style="font-size:13px">批次已删除</span>
-    <button onclick="app.undoDelete()" style="background:var(--success); color:white; border:none; padding:4px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">撤销</button>
-</div>
-
-<div class="table-wrapper">
-    <table>
-        <thead>
-            <tr>
-                <th style="min-width: 150px;">品牌</th>
-                <th style="min-width: 140px;">型号</th>
-                <th style="min-width: 100px;">高低配</th>
-                <th style="min-width: 100px;">成色</th>
-                <th style="min-width: 70px;">数量</th>
-                <th style="min-width: 100px;">成交价</th>
-                <th style="min-width: 100px;">小计</th>
-                <th style="min-width: 100px;">参考价</th>
-                <th style="min-width: 70px;">操作</th>
-            </tr>
-        </thead>
-        <tbody id="dataTableBody"></tbody>
-    </table>
-</div>
-
-<div class="footer">
-    <div class="stat-grid">
-        <div class="stat-item">
-            <div class="stat-label">成交总额</div>
-            <div class="stat-val" style="color:var(--success)">¥ <span id="totalActual">0</span></div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-label">参考(成本)总额</div>
-            <div class="stat-val" style="color:var(--warning)">¥ <span id="totalRef">0</span></div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-label">收货总台数</div>
-            <div class="stat-val" id="totalQty">0</div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-label">预估利润率</div>
-            <div class="stat-val" id="profitRatio">--</div>
+<div id="screenshot-area">
+    <div id="brand-container"></div>
+    <div class="summary-card">
+        <div class="summary-grid">
+            <div class="sum-item">总台数: <span class="sum-val" id="totalQty">0</span></div>
+            <div class="sum-item">成交额: <span class="sum-val" style="color:var(--warning)" id="totalActual">¥0</span></div>
+            <div class="sum-item">参考额: <span class="sum-val" id="totalRef">¥0</span></div>
+            <div class="sum-item">利润率: <span class="sum-val" id="profitRate">0%</span></div>
         </div>
     </div>
 </div>
 
-<div class="modal" id="commonModal" onclick="this.style.display='none'">
-    <div class="modal-content" onclick="event.stopPropagation()" id="modalContent"></div>
+<div class="tab-bar">
+    <button class="tab-item" onclick="app.addNewBrand()">
+        <span class="tab-icon">➕</span><span>添加</span>
+    </button>
+    <button class="tab-item" onclick="app.shareToken()">
+        <span class="tab-icon">📤</span><span>分享</span>
+    </button>
+    <button class="tab-item" onclick="app.exportReport()">
+        <span class="tab-icon">📎</span><span>导出</span>
+    </button>
+    <button class="tab-item" onclick="app.showCharts()">
+        <span class="tab-icon">📊</span><span>统计</span>
+    </button>
+    <button class="tab-item" onclick="app.toggleDrawer(true)">
+        <span class="tab-icon">⚙️</span><span>管理</span>
+    </button>
+</div>
+
+<div class="drawer" id="manageDrawer" onclick="app.toggleDrawer(false)">
+    <div class="drawer-content" onclick="event.stopPropagation()">
+        <div style="text-align:center; padding-bottom:15px; font-weight:bold; border-bottom:1px solid var(--border)">安全管理控制台</div>
+        <div class="drawer-item" onclick="app.toggleTheme()">🌓 切换主题模式</div>
+        <div class="drawer-item" onclick="app.generateLongImage()">📸 生成高清长图</div>
+        <div class="drawer-item" onclick="app.printPage()">🖨️ 打印回收清单</div>
+        <div class="drawer-item" onclick="app.backupJSON()">📂 安全备份 (JSON)</div>
+        <div class="drawer-item" onclick="app.restoreJSON()">📥 恢复备份 (JSON)</div>
+        <div class="drawer-item" onclick="app.showRecover()">🔑 恢复口令数据</div>
+        <div class="drawer-item" style="color:var(--danger)" onclick="app.clearAll()">🗑️ 彻底销毁本地数据</div>
+        <div class="drawer-footer">
+            废机回收 ERP v7.3 Professional | 微信：Egg77Egg88
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="appModal" onclick="this.style.display='none'">
+    <div class="modal-body" onclick="event.stopPropagation()" id="modalContent"></div>
 </div>
 
 <script>
+/**
+ * 安全配置
+ */
+const SEC_KEY = "Egg77Egg88_secret_2026"; // AES密钥
+const STORAGE_KEY = "erp_v7_secure_data";
+const HASH_KEY = "erp_v7_data_hash";
+
 const app = {
-    brands: ["苹果", "华为", "小米", "OPPO", "vivo", "荣耀", "三星", "一加", "魅族", "其他"],
-    cfgs: ["—", "高配", "中配", "低配"],
-    qualities: ["靓机", "小花", "大花", "碎屏"],
-    db: {
-        batches: { "4月16日收货单": [] },
-        current: "4月16日收货单"
+    statusList: ["不开机", "开机屏坏", "开机屏好", "正常机"],
+    cfgList: ["—", "高配", "中配", "低配"],
+    data: [],
+
+    // --- 安全模块 ---
+    
+    // XSS 过滤
+    xss(str) {
+        if (!str) return "";
+        return str.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     },
-    tempDelete: null,
-    undoTimer: null,
+
+    // 数据加密与摘要
+    encryptData(obj) {
+        const jsonStr = JSON.stringify(obj);
+        const encrypted = CryptoJS.AES.encrypt(jsonStr, SEC_KEY).toString();
+        const hash = CryptoJS.MD5(jsonStr).toString();
+        return { encrypted, hash };
+    },
+
+    // 数据解密与校验
+    decryptData(encryptedStr, storedHash) {
+        try {
+            const bytes = CryptoJS.AES.decrypt(encryptedStr, SEC_KEY);
+            const decryptedJson = bytes.toString(CryptoJS.enc.Utf8);
+            const currentHash = CryptoJS.MD5(decryptedJson).toString();
+            
+            if (currentHash !== storedHash) {
+                throw new Error("TamperDetected");
+            }
+            return JSON.parse(decryptedJson);
+        } catch (e) {
+            console.error("Security Breach:", e);
+            return null;
+        }
+    },
+
+    // --- 核心逻辑 ---
 
     init() {
-        const saved = localStorage.getItem('erp_v68_stable');
-        if (saved) this.db = JSON.parse(saved);
-        this.renderBatchBar();
-        this.renderTable();
+        this.initAntiDebug();
+        const encrypted = localStorage.getItem(STORAGE_KEY);
+        const storedHash = localStorage.getItem(HASH_KEY);
+
+        if (encrypted && storedHash) {
+            const decrypted = this.decryptData(encrypted, storedHash);
+            if (decrypted) {
+                this.data = decrypted;
+            } else {
+                if (confirm("⚠️ 安全警报：本地数据校验失败或已被篡改！\n数据可能已损坏，是否清空数据以继续使用？")) {
+                    this.clearAll(true);
+                }
+            }
+        } else {
+            const defaults = ["OPPO", "vivo", "华为", "荣耀", "苹果", "小米"];
+            this.data = defaults.map(b => ({ brand: b, items: Array(3).fill().map(() => this.emptyRow()) }));
+        }
+        this.render();
         if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
     },
 
+    // 禁用开发者工具快捷键
+    initAntiDebug() {
+        document.addEventListener('keydown', (e) => {
+            if (
+                e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'C' || e.key === 'J')) ||
+                (e.ctrlKey && e.key === 'u')
+            ) {
+                e.preventDefault();
+                alert("为了数据安全，本系统已限制开发者工具。");
+            }
+        });
+    },
+
+    emptyRow() { return { m: "", s: "不开机", c: "—", q: 1, p: "", r: "" }; },
+
     save() {
-        localStorage.setItem('erp_v68_stable', JSON.stringify(this.db));
+        const { encrypted, hash } = this.encryptData(this.data);
+        localStorage.setItem(STORAGE_KEY, encrypted);
+        localStorage.setItem(HASH_KEY, hash);
         this.updateStats();
     },
 
-    // --- 批次管理 ---
-    renderBatchBar() {
-        const bar = document.getElementById('batchBar');
-        bar.innerHTML = '';
-        Object.keys(this.db.batches).forEach(name => {
-            const isAct = name === this.db.current;
-            const tab = document.createElement('div');
-            tab.className = `batch-tab ${isAct ? 'active' : ''}`;
-            tab.innerHTML = `
-                <span onclick="app.switchBatch('${name}')">${name}</span>
-                <small onclick="app.renameBatch('${name}')" style="margin-left:5px; opacity:0.6">✏️</small>
-                <small onclick="app.removeBatch('${name}')" style="margin-left:5px; opacity:0.6">✕</small>
-            `;
-            bar.appendChild(tab);
-        });
-        const addBtn = document.createElement('div');
-        addBtn.className = 'batch-tab';
-        addBtn.innerHTML = '<b>+ 新增</b>';
-        addBtn.onclick = () => {
-            const n = prompt("输入新批次名称:");
-            if (n && !this.db.batches[n]) { this.db.batches[n] = []; this.switchBatch(n); }
-        };
-        bar.appendChild(addBtn);
-    },
-
-    switchBatch(n) { this.db.current = n; this.save(); this.renderBatchBar(); this.renderTable(); },
-    
-    renameBatch(old) {
-        const n = prompt("重命名批次:", old);
-        if (n && n !== old) {
-            this.db.batches[n] = this.db.batches[old];
-            delete this.db.batches[old];
-            if (this.db.current === old) this.db.current = n;
-            this.save(); this.renderBatchBar();
-        }
-    },
-
-    removeBatch(n) {
-        if (Object.keys(this.db.batches).length <= 1) return alert("必须保留一个批次");
-        this.tempDelete = { name: n, data: this.db.batches[n] };
-        delete this.db.batches[n];
-        this.db.current = Object.keys(this.db.batches)[0];
-        this.save(); this.renderBatchBar(); this.renderTable();
-        
-        const bar = document.getElementById('undoBar');
-        bar.style.display = 'flex';
-        clearTimeout(this.undoTimer);
-        this.undoTimer = setTimeout(() => bar.style.display = 'none', 5000);
-    },
-
-    undoDelete() {
-        if (!this.tempDelete) return;
-        this.db.batches[this.tempDelete.name] = this.tempDelete.data;
-        this.db.current = this.tempDelete.name;
-        document.getElementById('undoBar').style.display = 'none';
-        this.save(); this.renderBatchBar(); this.renderTable();
-    },
-
-    // --- 表格渲染 (修复高低配、其他品牌逻辑) ---
-    addRow() {
-        this.db.batches[this.db.current].unshift({
-            b: "苹果", cb: "", m: "", cfg: "—", qly: "靓机", qty: 1, prc: 0, ref: 0
-        });
-        this.renderTable(); this.save();
-    },
-
-    renderTable() {
-        const body = document.getElementById('dataTableBody');
-        body.innerHTML = '';
-        const items = this.db.batches[this.db.current] || [];
-        
-        items.forEach((item, idx) => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>
-                    <div class="brand-cell">
-                        <select class="cell-input" onchange="app.update(${idx}, 'b', this.value); app.renderTable();">
-                            ${this.brands.map(b => `<option value="${b}" ${item.b===b?'selected':''}>${b}</option>`).join('')}
-                        </select>
-                        ${item.b === '其他' ? `<input type="text" class="cell-input other-input" placeholder="输入品牌" value="${item.cb||''}" oninput="app.update(${idx}, 'cb', this.value)">` : ''}
-                    </div>
-                </td>
-                <td><input type="text" class="cell-input" placeholder="型号" value="${item.m}" oninput="app.update(${idx}, 'm', this.value)"></td>
-                <td>
-                    <select class="cell-input" onchange="app.update(${idx}, 'cfg', this.value)">
-                        ${this.cfgs.map(c => `<option value="${c}" ${item.cfg===c?'selected':''}>${c}</option>`).join('')}
-                    </select>
-                </td>
-                <td>
-                    <select class="cell-input" onchange="app.update(${idx}, 'qly', this.value)">
-                        ${this.qualities.map(q => `<option value="${q}" ${item.qly===q?'selected':''}>${q}</option>`).join('')}
-                    </select>
-                </td>
-                <td><input type="number" class="cell-input" value="${item.qty}" oninput="app.update(${idx}, 'qty', this.value)"></td>
-                <td><input type="number" class="cell-input" value="${item.prc}" oninput="app.update(${idx}, 'prc', this.value)"></td>
-                <td class="cell-readonly">¥${(item.prc * item.qty).toLocaleString()}</td>
-                <td><input type="number" class="cell-input" value="${item.ref}" oninput="app.update(${idx}, 'ref', this.value)"></td>
-                <td><button onclick="app.deleteRow(${idx})" style="background:none; border:none; color:var(--danger); font-size:18px; cursor:pointer">✕</button></td>
-            `;
-            body.appendChild(tr);
-        });
+    render() {
+        const container = document.getElementById('brand-container');
+        container.innerHTML = this.data.map((b, bIdx) => `
+            <div class="brand-card">
+                <div class="brand-header">
+                    <span class="brand-name">${this.xss(b.brand)}</span>
+                    <button class="btn-del-brand" onclick="app.delBrand(${bIdx})" style="border:none;background:none;color:var(--danger);font-size:12px;">删除</button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="min-width:100px">型号</th>
+                                <th style="min-width:85px">机况</th>
+                                <th style="min-width:60px">规格</th>
+                                <th style="width:45px">台数</th>
+                                <th style="width:75px">成交价</th>
+                                <th style="width:70px">参考价</th>
+                                <th style="width:30px"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${b.items.map((i, rIdx) => `
+                                <tr>
+                                    <td><input type="text" class="cell-input" placeholder="输入型号" value="${this.xss(i.m)}" oninput="app.update(${bIdx}, ${rIdx}, 'm', this.value)"></td>
+                                    <td>
+                                        <select class="cell-input s-${i.s}" onchange="app.update(${bIdx}, ${rIdx}, 's', this.value); app.render()">
+                                            ${this.statusList.map(s => `<option value="${s}" ${i.s === s ? 'selected' : ''}>${s}</option>`).join('')}
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select class="cell-input" onchange="app.update(${bIdx}, ${rIdx}, 'c', this.value)">
+                                            ${this.cfgList.map(c => `<option value="${c}" ${i.c === c ? 'selected' : ''}>${c}</option>`).join('')}
+                                        </select>
+                                    </td>
+                                    <td><input type="number" class="cell-input" value="${i.q}" oninput="app.update(${bIdx}, ${rIdx}, 'q', this.value)"></td>
+                                    <td><input type="number" class="cell-input" style="color:var(--primary); font-weight:bold" value="${i.p}" oninput="app.update(${bIdx}, ${rIdx}, 'p', this.value)"></td>
+                                    <td><input type="number" class="cell-input" style="color:var(--gray)" value="${i.r}" oninput="app.update(${bIdx}, ${rIdx}, 'r', this.value)"></td>
+                                    <td><button onclick="app.delRow(${bIdx}, ${rIdx})" style="border:none; background:none">✕</button></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <button onclick="app.addRow(${bIdx})" style="width:100%;padding:10px;border:none;background:none;color:var(--info);font-size:12px;">➕ 添加一行</button>
+            </div>
+        `).join('');
         this.updateStats();
     },
 
-    update(idx, k, v) {
-        this.db.batches[this.db.current][idx][k] = v;
+    update(bIdx, rIdx, key, val) {
+        this.data[bIdx].items[rIdx][key] = val;
         this.save();
     },
 
-    deleteRow(idx) {
-        this.db.batches[this.db.current].splice(idx, 1);
-        this.renderTable(); this.save();
-    },
-
-    clearBatch() {
-        if (confirm("确定清空当前批次吗？")) {
-            this.db.batches[this.db.current] = [];
-            this.renderTable(); this.save();
-        }
-    },
-
-    // --- 财务统计 ---
     updateStats() {
-        let q=0, p=0, r=0;
-        (this.db.batches[this.db.current] || []).forEach(i => {
-            const num = parseFloat(i.qty) || 0;
-            q += num;
-            p += num * (parseFloat(i.prc) || 0);
-            r += num * (parseFloat(i.ref) || 0);
+        let q = 0, p = 0, r = 0;
+        this.data.forEach(b => {
+            b.items.forEach(i => {
+                const qty = parseFloat(i.q) || 0;
+                if (i.m || i.p) {
+                    q += qty;
+                    p += qty * (parseFloat(i.p) || 0);
+                    r += qty * (parseFloat(i.r) || 0);
+                }
+            });
         });
         document.getElementById('totalQty').innerText = q;
-        document.getElementById('totalActual').innerText = Math.round(p).toLocaleString();
-        document.getElementById('totalRef').innerText = Math.round(r).toLocaleString();
-        
-        const ratioEl = document.getElementById('profitRatio');
-        if (r > 0) {
-            const pct = (((p - r) / r) * 100).toFixed(1);
-            ratioEl.innerText = (pct >= 0 ? '+' : '') + pct + '%';
-            ratioEl.style.color = pct >= 0 ? '#10b981' : '#f87171';
-        } else {
-            ratioEl.innerText = '--';
-        }
+        document.getElementById('totalActual').innerText = '¥' + Math.round(p).toLocaleString();
+        document.getElementById('totalRef').innerText = '¥' + Math.round(r).toLocaleString();
+        const rate = r > 0 ? (((p - r) / r) * 100).toFixed(1) : 0;
+        document.getElementById('profitRate').innerText = rate + '%';
     },
 
-    // --- 口令分享与压缩 ---
-    showShareModal() {
-        const content = document.getElementById('modalContent');
-        content.innerHTML = `
-            <h3 style="margin-top:0">📤 生成口令</h3>
-            <input type="text" id="shareUser" class="modal-input" placeholder="您的称呼 (如: 老王回收)">
-            <button class="btn btn-add" style="width:100%; justify-content:center" onclick="app.doGenerate()">生成并复制</button>
-        `;
-        document.getElementById('commonModal').style.display = 'flex';
+    // --- 功能模块 (继承 v7.2) ---
+    
+    toggleDrawer(show) { document.getElementById('manageDrawer').classList.toggle('active', show); },
+    
+    toggleTheme() {
+        const isDark = document.body.classList.toggle('dark');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
     },
 
-    doGenerate() {
-        const user = document.getElementById('shareUser').value || "佚名";
-        const data = { u: user, t: Date.now(), i: this.db.batches[this.db.current] };
-        const compressed = LZString.compressToBase64(JSON.stringify(data));
-        const token = `📱回收#${compressed}`;
-        
-        navigator.clipboard.writeText(token).then(() => {
-            alert("口令已生成并复制到剪贴板！");
-            document.getElementById('commonModal').style.display = 'none';
-        });
+    async generateLongImage() {
+        this.toggleDrawer(false);
+        const toast = document.getElementById('loading-toast');
+        toast.style.display = 'block';
+        const area = document.getElementById('screenshot-area');
+        try {
+            const canvas = await html2canvas(area, { scale: 2, backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg'), useCORS: true });
+            const link = document.createElement('a');
+            link.download = `清单_${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        } finally { toast.style.display = 'none'; }
     },
 
-    showRecoverModal() {
-        const content = document.getElementById('modalContent');
-        content.innerHTML = `
-            <h3 style="margin-top:0">📥 恢复口令</h3>
-            <textarea id="recoverToken" class="modal-input" style="height:100px" placeholder="粘贴 📱回收# 开头的口令"></textarea>
-            <button class="btn btn-add" style="width:100%; justify-content:center" onclick="app.doRecover()">确认导入</button>
-        `;
-        document.getElementById('commonModal').style.display = 'flex';
+    printPage() { this.toggleDrawer(false); window.print(); },
+
+    backupJSON() {
+        const payload = this.encryptData(this.data);
+        const blob = new Blob([JSON.stringify(payload)], {type: 'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = `SEC_BACKUP_${Date.now()}.json`;
+        a.click();
     },
 
-    doRecover() {
-        const token = document.getElementById('recoverToken').value.trim();
-        if (!token.startsWith("📱回收#")) return alert("无效口令");
+    restoreJSON() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = (re) => {
+                try {
+                    const payload = JSON.parse(re.target.result);
+                    const decrypted = this.decryptData(payload.encrypted, payload.hash);
+                    if (decrypted) {
+                        this.data = decrypted; this.save(); this.render();
+                        alert("安全备份恢复成功！");
+                    } else { throw new Error(); }
+                } catch(e) { alert("备份文件无效或已被修改"); }
+            };
+            reader.readAsText(e.target.files[0]);
+        };
+        input.click();
+    },
+
+    shareToken() {
+        const token = `📱ERP#${LZString.compressToBase64(JSON.stringify(this.encryptData(this.data)))}`;
+        const area = document.createElement('textarea');
+        area.value = token; document.body.appendChild(area); area.select();
+        document.execCommand('copy'); document.body.removeChild(area);
+        alert("加密口令已复制！");
+    },
+
+    showRecover() {
+        const token = prompt("粘贴加密口令：");
+        if (!token || !token.startsWith("📱ERP#")) return;
         try {
             const raw = LZString.decompressFromBase64(token.split('#')[1]);
-            const data = JSON.parse(raw);
-            const bName = `${data.u}_分享_${new Date(data.t).toLocaleDateString()}`;
-            this.db.batches[bName] = data.i;
-            this.switchBatch(bName);
-            document.getElementById('commonModal').style.display = 'none';
-            alert(`✅ 已恢复来自 [${data.u}] 的数据`);
-        } catch(e) { alert("解析失败，数据可能损坏"); }
+            const payload = JSON.parse(raw);
+            const decrypted = this.decryptData(payload.encrypted, payload.hash);
+            if (decrypted) {
+                this.data = decrypted; this.save(); this.render();
+                alert("口令同步成功！");
+            }
+        } catch(e) { alert("口令解析失败"); }
     },
 
-    // --- 图表统计 (修复占比逻辑) ---
+    exportReport() {
+        let csv = "\uFEFF品牌,型号,机况,规格,数量,成交价,总计\n";
+        this.data.forEach(b => b.items.forEach(i => {
+            if(i.m || i.p) csv += `${b.brand},${i.m},${i.s},${i.c},${i.q},${i.p},${i.q*i.p}\n`;
+        }));
+        const area = document.createElement('textarea');
+        area.value = csv; document.body.appendChild(area); area.select();
+        document.execCommand('copy'); document.body.removeChild(area);
+        alert("CSV数据已复制到剪贴板！");
+    },
+
     showCharts() {
         const content = document.getElementById('modalContent');
-        content.innerHTML = `
-            <h3 style="margin-top:0">📊 数据透视</h3>
-            <canvas id="chartBrand" style="margin-bottom:20px"></canvas>
-            <hr style="opacity:0.1">
-            <canvas id="chartQuality"></canvas>
-        `;
-        document.getElementById('commonModal').style.display = 'flex';
-        
-        const items = this.db.batches[this.db.current];
-        const brands = {}, quals = { "靓机":0, "小花":0, "大花":0, "碎屏":0 };
-        
-        items.forEach(i => {
-            const bName = i.b === '其他' ? (i.cb || '其他') : i.b;
-            const subtotal = (i.prc * i.qty) || 0;
-            brands[bName] = (brands[bName] || 0) + subtotal;
-            quals[i.qly] = (quals[i.qly] || 0) + (parseFloat(i.qty)||0);
+        content.innerHTML = `<h3>📊 品牌占比</h3><canvas id="chartCanvas"></canvas>`;
+        document.getElementById('appModal').style.display = 'flex';
+        const labels = [], values = [];
+        this.data.forEach(b => {
+            let sum = 0;
+            b.items.forEach(i => sum += (parseFloat(i.q)||0) * (parseFloat(i.p)||0));
+            if(sum > 0) { labels.push(b.brand); values.push(sum); }
         });
-
-        new Chart(document.getElementById('chartBrand'), {
-            type: 'pie',
-            data: {
-                labels: Object.keys(brands),
-                datasets: [{ data: Object.values(brands), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'] }]
-            },
-            options: { plugins: { title: { display: true, text: '品牌成交金额占比' } } }
-        });
-
-        new Chart(document.getElementById('chartQuality'), {
-            type: 'bar',
-            data: {
-                labels: Object.keys(quals),
-                datasets: [{ label: '台数', data: Object.values(quals), backgroundColor: '#3b82f6' }]
-            },
-            options: { plugins: { title: { display: true, text: '成色库存分布' } } }
+        new Chart(document.getElementById('chartCanvas'), {
+            type: 'doughnut',
+            data: { labels: labels, datasets: [{ data: values, backgroundColor: ['#FF3B30', '#34C759', '#007AFF', '#FF9500', '#AF52DE'] }] }
         });
     },
 
-    // --- 导出与备份 ---
-    exportExcel() {
-        const data = this.db.batches[this.db.current].map(i => ({
-            "品牌": i.b === '其他' ? i.cb : i.b,
-            "型号": i.m, "配置": i.cfg, "成色": i.qly, "数量": i.qty, 
-            "成交单价": i.prc, "成交小计": i.prc*i.qty, "参考成本价": i.ref
-        }));
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "清单");
-        XLSX.writeFile(wb, `${this.db.current}.xlsx`);
+    addNewBrand() {
+        const name = prompt("品牌名称:");
+        if (name) { this.data.push({ brand: name, items: Array(3).fill().map(() => this.emptyRow()) }); this.render(); this.save(); }
     },
+    delBrand(idx) { if (confirm("确定删除？")) { this.data.splice(idx, 1); this.render(); this.save(); } },
+    addRow(idx) { this.data[idx].items.push(this.emptyRow()); this.render(); },
+    delRow(bIdx, rIdx) { this.data[bIdx].items.splice(rIdx, 1); this.render(); this.save(); },
 
-    toggleTheme() {
-        document.body.classList.toggle('dark');
-        localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+    clearAll(force = false) {
+        if(force || confirm("⚠️ 警告：这将永久删除所有本地录入的数据且不可撤销。确认吗？")) {
+            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem(HASH_KEY);
+            location.reload();
+        }
     }
 };
 
