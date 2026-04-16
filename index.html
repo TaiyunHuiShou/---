@@ -3,237 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>数码回收专业报货对账系统</title>
+    <title>钛云数码-二手机批量报货系统</title>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
         :root { --main: #2563eb; --price: #dc2626; --bg: #f1f5f9; --card: #ffffff; --text: #1e293b; }
         body.dark { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; }
-        
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--text); font-family: system-ui; margin: 0; padding: 10px; transition: 0.3s; }
 
-        /* 顶部功能区 */
-        .top-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-        .btn { border: none; padding: 10px 16px; border-radius: 40px; font-size: 13px; font-weight: bold; cursor: pointer; color: white; display: flex; align-items: center; gap: 4px; }
+        /* 顶部操作中心 */
+        .admin-bar { background: var(--card); padding: 12px; border-radius: 16px; margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .btn { border: none; padding: 8px 14px; border-radius: 40px; font-size: 12px; font-weight: bold; cursor: pointer; color: white; display: flex; align-items: center; gap: 4px; }
         .btn-blue { background: var(--main); }
-        .btn-red { background: #ef4444; }
         .btn-gray { background: #64748b; }
-        .btn-dark { background: #334155; }
+        .btn-red { background: #ef4444; }
 
-        /* 品牌快速入口 */
-        .brand-nav { display: flex; overflow-x: auto; gap: 8px; padding: 5px 0 15px; border-bottom: 1px solid #cbd5e1; margin-bottom: 15px; }
-        .nav-item { padding: 6px 15px; background: var(--card); border-radius: 20px; font-size: 12px; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        /* 品牌导航区 */
+        .brand-nav { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 10px; margin-bottom: 10px; scrollbar-width: none; }
+        .nav-item { padding: 6px 14px; background: var(--card); border-radius: 20px; font-size: 11px; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
-        /* 报货单主体 */
-        #poster-area { background: var(--bg); border-radius: 12px; }
-        .brand-section { background: var(--card); border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .brand-title { font-size: 18px; font-weight: 900; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        /* 品牌卡片设计 */
+        .brand-section { background: var(--card); border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .brand-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; margin-bottom: 10px; padding-bottom: 5px; }
+        .brand-name { font-size: 18px; font-weight: 900; color: var(--main); }
         
-        table { width: 100%; border-collapse: collapse; min-width: 320px; }
-        th { font-size: 11px; color: #94a3b8; text-align: left; padding-bottom: 8px; }
-        td { padding: 8px 2px; border-bottom: 1px solid #f1f5f955; }
+        table { width: 100%; border-collapse: collapse; }
+        th { font-size: 10px; color: #94a3b8; text-align: left; padding: 5px; }
+        td { padding: 6px 2px; border-bottom: 1px solid #f1f5f9; }
 
-        input, select { border: none; background: #8882; padding: 8px; border-radius: 6px; font-size: 13px; color: var(--text); width: 100%; outline: none; }
-        .input-price { color: #ef4444; font-weight: bold; text-align: right; }
+        input, select { border: none; background: #8881; padding: 8px; border-radius: 8px; font-size: 13px; color: var(--text); width: 100%; outline: none; }
+        .input-price { color: var(--price); font-weight: bold; text-align: right; background: #ef444411; }
         
-        /* 统计栏 */
-        .stats-bar { margin-top: 10px; display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; color: var(--main); }
+        .stats { margin-top: 10px; display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; color: var(--main); opacity: 0.8; }
 
-        /* 全局结算汇总 */
-        .summary-box { background: #1e293b; color: white; padding: 20px; border-radius: 20px; margin: 20px 0; display: flex; justify-content: space-between; align-items: center; }
-        .summary-box b { font-size: 24px; color: #fbbf24; }
+        /* 全局统计 */
+        .grand-summary { background: #1e293b; color: white; padding: 20px; border-radius: 24px; margin: 20px 0; display: flex; justify-content: space-between; align-items: center; }
+        .grand-summary b { font-size: 26px; color: #fbbf24; }
 
-        /* 底部推广 - 隐形处理 */
-        .footer-credit { text-align: center; font-size: 11px; color: #94a3b8; margin: 30px 0; letter-spacing: 2px; }
-        .footer-credit strong { color: #64748b; }
+        .footer { text-align: center; font-size: 11px; color: #94a3b8; padding: 20px 0; letter-spacing: 1px; }
 
-        /* 长图遮罩 */
-        #mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:1000; padding:20px; overflow-y: auto; }
-        
-        @media print { .top-bar, .floating-actions { display: none; } }
+        #mask { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:1000; padding:20px; overflow-y: auto; }
+        #mask img { width: 100%; border-radius: 12px; }
     </style>
 </head>
 <body>
 
-<div class="top-bar">
-    <button class="btn btn-blue" onclick="exportImg()">📤 生成对账图</button>
-    <button class="btn btn-gray" onclick="saveData()">💾 备份数据</button>
-    <button class="btn btn-gray" onclick="loadData()">📂 恢复数据</button>
-    <button class="btn btn-dark" id="themeBtn" onclick="toggleTheme()">🌙 暗色模式</button>
-    <button class="btn btn-red" onclick="reset()">🗑️ 全部清空</button>
+<div class="admin-bar">
+    <button class="btn btn-blue" onclick="exportImg()">📤 生成对账长图</button>
+    <button class="btn btn-gray" onclick="backupJSON()">💾 备份(JSON)</button>
+    <button class="btn btn-gray" onclick="restoreJSON()">📂 恢复数据</button>
+    <button class="btn btn-gray" style="background:#475569" onclick="toggleTheme()">🌙 模式</button>
+    <button class="btn btn-red" onclick="clearData()">🗑️ 复位</button>
 </div>
 
 <div class="brand-nav" id="brandNav"></div>
 
-<div id="poster-area">
-    <div id="brands-container">
-        </div>
+<div id="capture-area">
+    <div id="main-content"></div>
 
-    <div class="summary-box">
-        <div>
-            <div style="font-size: 12px; opacity: 0.7;">合计数量</div>
-            <span id="total-qty">0</span> 台
-        </div>
-        <div style="text-align: right;">
-            <div style="font-size: 12px; opacity: 0.7;">结算总额</div>
-            ¥ <b id="total-money">0</b>
-        </div>
+    <div class="grand-summary">
+        <div><small style="opacity:0.7">总台数</small><br><span id="total-q">0</span> 台</div>
+        <div style="text-align: right;"><small style="opacity:0.7">结算总金额</small><br>¥ <b id="total-m">0</b></div>
     </div>
-    
-    <div class="footer-credit">
-        微信：<strong>Egg77Egg88</strong> | 技术支持：钛云数码
+
+    <div class="footer">
+        技术支持: 钛云数码 (微信 Egg77Egg88)
     </div>
 </div>
 
 <div id="mask" onclick="this.style.display='none'">
-    <div style="color:white; text-align:center; margin-bottom:10px;">图片已生成，长按保存并发送对账</div>
-    <div id="img-container"></div>
+    <p style="color:white; text-align:center;">图片已生成，长按保存发送</p>
+    <div id="img-out"></div>
 </div>
 
 <script>
-    // 预设国内常用品牌，他们觉得多可以点“删品牌”
-    const DEFAULT_BRANDS = ["苹果", "华为", "华为/荣耀", "OPPO", "vivo", "小米/红米", "三星", "二线/杂牌"];
-    let brands = JSON.parse(localStorage.getItem('rec_brands')) || DEFAULT_BRANDS;
-    let dataStore = JSON.parse(localStorage.getItem('rec_data')) || {};
+    const DEFAULT_BRANDS = ["苹果", "华为", "OPPO", "vivo", "小米/红米", "荣耀", "三星", "二线/杂牌"];
+    let brands = JSON.parse(localStorage.getItem('ty_brands')) || DEFAULT_BRANDS;
+    let data = JSON.parse(localStorage.getItem('ty_data')) || {};
 
     function init() {
-        renderNav();
-        renderBrands();
-        calcAll();
-    }
-
-    function renderNav() {
         const nav = document.getElementById('brandNav');
-        nav.innerHTML = brands.map(b => `<div class="nav-item" onclick="document.getElementById('brand-${b}').scrollIntoView({behavior:'smooth'})">${b}</div>`).join('') 
-                        + `<div class="nav-item" style="color:var(--main)" onclick="addBrand()">+ 自定义</div>`;
-    }
-
-    function renderBrands() {
-        const container = document.getElementById('brands-container');
+        nav.innerHTML = brands.map(b => `<div class="nav-item" onclick="location.href='#b-${b}'">${b}</div>`).join('') + `<div class="nav-item" style="color:var(--main)" onclick="addBrand()">+ 新品牌</div>`;
+        
+        const container = document.getElementById('main-content');
         container.innerHTML = brands.map(b => {
-            const rows = dataStore[b] || [{m:'', c:'标配', q:1, p:''}];
+            const rows = data[b] || [{m:'', c:'标配', q:1, p:''}];
             return `
-                <div class="brand-section" id="brand-${b}">
-                    <div class="brand-title">
-                        <span>${b}</span>
+                <div class="brand-section" id="b-${b}">
+                    <div class="brand-header">
+                        <span class="brand-name">${b}</span>
                         <div style="display:flex; gap:10px">
-                             <button onclick="addRow('${b}')" style="font-size:12px; border:none; background:none; color:var(--main)">+ 加行</button>
-                             <button onclick="removeBrand('${b}')" style="font-size:12px; border:none; background:none; color:#94a3b8">删除</button>
+                            <button onclick="addRow('${b}')" style="border:none; background:none; color:var(--main); font-size:12px">+ 加行</button>
+                            <button onclick="delBrand('${b}')" style="border:none; background:none; color:#94a3b8; font-size:12px">删除</button>
                         </div>
                     </div>
                     <table>
-                        <thead>
-                            <tr><th>型号描述</th><th width="70">配置</th><th width="45">数量</th><th width="90">单价</th></tr>
-                        </thead>
-                        <tbody id="body-${b}">
-                            ${rows.map((r, i) => renderRow(b, i, r)).join('')}
-                        </tbody>
+                        <thead><tr><th>型号/成色</th><th width="70">配置</th><th width="45">台数</th><th width="90">单价</th></tr></thead>
+                        <tbody>${rows.map((r, i) => `
+                            <tr>
+                                <td><input type="text" value="${r.m}" placeholder="型号..." oninput="upd('${b}',${i},'m',this.value)"></td>
+                                <td><select onchange="upd('${b}',${i},'c',this.value)">
+                                    <option ${r.c=='标配'?'selected':''}>标配</option>
+                                    <option ${r.c=='高配'?'selected':''}>高配</option>
+                                    <option ${r.c=='低配'?'selected':''}>低配</option>
+                                </select></td>
+                                <td><input type="number" value="${r.q}" style="text-align:center" oninput="upd('${b}',${i},'q',this.value)"></td>
+                                <td><input type="number" class="input-price" value="${r.p}" placeholder="¥0" oninput="upd('${b}',${i},'p',this.value)"></td>
+                            </tr>
+                        `).join('')}</tbody>
                     </table>
-                    <div class="stats-bar">
-                        <span>小计: <span id="qty-${b}">0</span> 台</span>
-                        <span>金额: ¥<span id="money-${b}">0</span></span>
+                    <div class="stats">
+                        <span>${b}合计: <span id="q-${b}">0</span> 台</span>
+                        <span>金额: ¥<span id="m-${b}">0</span></span>
                     </div>
                 </div>
             `;
         }).join('');
+        calc();
     }
 
-    function renderRow(brand, index, row) {
-        return `
-            <tr>
-                <td><input type="text" value="${row.m}" placeholder="输入型号..." oninput="upd('${brand}',${index},'m',this.value)"></td>
-                <td>
-                    <select onchange="upd('${brand}',${index},'c',this.value)">
-                        <option ${row.c==='标配'?'selected':''}>标配</option>
-                        <option ${row.c==='高配'?'selected':''}>高配</option>
-                        <option ${row.c==='中配'?'selected':''}>中配</option>
-                        <option ${row.c==='低配'?'selected':''}>低配</option>
-                    </select>
-                </td>
-                <td><input type="number" style="text-align:center" value="${row.q}" oninput="upd('${brand}',${index},'q',this.value)"></td>
-                <td><input type="number" class="input-price" value="${row.p}" placeholder="¥待填" oninput="upd('${brand}',${index},'p',this.value)"></td>
-            </tr>
-        `;
+    function upd(b, i, k, v) {
+        if(!data[b]) data[b] = [{}];
+        data[b][i][k] = v;
+        if(k === 'm' && v !== '' && i === data[b].length - 1) { data[b].push({m:'', c:'标配', q:1, p:''}); init(); }
+        save(); calc();
     }
 
-    function upd(brand, index, key, val) {
-        if(!dataStore[brand]) dataStore[brand] = [{m:'', c:'标配', q:1, p:''}];
-        dataStore[brand][index][key] = val;
-        
-        // 自动增行
-        if(key === 'm' && val !== '' && index === dataStore[brand].length - 1) {
-            dataStore[brand].push({m:'', c:'标配', q:1, p:''});
-            renderBrands(); 
-        }
-        
-        saveLocal();
-        calcAll();
-    }
+    function addRow(b) { data[b].push({m:'', c:'标配', q:1, p:''}); init(); }
+    function delBrand(b) { if(confirm('删除品牌？')) { brands = brands.filter(x => x!==b); delete data[b]; init(); save(); } }
+    function addBrand() { const n = prompt('品牌名:'); if(n) { brands.push(n); init(); } }
 
-    function addRow(brand) {
-        dataStore[brand].push({m:'', c:'标配', q:1, p:''});
-        renderBrands();
-    }
-
-    function addBrand() {
-        const name = prompt("输入新品牌名称:");
-        if(name && !brands.includes(name)) {
-            brands.push(name);
-            dataStore[name] = [{m:'', c:'标配', q:1, p:''}];
-            init();
-        }
-    }
-
-    function removeBrand(name) {
-        if(confirm(`确定删除 ${name} 吗？`)) {
-            brands = brands.filter(b => b !== name);
-            delete dataStore[name];
-            init();
-        }
-    }
-
-    function calcAll() {
-        let totalQ = 0, totalM = 0;
+    function calc() {
+        let tQ = 0, tM = 0;
         brands.forEach(b => {
             let bQ = 0, bM = 0;
-            (dataStore[b] || []).forEach(r => {
-                const q = parseFloat(r.q) || 0;
-                const p = parseFloat(r.p) || 0;
-                bQ += q; bM += (q * p);
+            (data[b] || []).forEach(r => {
+                const q = parseFloat(r.q)||0, p = parseFloat(r.p)||0;
+                bQ += q; bM += (q*p);
             });
-            document.getElementById(`qty-${b}`).innerText = bQ;
-            document.getElementById(`money-${b}`).innerText = bM.toLocaleString();
-            totalQ += bQ; totalM += bM;
+            document.getElementById(`q-${b}`).innerText = bQ;
+            document.getElementById(`m-${b}`).innerText = bM.toLocaleString();
+            tQ += bQ; tM += bM;
         });
-        document.getElementById('total-qty').innerText = totalQ;
-        document.getElementById('total-money').innerText = totalM.toLocaleString();
+        document.getElementById('total-q').innerText = tQ;
+        document.getElementById('total-m').innerText = tM.toLocaleString();
     }
 
-    function saveLocal() {
-        localStorage.setItem('rec_brands', JSON.stringify(brands));
-        localStorage.setItem('rec_data', JSON.stringify(dataStore));
+    function save() { 
+        localStorage.setItem('ty_brands', JSON.stringify(brands)); 
+        localStorage.setItem('ty_data', JSON.stringify(data)); 
     }
 
-    function toggleTheme() {
-        document.body.classList.toggle('dark');
-        const isDark = document.body.classList.contains('dark');
-        document.getElementById('themeBtn').innerText = isDark ? "☀️ 亮色模式" : "🌙 暗色模式";
+    // 备份功能
+    function backupJSON() {
+        const exportData = { brands, data, time: new Date().toLocaleString(), source: "钛云数码系统" };
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `钛云数码_备份_${new Date().getTime()}.json`;
+        a.click();
     }
 
-    function reset() {
-        if(confirm("确定清空所有数据吗？")) {
-            localStorage.clear();
-            location.reload();
-        }
+    // 恢复功能
+    function restoreJSON() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = e => {
+            const reader = new FileReader();
+            reader.onload = ev => {
+                try {
+                    const imported = JSON.parse(ev.target.result);
+                    if(imported.brands) {
+                        brands = imported.brands;
+                        data = imported.data;
+                        save(); init();
+                        alert('恢复成功！');
+                    }
+                } catch(err) { alert('文件错误'); }
+            };
+            reader.readAsText(e.target.files[0]);
+        };
+        input.click();
     }
+
+    function toggleTheme() { document.body.classList.toggle('dark'); }
+    function clearData() { if(confirm('清空所有并重置？')) { localStorage.clear(); location.reload(); } }
 
     async function exportImg() {
-        const canvas = await html2canvas(document.getElementById('poster-area'), { scale: 2, backgroundColor: null });
-        const img = new Image();
-        img.src = canvas.toDataURL();
-        img.style.width = '100%';
-        document.getElementById('img-container').innerHTML = '';
-        document.getElementById('img-container').appendChild(img);
+        const canvas = await html2canvas(document.getElementById('capture-area'), { scale: 2, backgroundColor: null });
+        document.getElementById('img-out').innerHTML = `<img src="${canvas.toDataURL()}">`;
         document.getElementById('mask').style.display = 'block';
     }
 
