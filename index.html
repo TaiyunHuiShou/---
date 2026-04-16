@@ -3,240 +3,431 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
-    <title>回收助手-手机专用版</title>
+    <title>手机回收 ERP 6.8 - 专家修复版</title>
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, system-ui, sans-serif; background: #f4f7f6; padding: 8px; margin: 0; font-size: 14px; }
-        .container { max-width: 100%; margin: 0 auto; }
+        :root {
+            --primary: #2563eb; --danger: #ef4444; --success: #10b981;
+            --warning: #f59e0b; --bg: #f1f5f9; --card: #ffffff;
+            --text: #1e293b; --border: #cbd5e1; --modal-overlay: rgba(0,0,0,0.6);
+        }
+        .dark {
+            --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --border: #334155; --modal-overlay: rgba(0,0,0,0.85);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        body { 
+            font-family: -apple-system, system-ui, sans-serif; 
+            background: var(--bg); color: var(--text); margin: 0; 
+            padding-bottom: 240px; transition: background 0.3s; 
+        }
+
+        /* 布局组件 */
+        .header { background: var(--card); padding: 10px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+        .batch-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
+        .batch-bar::-webkit-scrollbar { display: none; }
+        .batch-tab { 
+            padding: 6px 12px; background: var(--bg); border: 1px solid var(--border); 
+            border-radius: 8px; font-size: 13px; white-space: nowrap; cursor: pointer; display: flex; align-items: center; gap: 5px;
+        }
+        .batch-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .toolbar { display: flex; gap: 8px; padding: 10px; background: var(--card); overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .btn { padding: 8px 14px; border-radius: 8px; border: none; font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+        .btn-add { background: var(--primary); color: white; }
+        .btn-outline { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+        .btn-purple { background: #8b5cf6; color: white; }
+
+        /* 表格优化 */
+        .table-wrapper { 
+            width: 100%; overflow-x: auto; background: var(--card); 
+            border-top: 1px solid var(--border); -webkit-overflow-scrolling: touch; 
+        }
+        table { width: 100%; border-collapse: collapse; min-width: 950px; font-size: 14px; }
+        th { background: var(--bg); padding: 12px 8px; text-align: left; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+        td { padding: 8px; border-bottom: 1px solid var(--border); }
         
-        /* 顶部工具栏适配手机 */
-        .header-tools { background: white; padding: 10px; border-radius: 12px; margin-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .btn { border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; color: white; flex: 1; min-width: 80px; text-align: center; }
-        .btn-green { background: #10b981; }
-        .btn-blue { background: #3b82f6; }
-        .btn-red { background: #ef4444; }
-        .btn-gray { background: #64748b; }
+        .cell-input { width: 100%; padding: 8px; border: 1px solid transparent; background: transparent; color: var(--text); border-radius: 4px; transition: 0.2s; }
+        .cell-input:focus { border-color: var(--primary); background: var(--bg); }
+        .cell-readonly { font-weight: bold; color: var(--primary); font-size: 13px; }
 
-        /* 保存提示 */
-        #toast { position: fixed; top: 15px; left: 50%; transform: translateX(-50%); background: rgba(16, 185, 129, 0.9); color: white; padding: 8px 20px; border-radius: 20px; display: none; z-index: 9999; font-size: 12px; }
+        /* 品牌逻辑展示 */
+        .brand-cell { display: flex; flex-direction: column; gap: 4px; }
+        .other-input { border: 1px solid var(--warning) !important; font-size: 12px; background: var(--bg); }
 
-        .search-brand-row { display: flex; gap: 5px; margin-bottom: 10px; }
-        .input-box { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ddd; outline: none; font-size: 13px; }
+        /* 固定底部面板 */
+        .footer { 
+            position: fixed; bottom: 0; left: 0; right: 0; 
+            background: #1e293b; color: white; padding: 20px 15px;
+            border-radius: 20px 20px 0 0; box-shadow: 0 -8px 25px rgba(0,0,0,0.3); z-index: 200;
+        }
+        .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .stat-label { font-size: 11px; opacity: 0.6; margin-bottom: 2px; }
+        .stat-val { font-size: 19px; font-weight: 800; }
 
-        /* 品牌卡片适配 */
-        .brand-grid { display: flex; flex-direction: column; gap: 10px; }
-        .brand-card { background: white; border-radius: 10px; padding: 10px; box-shadow: 0 1px 5px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-        .brand-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 5px; }
-        .brand-name { font-weight: bold; color: #1e293b; font-size: 15px; }
-        
-        /* 表格手机端极致压缩 */
-        .table-container { width: 100%; overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; } /* 固定布局防止溢出 */
-        th, td { border: 1px solid #edf2f7; padding: 4px 2px; text-align: center; overflow: hidden; }
-        th { background: #f8fafc; color: #64748b; font-size: 11px; }
-        
-        /* 列宽精细控制 */
-        .col-m { width: 32%; } /* 型号 */
-        .col-c { width: 18%; } /* 配置 */
-        .col-q { width: 12%; } /* 数量 */
-        .col-p { width: 17%; } /* 单价 */
-        .col-r { width: 17%; } /* 参考 */
-        .col-d { width: 28px; } /* 删除按钮 */
+        /* 模态框适配 */
+        .modal { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--modal-overlay); display: none; align-items: center; 
+            justify-content: center; z-index: 1000; padding: 20px; backdrop-filter: blur(4px);
+        }
+        .modal-content { 
+            background: var(--card); color: var(--text); width: 100%; max-width: 450px; 
+            border-radius: 16px; padding: 24px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+        .modal-input { width: 100%; padding: 12px; margin: 12px 0; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); }
 
-        .row-input { border: 1px solid transparent; width: 100%; text-align: center; font-size: 13px; padding: 5px 0; outline: none; background: transparent; }
-        .row-input:focus { background: #fff; border-bottom: 1px solid #3b82f6; }
-        .del-row-btn { background: #fee2e2; color: #ef4444; border: none; width: 22px; height: 22px; border-radius: 4px; font-size: 14px; }
-
-        /* 底部汇总适配手机 */
-        .footer-total { position: sticky; bottom: 5px; background: #1e293b; color: white; padding: 10px; border-radius: 15px; display: flex; flex-wrap: wrap; justify-content: space-around; gap: 5px; margin-top: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; }
-        .stat-item { font-size: 11px; white-space: nowrap; }
-        .stat-val { font-weight: bold; color: #34d399; font-size: 13px; }
-
-        body.dark { background: #0f172a; color: #e2e8f0; }
-        body.dark .header-tools, body.dark .brand-card { background: #1e293b; border-color: #334155; }
-        body.dark .row-input { color: white; }
+        #undoBar { 
+            position: fixed; bottom: 250px; left: 50%; transform: translateX(-50%);
+            background: #334155; color: white; padding: 12px 24px; 
+            border-radius: 50px; display: none; justify-content: space-between; align-items: center; 
+            z-index: 300; width: 90%; max-width: 300px; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
     </style>
 </head>
 <body>
 
-<div id="toast">✅ 已存至本地</div>
+<div class="header">
+    <div class="batch-bar" id="batchBar"></div>
+</div>
 
-<div class="container">
-    <div class="header-tools">
-        <button onclick="exportExcel()" class="btn btn-green">导出</button>
-        <button onclick="saveData(true)" class="btn btn-blue">保存</button>
-        <button onclick="clearData()" class="btn btn-red">清空</button>
-        <button onclick="toggleTheme()" class="btn btn-gray">模式</button>
-    </div>
+<div class="toolbar">
+    <button class="btn btn-add" onclick="app.addRow()">➕ 添加行</button>
+    <button class="btn btn-purple" onclick="app.showShareModal()">📤 分享口令</button>
+    <button class="btn btn-outline" style="color:var(--primary)" onclick="app.showRecoverModal()">📥 恢复口令</button>
+    <button class="btn btn-outline" onclick="app.showCharts()">📊 统计图</button>
+    <button class="btn btn-outline" onclick="app.exportExcel()">📎 导出Excel</button>
+    <button class="btn btn-outline" onclick="app.toggleTheme()">🌓 主题</button>
+    <button class="btn btn-outline" style="color:var(--danger)" onclick="app.clearBatch()">🗑️ 清空</button>
+</div>
 
-    <div class="search-brand-row">
-        <input type="text" id="brandInput" class="input-box" placeholder="+新品牌(回车)">
-        <input type="text" id="searchInput" class="input-box" placeholder="🔍 搜型号" oninput="filterModels()">
-    </div>
+<div id="undoBar">
+    <span style="font-size:13px">批次已删除</span>
+    <button onclick="app.undoDelete()" style="background:var(--success); color:white; border:none; padding:4px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">撤销</button>
+</div>
 
-    <div id="brandGrid" class="brand-grid"></div>
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th style="min-width: 150px;">品牌</th>
+                <th style="min-width: 140px;">型号</th>
+                <th style="min-width: 100px;">高低配</th>
+                <th style="min-width: 100px;">成色</th>
+                <th style="min-width: 70px;">数量</th>
+                <th style="min-width: 100px;">成交价</th>
+                <th style="min-width: 100px;">小计</th>
+                <th style="min-width: 100px;">参考价</th>
+                <th style="min-width: 70px;">操作</th>
+            </tr>
+        </thead>
+        <tbody id="dataTableBody"></tbody>
+    </table>
+</div>
 
-    <div class="footer-total">
-        <div class="stat-item">台数:<span id="totalQty" class="stat-val">0</span></div>
-        <div class="stat-item">结算:<span id="totalMoney" class="stat-val">0</span></div>
-        <div class="stat-item">利润:<span id="totalDiff" class="stat-val" style="color:#fbbf24">0</span></div>
+<div class="footer">
+    <div class="stat-grid">
+        <div class="stat-item">
+            <div class="stat-label">成交总额</div>
+            <div class="stat-val" style="color:var(--success)">¥ <span id="totalActual">0</span></div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">参考(成本)总额</div>
+            <div class="stat-val" style="color:var(--warning)">¥ <span id="totalRef">0</span></div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">收货总台数</div>
+            <div class="stat-val" id="totalQty">0</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">预估利润率</div>
+            <div class="stat-val" id="profitRatio">--</div>
+        </div>
     </div>
 </div>
 
+<div class="modal" id="commonModal" onclick="this.style.display='none'">
+    <div class="modal-content" onclick="event.stopPropagation()" id="modalContent"></div>
+</div>
+
 <script>
-    let brands = JSON.parse(localStorage.getItem('brands_v5')) || ["苹果", "华为", "小米"];
-    let mainData = JSON.parse(localStorage.getItem('data_v5')) || {};
+const app = {
+    brands: ["苹果", "华为", "小米", "OPPO", "vivo", "荣耀", "三星", "一加", "魅族", "其他"],
+    cfgs: ["—", "高配", "中配", "低配"],
+    qualities: ["靓机", "小花", "大花", "碎屏"],
+    db: {
+        batches: { "4月16日收货单": [] },
+        current: "4月16日收货单"
+    },
+    tempDelete: null,
+    undoTimer: null,
 
-    function render() {
-        const grid = document.getElementById('brandGrid');
-        grid.innerHTML = '';
-        brands.forEach(name => {
-            const card = document.createElement('div');
-            card.className = 'brand-card';
-            card.innerHTML = `
-                <div class="brand-header">
-                    <span class="brand-name">${name}</span>
-                    <button onclick="removeBrand('${name}')" style="background:none; border:none; color:#94a3b8; font-size:11px;">移除</button>
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th class="col-m">型号</th>
-                                <th class="col-c">配置</th>
-                                <th class="col-q">数</th>
-                                <th class="col-p">价</th>
-                                <th class="col-r" style="background:#fff7ed">参</th>
-                                <th class="col-d"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="body-${name}"></tbody>
-                    </table>
-                    <button onclick="addRow('${name}')" style="width:100%; padding:6px; margin-top:5px; border:1px dashed #3b82f6; color:#3b82f6; background:none; font-size:12px; border-radius:4px;">+ 加行</button>
-                </div>
+    init() {
+        const saved = localStorage.getItem('erp_v68_stable');
+        if (saved) this.db = JSON.parse(saved);
+        this.renderBatchBar();
+        this.renderTable();
+        if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
+    },
+
+    save() {
+        localStorage.setItem('erp_v68_stable', JSON.stringify(this.db));
+        this.updateStats();
+    },
+
+    // --- 批次管理 ---
+    renderBatchBar() {
+        const bar = document.getElementById('batchBar');
+        bar.innerHTML = '';
+        Object.keys(this.db.batches).forEach(name => {
+            const isAct = name === this.db.current;
+            const tab = document.createElement('div');
+            tab.className = `batch-tab ${isAct ? 'active' : ''}`;
+            tab.innerHTML = `
+                <span onclick="app.switchBatch('${name}')">${name}</span>
+                <small onclick="app.renameBatch('${name}')" style="margin-left:5px; opacity:0.6">✏️</small>
+                <small onclick="app.removeBatch('${name}')" style="margin-left:5px; opacity:0.6">✕</small>
             `;
-            grid.appendChild(card);
-            const rows = mainData[name] || [{}, {}];
-            rows.forEach(rowData => addRow(name, rowData));
+            bar.appendChild(tab);
         });
-        updateTotal();
-    }
+        const addBtn = document.createElement('div');
+        addBtn.className = 'batch-tab';
+        addBtn.innerHTML = '<b>+ 新增</b>';
+        addBtn.onclick = () => {
+            const n = prompt("输入新批次名称:");
+            if (n && !this.db.batches[n]) { this.db.batches[n] = []; this.switchBatch(n); }
+        };
+        bar.appendChild(addBtn);
+    },
 
-    function addRow(brand, data = {}) {
-        const tbody = document.getElementById(`body-${brand}`);
-        const tr = document.createElement('tr');
-        tr.className = 'data-row';
-        tr.innerHTML = `
-            <td><input type="text" class="row-input model-in" value="${data.m||''}"></td>
-            <td><input type="text" class="row-input config-in" value="${data.c||''}"></td>
-            <td><input type="number" class="row-input qty-in" value="${data.q||1}"></td>
-            <td><input type="number" class="row-input price-in" value="${data.p||''}"></td>
-            <td style="background:#fff7ed"><input type="number" class="row-input ref-in" value="${data.r||''}"></td>
-            <td><button class="del-row-btn" onclick="this.closest('tr').remove();autoSave();updateTotal();">×</button></td>
-        `;
-        tbody.appendChild(tr);
-        tr.querySelectorAll('input').forEach(input => {
-            input.oninput = () => { updateTotal(); autoSave(); };
-        });
-    }
-
-    function updateTotal() {
-        let totalQ = 0, totalM = 0, totalR = 0;
-        document.querySelectorAll('.data-row').forEach(row => {
-            const m = row.querySelector('.model-in').value;
-            if(m) {
-                const q = parseFloat(row.querySelector('.qty-in').value) || 0;
-                const p = parseFloat(row.querySelector('.price-in').value) || 0;
-                const r = parseFloat(row.querySelector('.ref-in').value) || 0;
-                totalQ += q;
-                totalM += (q * p);
-                totalR += (q * r);
-            }
-        });
-        document.getElementById('totalQty').innerText = totalQ;
-        document.getElementById('totalMoney').innerText = Math.round(totalM);
-        document.getElementById('totalDiff').innerText = Math.round(totalM - totalR);
-    }
-
-    function saveData(isManual = false) {
-        const newData = {};
-        brands.forEach(name => {
-            const rows = [];
-            document.querySelectorAll(`#body-${name} .data-row`).forEach(row => {
-                const m = row.querySelector('.model-in').value;
-                if(m || row.querySelector('.price-in').value) {
-                    rows.push({
-                        m: m, c: row.querySelector('.config-in').value,
-                        q: row.querySelector('.qty-in').value, p: row.querySelector('.price-in').value,
-                        r: row.querySelector('.ref-in').value
-                    });
-                }
-            });
-            newData[name] = rows;
-        });
-        mainData = newData;
-        localStorage.setItem('data_v5', JSON.stringify(mainData));
-        localStorage.setItem('brands_v5', JSON.stringify(brands));
-        if(isManual) {
-            const toast = document.getElementById('toast');
-            toast.style.display = 'block';
-            setTimeout(() => { toast.style.display = 'none'; }, 1500);
+    switchBatch(n) { this.db.current = n; this.save(); this.renderBatchBar(); this.renderTable(); },
+    
+    renameBatch(old) {
+        const n = prompt("重命名批次:", old);
+        if (n && n !== old) {
+            this.db.batches[n] = this.db.batches[old];
+            delete this.db.batches[old];
+            if (this.db.current === old) this.db.current = n;
+            this.save(); this.renderBatchBar();
         }
-    }
+    },
 
-    function autoSave() { saveData(false); }
+    removeBatch(n) {
+        if (Object.keys(this.db.batches).length <= 1) return alert("必须保留一个批次");
+        this.tempDelete = { name: n, data: this.db.batches[n] };
+        delete this.db.batches[n];
+        this.db.current = Object.keys(this.db.batches)[0];
+        this.save(); this.renderBatchBar(); this.renderTable();
+        
+        const bar = document.getElementById('undoBar');
+        bar.style.display = 'flex';
+        clearTimeout(this.undoTimer);
+        this.undoTimer = setTimeout(() => bar.style.display = 'none', 5000);
+    },
 
-    function toggleTheme() {
+    undoDelete() {
+        if (!this.tempDelete) return;
+        this.db.batches[this.tempDelete.name] = this.tempDelete.data;
+        this.db.current = this.tempDelete.name;
+        document.getElementById('undoBar').style.display = 'none';
+        this.save(); this.renderBatchBar(); this.renderTable();
+    },
+
+    // --- 表格渲染 (修复高低配、其他品牌逻辑) ---
+    addRow() {
+        this.db.batches[this.db.current].unshift({
+            b: "苹果", cb: "", m: "", cfg: "—", qly: "靓机", qty: 1, prc: 0, ref: 0
+        });
+        this.renderTable(); this.save();
+    },
+
+    renderTable() {
+        const body = document.getElementById('dataTableBody');
+        body.innerHTML = '';
+        const items = this.db.batches[this.db.current] || [];
+        
+        items.forEach((item, idx) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <div class="brand-cell">
+                        <select class="cell-input" onchange="app.update(${idx}, 'b', this.value); app.renderTable();">
+                            ${this.brands.map(b => `<option value="${b}" ${item.b===b?'selected':''}>${b}</option>`).join('')}
+                        </select>
+                        ${item.b === '其他' ? `<input type="text" class="cell-input other-input" placeholder="输入品牌" value="${item.cb||''}" oninput="app.update(${idx}, 'cb', this.value)">` : ''}
+                    </div>
+                </td>
+                <td><input type="text" class="cell-input" placeholder="型号" value="${item.m}" oninput="app.update(${idx}, 'm', this.value)"></td>
+                <td>
+                    <select class="cell-input" onchange="app.update(${idx}, 'cfg', this.value)">
+                        ${this.cfgs.map(c => `<option value="${c}" ${item.cfg===c?'selected':''}>${c}</option>`).join('')}
+                    </select>
+                </td>
+                <td>
+                    <select class="cell-input" onchange="app.update(${idx}, 'qly', this.value)">
+                        ${this.qualities.map(q => `<option value="${q}" ${item.qly===q?'selected':''}>${q}</option>`).join('')}
+                    </select>
+                </td>
+                <td><input type="number" class="cell-input" value="${item.qty}" oninput="app.update(${idx}, 'qty', this.value)"></td>
+                <td><input type="number" class="cell-input" value="${item.prc}" oninput="app.update(${idx}, 'prc', this.value)"></td>
+                <td class="cell-readonly">¥${(item.prc * item.qty).toLocaleString()}</td>
+                <td><input type="number" class="cell-input" value="${item.ref}" oninput="app.update(${idx}, 'ref', this.value)"></td>
+                <td><button onclick="app.deleteRow(${idx})" style="background:none; border:none; color:var(--danger); font-size:18px; cursor:pointer">✕</button></td>
+            `;
+            body.appendChild(tr);
+        });
+        this.updateStats();
+    },
+
+    update(idx, k, v) {
+        this.db.batches[this.db.current][idx][k] = v;
+        this.save();
+    },
+
+    deleteRow(idx) {
+        this.db.batches[this.db.current].splice(idx, 1);
+        this.renderTable(); this.save();
+    },
+
+    clearBatch() {
+        if (confirm("确定清空当前批次吗？")) {
+            this.db.batches[this.db.current] = [];
+            this.renderTable(); this.save();
+        }
+    },
+
+    // --- 财务统计 ---
+    updateStats() {
+        let q=0, p=0, r=0;
+        (this.db.batches[this.db.current] || []).forEach(i => {
+            const num = parseFloat(i.qty) || 0;
+            q += num;
+            p += num * (parseFloat(i.prc) || 0);
+            r += num * (parseFloat(i.ref) || 0);
+        });
+        document.getElementById('totalQty').innerText = q;
+        document.getElementById('totalActual').innerText = Math.round(p).toLocaleString();
+        document.getElementById('totalRef').innerText = Math.round(r).toLocaleString();
+        
+        const ratioEl = document.getElementById('profitRatio');
+        if (r > 0) {
+            const pct = (((p - r) / r) * 100).toFixed(1);
+            ratioEl.innerText = (pct >= 0 ? '+' : '') + pct + '%';
+            ratioEl.style.color = pct >= 0 ? '#10b981' : '#f87171';
+        } else {
+            ratioEl.innerText = '--';
+        }
+    },
+
+    // --- 口令分享与压缩 ---
+    showShareModal() {
+        const content = document.getElementById('modalContent');
+        content.innerHTML = `
+            <h3 style="margin-top:0">📤 生成口令</h3>
+            <input type="text" id="shareUser" class="modal-input" placeholder="您的称呼 (如: 老王回收)">
+            <button class="btn btn-add" style="width:100%; justify-content:center" onclick="app.doGenerate()">生成并复制</button>
+        `;
+        document.getElementById('commonModal').style.display = 'flex';
+    },
+
+    doGenerate() {
+        const user = document.getElementById('shareUser').value || "佚名";
+        const data = { u: user, t: Date.now(), i: this.db.batches[this.db.current] };
+        const compressed = LZString.compressToBase64(JSON.stringify(data));
+        const token = `📱回收#${compressed}`;
+        
+        navigator.clipboard.writeText(token).then(() => {
+            alert("口令已生成并复制到剪贴板！");
+            document.getElementById('commonModal').style.display = 'none';
+        });
+    },
+
+    showRecoverModal() {
+        const content = document.getElementById('modalContent');
+        content.innerHTML = `
+            <h3 style="margin-top:0">📥 恢复口令</h3>
+            <textarea id="recoverToken" class="modal-input" style="height:100px" placeholder="粘贴 📱回收# 开头的口令"></textarea>
+            <button class="btn btn-add" style="width:100%; justify-content:center" onclick="app.doRecover()">确认导入</button>
+        `;
+        document.getElementById('commonModal').style.display = 'flex';
+    },
+
+    doRecover() {
+        const token = document.getElementById('recoverToken').value.trim();
+        if (!token.startsWith("📱回收#")) return alert("无效口令");
+        try {
+            const raw = LZString.decompressFromBase64(token.split('#')[1]);
+            const data = JSON.parse(raw);
+            const bName = `${data.u}_分享_${new Date(data.t).toLocaleDateString()}`;
+            this.db.batches[bName] = data.i;
+            this.switchBatch(bName);
+            document.getElementById('commonModal').style.display = 'none';
+            alert(`✅ 已恢复来自 [${data.u}] 的数据`);
+        } catch(e) { alert("解析失败，数据可能损坏"); }
+    },
+
+    // --- 图表统计 (修复占比逻辑) ---
+    showCharts() {
+        const content = document.getElementById('modalContent');
+        content.innerHTML = `
+            <h3 style="margin-top:0">📊 数据透视</h3>
+            <canvas id="chartBrand" style="margin-bottom:20px"></canvas>
+            <hr style="opacity:0.1">
+            <canvas id="chartQuality"></canvas>
+        `;
+        document.getElementById('commonModal').style.display = 'flex';
+        
+        const items = this.db.batches[this.db.current];
+        const brands = {}, quals = { "靓机":0, "小花":0, "大花":0, "碎屏":0 };
+        
+        items.forEach(i => {
+            const bName = i.b === '其他' ? (i.cb || '其他') : i.b;
+            const subtotal = (i.prc * i.qty) || 0;
+            brands[bName] = (brands[bName] || 0) + subtotal;
+            quals[i.qly] = (quals[i.qly] || 0) + (parseFloat(i.qty)||0);
+        });
+
+        new Chart(document.getElementById('chartBrand'), {
+            type: 'pie',
+            data: {
+                labels: Object.keys(brands),
+                datasets: [{ data: Object.values(brands), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'] }]
+            },
+            options: { plugins: { title: { display: true, text: '品牌成交金额占比' } } }
+        });
+
+        new Chart(document.getElementById('chartQuality'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(quals),
+                datasets: [{ label: '台数', data: Object.values(quals), backgroundColor: '#3b82f6' }]
+            },
+            options: { plugins: { title: { display: true, text: '成色库存分布' } } }
+        });
+    },
+
+    // --- 导出与备份 ---
+    exportExcel() {
+        const data = this.db.batches[this.db.current].map(i => ({
+            "品牌": i.b === '其他' ? i.cb : i.b,
+            "型号": i.m, "配置": i.cfg, "成色": i.qly, "数量": i.qty, 
+            "成交单价": i.prc, "成交小计": i.prc*i.qty, "参考成本价": i.ref
+        }));
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "清单");
+        XLSX.writeFile(wb, `${this.db.current}.xlsx`);
+    },
+
+    toggleTheme() {
         document.body.classList.toggle('dark');
         localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
     }
+};
 
-    document.getElementById('brandInput').onkeydown = (e) => {
-        if(e.key === 'Enter' && e.target.value) {
-            const name = e.target.value.trim();
-            if(!brands.includes(name)) { brands.push(name); render(); autoSave(); }
-            e.target.value = '';
-        }
-    };
-
-    function removeBrand(name) {
-        if(confirm(`删除品牌${name}?`)) {
-            brands = brands.filter(b => b !== name);
-            render(); autoSave();
-        }
-    }
-
-    function clearData() {
-        if(confirm('清空所有？')) {
-            mainData = {}; localStorage.removeItem('data_v5');
-            render();
-        }
-    }
-
-    function exportExcel() {
-        const sheetData = [["品牌", "型号", "配置", "数量", "单价", "参考价"]];
-        brands.forEach(b => {
-            (mainData[b] || []).forEach(r => sheetData.push([b, r.m, r.c, r.q, r.p, r.r]));
-        });
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.aoa_to_sheet(sheetData);
-        XLSX.utils.book_append_sheet(wb, ws, "清单");
-        XLSX.writeFile(wb, `清单.xlsx`);
-    }
-
-    function filterModels() {
-        const kw = document.getElementById('searchInput').value.toLowerCase();
-        document.querySelectorAll('.data-row').forEach(row => {
-            const m = row.querySelector('.model-in').value.toLowerCase();
-            row.style.display = m.includes(kw) ? '' : 'none';
-        });
-    }
-
-    window.onload = () => {
-        if(localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
-        render();
-    };
+app.init();
 </script>
 </body>
 </html>
