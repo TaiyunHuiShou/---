@@ -51,6 +51,23 @@
         .suggest-list li { padding: 5px 6px; font-size: 10px; cursor: pointer; border-bottom: 1px solid var(--border); }
         .suggest-list li:active { background: var(--primary); color: white; }
         
+        /* 机况+规格合并列内部布局 */
+        .status-config-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 100%;
+        }
+        .status-config-wrapper select {
+            width: 100%;
+            padding: 4px 2px;
+            font-size: 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--bg);
+            color: var(--text);
+        }
+        
         .qty-number {
             width: 55px;
             text-align: center;
@@ -350,7 +367,7 @@ const app = {
 
     exportToExcel() { if (this.isWechat) this.generateLongImage(); else this.downloadExcel(); },
     downloadExcel() {
-        const rows = [["品牌", "型号", "机况", "规格", "数量", "成交价", "参考价"]];
+        const rows = [["品牌", "型号", "机况", "高低配", "数量", "成交价", "参考价"]];
         this.data.forEach(b => b.items.forEach(i => rows.push([b.brand, i.m, i.s, i.c, i.q, i.p || "0", i.r || "0"])));
         const ws = XLSX.utils.aoa_to_sheet(rows);
         const wb = XLSX.utils.book_new();
@@ -359,37 +376,70 @@ const app = {
         this.toast("导出成功");
     },
 
+    // 终极修复：克隆渲染，彻底解决长图裁剪问题
     async generateLongImage() {
         this.toggleDrawer(false);
         const m = document.getElementById('appModal');
         const c = document.getElementById('modalContent');
         c.innerHTML = "<div style='text-align:center;padding:20px;'>正在渲染高清长图...</div>";
         m.style.display = 'flex';
+
+        const originalElement = document.getElementById('screenshot-area');
         
-        const element = document.getElementById('screenshot-area');
-        const table = element.querySelector('table');
-        let actualWidth = element.scrollWidth;
-        if (table) {
-            actualWidth = table.scrollWidth;
-        }
-        const originalWidth = element.style.width;
-        const originalOverflow = element.style.overflow;
-        element.style.width = actualWidth + 'px';
-        element.style.overflow = 'visible';
+        // 深克隆整个区域
+        const clone = originalElement.cloneNode(true);
+        clone.style.position = 'absolute';
+        clone.style.top = '-9999px';
+        clone.style.left = '-9999px';
+        clone.style.width = '1100px';
+        clone.style.minWidth = '1100px';
+        clone.style.backgroundColor = getComputedStyle(document.body).getPropertyValue('--bg');
+        document.body.appendChild(clone);
+        
+        // 固定表格宽度
+        const tables = clone.querySelectorAll('table');
+        tables.forEach(table => {
+            table.style.width = '1100px';
+            table.style.minWidth = '1100px';
+            table.style.tableLayout = 'fixed';
+        });
+        
+        // 将列宽百分比转换为固定像素（基于1100px）
+        // 列宽分配：型号27% + 机况规格26% + 数量10% + 成交价15% + 参考价13% + 删除9% = 100%
+        const ths = clone.querySelectorAll('th');
+        const colPercent = [27, 26, 10, 15, 13, 9]; // 6列
+        ths.forEach((th, idx) => {
+            if (idx < colPercent.length) {
+                th.style.width = (1100 * colPercent[idx] / 100) + 'px';
+            }
+        });
+        
+        const tds = clone.querySelectorAll('td');
+        tds.forEach(td => {
+            const parentRow = td.parentElement;
+            if (parentRow) {
+                const cellIndex = td.cellIndex;
+                if (cellIndex < colPercent.length) {
+                    td.style.width = (1100 * colPercent[cellIndex] / 100) + 'px';
+                }
+            }
+        });
+        
+        // 强制重排
+        clone.offsetHeight;
         
         try {
-            const canvas = await html2canvas(element, {
+            const canvas = await html2canvas(clone, {
                 scale: 2.5,
                 backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg'),
                 useCORS: true,
                 logging: false,
-                windowWidth: actualWidth,
-                x: 0,
-                y: 0,
-                width: actualWidth
+                width: 1100,
+                windowWidth: 1100
             });
-            element.style.width = originalWidth;
-            element.style.overflow = originalOverflow;
+            
+            document.body.removeChild(clone);
+            
             const imgData = canvas.toDataURL('image/png');
             c.innerHTML = `
                 <div style="text-align:center; overflow-x:auto;">
@@ -401,9 +451,9 @@ const app = {
                 </div>
             `;
         } catch (err) {
-            element.style.width = originalWidth;
-            element.style.overflow = originalOverflow;
-            c.innerHTML = `<div style="text-align:center;padding:20px;">截图失败，请重试</div>`;
+            if (clone && clone.parentNode) document.body.removeChild(clone);
+            console.error('长图生成失败', err);
+            c.innerHTML = `<div style="text-align:center;padding:20px;color:var(--danger);">长图生成失败，请重试</div>`;
         }
     },
 
@@ -519,37 +569,41 @@ const app = {
                 <div class="table-wrapper">
                     <table>
                         <thead>
-                            <tr><th style="width:27%">型号</th>
-                            <th style="width:13%">机况</th>
-                            <th style="width:13%">规格</th>
-                            <th style="width:10%">数量</th>
-                            <th style="width:15%">成交价</th>
-                            <th class="ref-column" style="width:13%">参考价</th>
-                            <th style="width:9%"></th>
-                        </tr>
+                            <tr>
+                                <th style="width:27%">型号</th>
+                                <th style="width:26%">机况 / 规格</th>
+                                <th style="width:10%">数量</th>
+                                <th style="width:15%">成交价</th>
+                                <th class="ref-column" style="width:13%">参考价</th>
+                                <th style="width:9%"></th>
+                            </tr>
                         </thead>
                         <tbody>`;
             b.items.forEach((i, ri) => {
                 html += `<tr>
-                    <td class="col-model"><div class="model-wrapper" id="mw-${bi}-${ri}"><input type="text" class="cell-input" value="${this.escape(i.m)}" placeholder="型号" 
+                    <td><div class="model-wrapper" id="mw-${bi}-${ri}"><input type="text" class="cell-input" value="${this.escape(i.m)}" placeholder="型号" 
                         ontouchstart=""
                         onfocus="app.filterModels(${bi},${ri},this)" 
                         oninput="app.update(${bi},${ri},'m',this.value); app.filterModels(${bi},${ri},this)" 
                         onblur="app.hideModelsDelayed(${bi},${ri})"></div></td>
-                    <td><select class="cell-input" onchange="app.update(${bi},${ri},'s',this.value)">${STATUS_LIST.map(s => `<option value="${s}" ${i.s === s ? 'selected' : ''}>${s}</option>`).join('')}</select></td>
-                    <td><select class="cell-input" style="color:var(--gray); font-size:11px" onchange="app.update(${bi},${ri},'c',this.value)">${CONFIG_LIST.map(c => `<option value="${c}" ${i.c === c ? 'selected' : ''}>${c}</option>`).join('')}</select></td>
+                    <td>
+                        <div class="status-config-wrapper">
+                            <select class="cell-input" onchange="app.update(${bi},${ri},'s',this.value)">${STATUS_LIST.map(s => `<option value="${s}" ${i.s === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
+                            <select class="cell-input" style="color:var(--gray); font-size:11px" onchange="app.update(${bi},${ri},'c',this.value)">${CONFIG_LIST.map(c => `<option value="${c}" ${i.c === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
+                        </div>
+                    </div>
                     <td><input type="number" class="qty-number" value="${i.q}" min="1" step="1" 
                         ontouchstart=""
-                        onchange="app.updateQty(${bi},${ri},this.value)"></td>
+                        onchange="app.updateQty(${bi},${ri},this.value)"></div>
                     <td><input type="tel" inputmode="decimal" class="price-input" value="${i.p}" 
                         ontouchstart=""
                         oninput="app.filterPriceInput(this,${bi},${ri},'p')" 
-                        onchange="app.filterPriceInput(this,${bi},${ri},'p')" placeholder="成交价"></td>
+                        onchange="app.filterPriceInput(this,${bi},${ri},'p')" placeholder="成交价"></div>
                     <td class="ref-column"><input type="tel" inputmode="decimal" class="price-input" value="${i.r}" 
                         ontouchstart=""
                         oninput="app.filterPriceInput(this,${bi},${ri},'r')" 
-                        onchange="app.filterPriceInput(this,${bi},${ri},'r')" placeholder="参考价"></td>
-                    <td><button class="del-row-btn" onclick="app.delRow(${bi},${ri})">✕</button></td>
+                        onchange="app.filterPriceInput(this,${bi},${ri},'r')" placeholder="参考价"></div>
+                    <td><button class="del-row-btn" onclick="app.delRow(${bi},${ri})">✕</button></div>
                 </tr>`;
             });
             html += `</tbody></table></div>
