@@ -23,7 +23,6 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 100px; transition: 0.3s; }
         
-        /* 参考价列默认隐藏，可通过按钮显示 */
         .ref-column { display: none; }
         body.show-ref .ref-column { display: table-cell !important; }
         
@@ -32,33 +31,23 @@
         .brand-header { padding: 10px 15px; background: rgba(0,0,0,0.02); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .brand-name { font-weight: bold; color: var(--primary); font-size: 14px; }
         
-        /* 手机端优化：表格不溢出屏幕 */
         .table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 650px; }
         th, td { padding: 6px 4px; text-align: center; border-bottom: 1px solid var(--border); }
         th { background: var(--bg); color: var(--gray); font-weight: 500; }
         
-        /* 手机端列宽分配 */
-        .col-model { width: 25%; }      /* 型号 */
-        .col-status { width: 22%; }     /* 机况/规格 */
-        .col-qty { width: 15%; }        /* 数量 */
-        .col-price { width: 18%; }      /* 成交价 */
-        .col-ref { width: 18%; }        /* 参考价 */
-        .col-del { width: 8%; }         /* 删除 */
-        
-        /* 机况/规格内部布局 */
         .status-wrapper { display: flex; flex-direction: column; gap: 4px; }
         .status-select, .config-select { width: 100%; padding: 4px 2px; font-size: 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); text-align: center; }
         
         .qty-container { display: flex; align-items: center; justify-content: center; gap: 3px; }
         .btn-qty { width: 22px; height: 22px; border: 1px solid var(--border); background: var(--bg); border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; }
+        .qty-input { width: 40px; padding: 4px 0; text-align: center; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); font-size: 12px; }
         .cell-input {
             width: 100%; padding: 4px 2px; border: 1px solid var(--border); border-radius: 4px;
             background: var(--bg); color: var(--text); font-size: 11px; text-align: center;
         }
         .model-input-wrapper { position: relative; width: 100%; }
         
-        /* 建议列表 */
         .suggest-list {
             position: absolute; top: 100%; left: 0; right: 0; z-index: 9999;
             background: var(--suggest-bg); border: 1px solid var(--border);
@@ -69,12 +58,10 @@
         .suggest-list li { padding: 6px 8px; font-size: 11px; cursor: pointer; border-bottom: 1px solid var(--border); }
         .suggest-list li:last-child { border-bottom: none; }
         
-        /* 底部工具栏 */
         .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border);
             display: grid; grid-template-columns: repeat(4, 1fr); padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); z-index: 500; }
         .tab-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--gray); font-size: 10px; border: none; background: none; cursor: pointer; }
         
-        /* 抽屉菜单 */
         .drawer { position: fixed; bottom: 0; left: 0; right: 0; top: 0; background: rgba(0,0,0,0.5); visibility: hidden; opacity: 0; transition: 0.3s; z-index: 1000; }
         .drawer.active { visibility: visible; opacity: 1; }
         .drawer-content { position: absolute; bottom: 0; left: 0; right: 0; background: var(--card); border-radius: 20px 20px 0 0;
@@ -82,7 +69,6 @@
         .drawer.active .drawer-content { transform: translateY(0); }
         .drawer-item { display: flex; align-items: center; gap: 12px; padding: 15px; border-bottom: 1px solid var(--border); font-size: 15px; color: var(--text); cursor: pointer; }
         
-        /* 模态框 */
         .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); display: none; z-index: 2000;
             align-items: center; justify-content: center; padding: 20px; }
         .modal-body { background: var(--card); width: 100%; max-width: 350px; border-radius: 16px; padding: 20px; }
@@ -97,15 +83,13 @@
         #toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; z-index: 3000; opacity: 0; transition: 0.2s; white-space: nowrap; }
         #toast.show { opacity: 1; }
         
-        /* 统计卡片 */
         .summary-card { background: var(--card); margin: 12px; padding: 12px; border-radius: 12px; border: 1px dashed var(--border); }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center; }
         .stats-item { font-size: 12px; }
         .stats-value { font-size: 16px; font-weight: bold; margin-top: 4px; }
         
-        /* 电脑端稍微放大 */
         @media (min-width: 768px) {
-            table { font-size: 13px; }
+            table { font-size: 13px; min-width: auto; }
             .cell-input { font-size: 13px; padding: 6px 4px; }
             .status-select, .config-select { font-size: 12px; padding: 5px; }
             .stats-value { font-size: 18px; }
@@ -114,8 +98,8 @@
 </head>
 <body class="show-ref">
 <div class="navbar">
-    <div class="nav-title">废机宝 12.0</div>
-    <div style="font-size: 12px; color: var(--gray);">手机优化版</div>
+    <div class="nav-title">废机宝 13.0</div>
+    <div style="font-size: 12px; color: var(--gray);">完整版</div>
 </div>
 <div id="screenshot-area">
     <div id="brand-container"></div>
@@ -154,14 +138,18 @@
 <script>
 const SECRET_KEY = "Egg77Egg88_secret_2026";
 
+// ==================== 完整型号数据库 ====================
 const FULL_MODEL_MAP = {
-    "OPPO": ["Find X9 Ultra", "Find X9 Pro", "Find X9", "Find X8 Pro", "Find X8", "Find X7 Ultra", "Find X7", "Find X6 Pro", "Find X6", "Reno13 Pro", "Reno13", "Reno12 Pro", "Reno12", "Reno11 Pro", "Reno11", "Reno10 Pro+", "Reno10 Pro", "Reno10", "K12x", "K12", "K11x", "K11", "A3 Pro", "A3x", "A2 Pro", "A2x", "A2"],
-    "vivo": ["X300 Ultra", "X300 Pro", "X300", "X200 Ultra", "X200 Pro", "X200", "X100 Ultra", "X100 Pro", "X100", "X90 Pro+", "X90 Pro", "X90", "S20 Pro", "S20", "S19 Pro", "S19", "S18 Pro", "S18", "Y500 Pro", "Y500", "Y300 Pro", "Y300", "iQOO 13", "iQOO 12 Pro", "iQOO 12", "iQOO 11S", "iQOO 11"],
-    "华为": ["Mate 80 RS", "Mate 80 Pro", "Mate 80", "Mate 70 Pro+", "Mate 70 Pro", "Mate 70", "Mate 60 Pro+", "Mate 60 Pro", "Mate 60", "Pura 80 Ultra", "Pura 80 Pro", "Pura 80", "Pura 70 Ultra", "Pura 70 Pro", "Pura 70", "Nova 15 Pro", "Nova 15", "Nova 14 Ultra", "Nova 14 Pro", "Nova 14", "畅享90", "畅享80", "畅享70 Pro", "畅享70"],
-    "荣耀": ["Magic V6", "Magic V5", "Magic V3", "Magic V2", "Magic7 Pro", "Magic7", "Magic6 Pro", "Magic6", "Magic5 Pro", "Magic5", "300 Pro", "300", "200 Pro", "200", "100 Pro", "100", "X80 GT", "X80", "X70", "X60 Pro", "X60"],
-    "苹果": ["iPhone 18 Pro Max", "iPhone 18 Pro", "iPhone 18 Plus", "iPhone 18", "iPhone 17 Pro Max", "iPhone 17 Pro", "iPhone 17 Plus", "iPhone 17", "iPhone 16 Pro Max", "iPhone 16 Pro", "iPhone 16 Plus", "iPhone 16", "iPhone 15 Pro Max", "iPhone 15 Pro", "iPhone 15 Plus", "iPhone 15", "iPhone 14 Pro Max", "iPhone 14 Pro", "iPhone 14 Plus", "iPhone 14", "iPhone SE 2026", "iPhone SE 2024", "iPhone SE 2022"],
-    "小米": ["小米17 Pro Max", "小米17 Pro", "小米17", "小米16 Pro", "小米16", "小米15 Ultra", "小米15 Pro", "小米15", "小米14 Ultra", "小米14 Pro", "小米14", "小米13 Ultra", "小米13 Pro", "小米13", "MIX Fold 4", "MIX Fold 3", "MIX Fold 2", "Civi 4 Pro", "Civi 3", "Civi 2"],
-    "三星": ["Galaxy S26 Ultra", "Galaxy S26 Plus", "Galaxy S26", "Galaxy S25 Ultra", "Galaxy S25 Plus", "Galaxy S25", "Galaxy S24 Ultra", "Galaxy S24 Plus", "Galaxy S24", "Galaxy Z Fold 6", "Galaxy Z Fold 5", "Galaxy Z Fold 4", "Galaxy Z Flip 6", "Galaxy Z Flip 5", "Galaxy Z Flip 4"]
+    "OPPO": ["Find X9 Ultra", "Find X9 Pro", "Find X9", "Find X8 Pro", "Find X8", "Find X7 Ultra", "Find X7", "Find X6 Pro", "Find X6", "Find X5 Pro", "Find X5", "Find X3 Pro", "Find X3", "Find X2 Pro", "Find X2", "Find X", "Find 7", "Find 5", "Find N3", "Find N3 Flip", "Find N2", "Find N2 Flip", "Find N", "Reno13 Pro", "Reno13", "Reno12 Pro", "Reno12", "Reno11 Pro", "Reno11", "Reno10 Pro+", "Reno10 Pro", "Reno10", "Reno9 Pro+", "Reno9 Pro", "Reno9", "Reno8 Pro+", "Reno8 Pro", "Reno8", "Reno7 Pro", "Reno7", "Reno6 Pro+", "Reno6 Pro", "Reno6", "Reno5 Pro+", "Reno5 Pro", "Reno5", "Reno4 Pro", "Reno4", "Reno3 Pro", "Reno3", "Reno2", "Reno", "R17 Pro", "R17", "R15", "R11s", "R11", "R9s", "R9", "K12x", "K12", "K11x", "K11", "K10x", "K10", "K9x", "K9", "K7x", "K7", "K5", "K3", "K1", "A3 Pro", "A3x", "A2 Pro", "A2x", "A2", "A1 Pro", "A1x", "A1", "A97", "A96", "A95", "A93", "A92s", "A92", "A91", "A72", "A52", "A32", "A12", "A11", "A9", "A8", "A7", "A5", "A3", "A1"],
+    "vivo": ["X300 Ultra", "X300 Pro", "X300", "X200 Ultra", "X200 Pro", "X200", "X100 Ultra", "X100 Pro", "X100", "X90 Pro+", "X90 Pro", "X90", "X80 Pro", "X80", "X70 Pro+", "X70 Pro", "X70", "X60 Pro+", "X60 Pro", "X60", "X50 Pro+", "X50 Pro", "X50", "X30 Pro", "X30", "X27 Pro", "X27", "X23", "X21", "X20", "X9s", "X9", "X7", "X6", "X5", "X3", "X Fold4", "X Fold3 Pro", "X Fold3", "X Fold2", "X Fold+", "X Fold", "X Flip", "S20 Pro", "S20", "S19 Pro", "S19", "S18 Pro", "S18", "S17 Pro", "S17", "S16 Pro", "S16", "S15 Pro", "S15", "S12 Pro", "S12", "S10", "S9", "S7", "S5", "S1", "Y500 Pro", "Y500", "Y300 Pro+", "Y300 Pro", "Y300", "Y200", "Y100", "Y78", "Y77", "Y76", "Y73s", "Y72", "Y70", "Y55", "Y53", "Y51", "Y50", "Y36", "Y35", "Y33", "Y31", "Y30", "Y20", "iQOO 13", "iQOO 12 Pro", "iQOO 12", "iQOO 11S", "iQOO 11 Pro", "iQOO 11", "iQOO 10 Pro", "iQOO 10", "iQOO 9 Pro", "iQOO 9", "iQOO 8 Pro", "iQOO 8", "iQOO 7", "iQOO Neo9S Pro", "iQOO Neo9 Pro", "iQOO Neo9", "iQOO Neo8 Pro", "iQOO Neo8", "iQOO Neo7 SE", "iQOO Neo7", "iQOO Z9", "iQOO Z8", "iQOO Z7", "iQOO Z6", "iQOO Z5"],
+    "华为": ["Mate 80 RS", "Mate 80 Pro", "Mate 80", "Mate 70 Pro+", "Mate 70 Pro", "Mate 70", "Mate 60 Pro+", "Mate 60 Pro", "Mate 60", "Mate 50 Pro", "Mate 50", "Mate 40 Pro+", "Mate 40 Pro", "Mate 40", "Mate 30 Pro", "Mate 30", "Mate 20 Pro", "Mate 20", "Mate 10 Pro", "Mate 10", "Mate 9 Pro", "Mate 9", "Mate 8", "Mate 7", "Pura 80 Ultra", "Pura 80 Pro", "Pura 80", "Pura 70 Ultra", "Pura 70 Pro", "Pura 70", "P60 Pro", "P60", "P50 Pro", "P50", "P40 Pro+", "P40 Pro", "P40", "P30 Pro", "P30", "P20 Pro", "P20", "P10 Plus", "P10", "P9 Plus", "P9", "P8", "P7", "P6", "Nova 15 Pro", "Nova 15", "Nova 14 Ultra", "Nova 14 Pro", "Nova 14", "Nova 13 Pro", "Nova 13", "Nova 12 Ultra", "Nova 12 Pro", "Nova 12", "Nova 11 Pro", "Nova 11", "Nova 10 Pro", "Nova 10", "Nova 9 Pro", "Nova 9", "Nova 8 Pro", "Nova 8", "Nova 7 Pro", "Nova 7", "Nova 6", "Nova 5 Pro", "Nova 5", "Nova 4", "Nova 3", "Nova 2", "Nova", "畅享90", "畅享80", "畅享70 Pro", "畅享70", "畅享60 Pro", "畅享60", "畅享50", "畅享20", "畅享10", "畅享9", "畅享8", "畅享7", "畅享6", "畅享5", "Mate X6", "Mate X5", "Mate X3", "Mate Xs 2", "Mate X2", "Mate X", "Pocket 2", "Pocket S", "Pura X"],
+    "荣耀": ["Magic V6", "Magic V5", "Magic V3", "Magic V2", "Magic Vs2", "Magic Vs", "Magic7 Pro", "Magic7", "Magic6 Pro", "Magic6", "Magic5 Pro", "Magic5", "Magic4 Pro", "Magic4", "Magic3 Pro", "Magic3", "Magic2", "Magic", "300 Pro", "300", "200 Pro", "200", "100 Pro", "100", "90 Pro", "90", "80 Pro", "80", "70 Pro", "70", "60 Pro", "60", "50 Pro", "50", "30 Pro+", "30 Pro", "30", "20 Pro", "20", "10", "9", "8", "7", "6", "X80 GT", "X80", "X70", "X60 Pro", "X60", "X50 Pro", "X50", "X40 GT", "X40", "X30", "X20", "X10", "畅玩60 Plus", "畅玩60", "畅玩50 Plus", "畅玩50", "畅玩40", "畅玩30", "畅玩20", "畅玩10", "畅玩9"],
+    "苹果": ["iPhone 18 Pro Max", "iPhone 18 Pro", "iPhone 18 Plus", "iPhone 18", "iPhone 17 Pro Max", "iPhone 17 Pro", "iPhone 17 Plus", "iPhone 17", "iPhone 17e", "iPhone 16 Pro Max", "iPhone 16 Pro", "iPhone 16 Plus", "iPhone 16", "iPhone 16e", "iPhone 15 Pro Max", "iPhone 15 Pro", "iPhone 15 Plus", "iPhone 15", "iPhone 14 Pro Max", "iPhone 14 Pro", "iPhone 14 Plus", "iPhone 14", "iPhone 13 Pro Max", "iPhone 13 Pro", "iPhone 13 mini", "iPhone 13", "iPhone 12 Pro Max", "iPhone 12 Pro", "iPhone 12 mini", "iPhone 12", "iPhone 11 Pro Max", "iPhone 11 Pro", "iPhone 11", "iPhone XS Max", "iPhone XS", "iPhone XR", "iPhone X", "iPhone 8 Plus", "iPhone 8", "iPhone 7 Plus", "iPhone 7", "iPhone 6s Plus", "iPhone 6s", "iPhone 6 Plus", "iPhone 6", "iPhone 5s", "iPhone 5c", "iPhone 5", "iPhone 4s", "iPhone 4", "iPhone SE 2026", "iPhone SE 2024", "iPhone SE 2022", "iPhone SE 2020", "iPhone SE"],
+    "小米": ["小米17 Pro Max", "小米17 Pro", "小米17", "小米16 Pro", "小米16", "小米15 Ultra", "小米15 Pro", "小米15", "小米14 Ultra", "小米14 Pro", "小米14", "小米13 Ultra", "小米13 Pro", "小米13", "小米12S Ultra", "小米12S Pro", "小米12S", "小米12 Pro", "小米12", "小米11 Ultra", "小米11 Pro", "小米11", "小米10 Ultra", "小米10 Pro", "小米10", "小米9 Pro", "小米9", "小米8", "小米6", "小米5", "小米4", "小米3", "小米2", "小米1", "MIX Fold 4", "MIX Fold 3", "MIX Fold 2", "MIX Fold", "MIX 4", "MIX 3", "MIX 2S", "MIX 2", "MIX", "Civi 4 Pro", "Civi 3", "Civi 2", "Civi 1S", "Civi", "小米Note 3", "小米Note 2", "小米Note"],
+    "红米": ["Redmi K80 Pro", "Redmi K80", "Redmi K70 Ultra", "Redmi K70 Pro", "Redmi K70", "Redmi K60 Ultra", "Redmi K60 Pro", "Redmi K60", "Redmi K50 Pro", "Redmi K50", "Redmi K40 Pro", "Redmi K40", "Redmi K30 Pro", "Redmi K30", "Redmi K20 Pro", "Redmi K20", "Redmi Note 15 Pro", "Redmi Note 15", "Redmi Note 14 Pro+", "Redmi Note 14 Pro", "Redmi Note 14", "Redmi Note 13 Pro+", "Redmi Note 13 Pro", "Redmi Note 13", "Redmi Note 12 Pro+", "Redmi Note 12 Pro", "Redmi Note 12", "Redmi Note 11 Pro+", "Redmi Note 11 Pro", "Redmi Note 11", "Redmi Note 10 Pro", "Redmi Note 10", "Redmi Note 9 Pro", "Redmi Note 9", "Redmi Note 8 Pro", "Redmi Note 8", "Redmi Note 7 Pro", "Redmi Note 7", "Redmi 14C", "Redmi 14R", "Redmi 13C", "Redmi 13R", "Redmi 12C", "Redmi 12", "Redmi 10A", "Redmi 10", "Redmi 9A", "Redmi 9", "Redmi 8", "Redmi 7", "Redmi 6", "Redmi 5", "Redmi 4", "Redmi 3", "Redmi 2", "Redmi 1", "Redmi Turbo 4", "Redmi Turbo 3"],
+    "三星": ["Galaxy S26 Ultra", "Galaxy S26 Plus", "Galaxy S26", "Galaxy S25 Ultra", "Galaxy S25 Plus", "Galaxy S25", "Galaxy S24 Ultra", "Galaxy S24 Plus", "Galaxy S24", "Galaxy S23 Ultra", "Galaxy S23 Plus", "Galaxy S23", "Galaxy S22 Ultra", "Galaxy S22 Plus", "Galaxy S22", "Galaxy S21 Ultra", "Galaxy S21 Plus", "Galaxy S21", "Galaxy S20 Ultra", "Galaxy S20 Plus", "Galaxy S20", "Galaxy S10 Plus", "Galaxy S10", "Galaxy S9 Plus", "Galaxy S9", "Galaxy S8 Plus", "Galaxy S8", "Galaxy S7 Edge", "Galaxy S7", "Galaxy S6 Edge", "Galaxy S6", "Galaxy S5", "Galaxy S4", "Galaxy S3", "Galaxy S2", "Galaxy S", "Galaxy Note 20 Ultra", "Galaxy Note 20", "Galaxy Note 10 Plus", "Galaxy Note 10", "Galaxy Note 9", "Galaxy Note 8", "Galaxy Note 7", "Galaxy Note 5", "Galaxy Note 4", "Galaxy Note 3", "Galaxy Note 2", "Galaxy Z Fold 6", "Galaxy Z Fold 5", "Galaxy Z Fold 4", "Galaxy Z Fold 3", "Galaxy Z Fold 2", "Galaxy Z Flip 6", "Galaxy Z Flip 5", "Galaxy Z Flip 4", "Galaxy Z Flip 3", "Galaxy A56", "Galaxy A55", "Galaxy A36", "Galaxy A35", "Galaxy A26", "Galaxy A25", "Galaxy A16", "Galaxy A15", "Galaxy A14", "Galaxy A13", "Galaxy A12", "Galaxy A11", "Galaxy A10", "Galaxy A9", "Galaxy A8", "Galaxy A7", "Galaxy A5", "Galaxy A3"],
+    "一加": ["一加 15T", "一加 15", "一加 14", "一加 13", "一加 12", "一加 11", "一加 10 Pro", "一加 10", "一加 9 Pro", "一加 9", "一加 8T", "一加 8 Pro", "一加 8", "一加 7T Pro", "一加 7T", "一加 7 Pro", "一加 7", "一加 6T", "一加 6", "一加 Ace 6 Pro", "一加 Ace 6", "一加 Ace 5 Pro", "一加 Ace 5", "一加 Ace 4", "一加 Ace 3 Pro", "一加 Ace 3", "一加 Ace 2 Pro", "一加 Ace 2", "一加 Ace"],
+    "魅族": ["魅族 22 Pro", "魅族 22", "魅族 21s", "魅族 21 Pro", "魅族 21", "魅族 20 Infinity", "魅族 20 Pro", "魅族 20", "魅族 18s Pro", "魅族 18s", "魅族 18 Pro", "魅族 18", "魅族 17 Pro", "魅族 17", "魅族 16s Pro", "魅族 16s", "魅族 16th", "魅族 15 Plus", "魅族 15", "魅蓝 Note 6", "魅蓝 Note 5", "魅蓝 Note 3", "魅蓝 X", "魅蓝 E", "Pro 7 Plus", "Pro 7", "Pro 6", "Pro 5", "MX6", "MX5", "MX4", "MX3", "MX2", "MX"]
 };
 
 const STATUS_LIST = ["废机整机", "开机屏坏", "开机屏好", "正常机"];
@@ -173,7 +161,7 @@ const app = {
     isWechat: /MicroMessenger/i.test(navigator.userAgent),
 
     init() {
-        const saved = localStorage.getItem("feijibao_v13");
+        const saved = localStorage.getItem("feijibao_v15");
         if (saved) {
             try { this.data = JSON.parse(saved); } catch(e) { this.resetData(); }
         } else { this.resetData(); }
@@ -195,13 +183,25 @@ const app = {
     },
 
     emptyRows(n) { return Array(n).fill().map(() => ({ m: "", s: "废机整机", c: "—", q: 1, p: "", r: "" })); },
-    save() { localStorage.setItem("feijibao_v13", JSON.stringify(this.data)); this.updateStats(); },
+    save() { localStorage.setItem("feijibao_v15", JSON.stringify(this.data)); this.updateStats(); },
 
     update(bIdx, rIdx, key, val) {
         if (this.data[bIdx] && this.data[bIdx].items[rIdx]) {
             this.data[bIdx].items[rIdx][key] = val;
             this.save();
         }
+    },
+
+    // 数量更新（支持手动输入）
+    updateQty(bIdx, rIdx, value) {
+        let v = parseInt(value) || 1;
+        if (v < 1) v = 1;
+        this.data[bIdx].items[rIdx].q = v;
+        this.save();
+        this.updateStats();
+        // 重新渲染数量显示
+        const qtySpan = document.querySelector(`#brand-container .brand-card:nth-child(${bIdx+1}) table tbody tr:nth-child(${rIdx+1}) .qty-span`);
+        if (qtySpan) qtySpan.innerText = v;
     },
 
     changeQty(bIdx, rIdx, delta) {
@@ -242,11 +242,35 @@ const app = {
                 e.preventDefault();
                 inputEl.value = m;
                 this.update(bIdx, rIdx, 'm', m);
+                this.checkAndMerge(bIdx, rIdx);
                 if (ul.parentNode) ul.remove();
             };
             ul.appendChild(li);
         });
         wrapper.appendChild(ul);
+    },
+
+    checkAndMerge(bIdx, rIdx) {
+        const currentItem = this.data[bIdx].items[rIdx];
+        if (!currentItem.m) return;
+        
+        const duplicateIdx = this.data[bIdx].items.findIndex((item, idx) => 
+            idx !== rIdx && 
+            item.m === currentItem.m && 
+            item.s === currentItem.s && 
+            item.c === currentItem.c
+        );
+        
+        if (duplicateIdx !== -1) {
+            const duplicateItem = this.data[bIdx].items[duplicateIdx];
+            if (confirm(`发现相同的手机记录：\n品牌：${this.data[bIdx].brand}\n型号：${currentItem.m}\n机况：${currentItem.s}\n配置：${currentItem.c}\n\n当前数量：${currentItem.q}\n已有数量：${duplicateItem.q}\n\n是否合并数量？`)) {
+                duplicateItem.q = (parseInt(duplicateItem.q) || 1) + (parseInt(currentItem.q) || 1);
+                this.data[bIdx].items.splice(rIdx, 1);
+                this.render();
+                this.save();
+                this.toast("已合并相同手机");
+            }
+        }
     },
 
     hideSuggestions(bIdx, rIdx) {
@@ -286,15 +310,29 @@ const app = {
         const modal = document.getElementById('appModal');
         const content = document.getElementById('modalContent');
         content.innerHTML = `<div style="font-weight:bold;margin-bottom:12px;text-align:center;">添加品牌</div>
-            <select id="newBrandSelect" class="brand-select-full">${BRAND_OPTIONS.map(b => `<option value="${b}">${b}</option>`).join('')}</select>
-            <input id="manualBrandInput" class="brand-select-full" style="display:none;" placeholder="输入品牌名称">
+            <select id="newBrandSelect" class="brand-select-full" onchange="app.toggleManualBrandInput()">
+                ${BRAND_OPTIONS.map(b => `<option value="${b}">${b}</option>`).join('')}
+            </select>
+            <input id="manualBrandInput" class="brand-select-full" style="display:none;" placeholder="请输入品牌名称">
             <button class="btn-confirm" onclick="app.confirmAddBrand()">确认添加</button>`;
         modal.style.display = 'flex';
+        this.toggleManualBrandInput();
     },
+    
+    toggleManualBrandInput() {
+        const select = document.getElementById('newBrandSelect');
+        const manualInput = document.getElementById('manualBrandInput');
+        if (select && manualInput) {
+            manualInput.style.display = select.value === "手动输入" ? "block" : "none";
+        }
+    },
+
     confirmAddBrand() {
         const sel = document.getElementById('newBrandSelect');
         const manual = document.getElementById('manualBrandInput');
         let brand = sel.value === "手动输入" ? (manual.value.trim() || "新品牌") : sel.value;
+        if (!brand) { this.toast("请输入品牌名称"); return; }
+        if (this.data.some(b => b.brand === brand)) { this.toast("品牌已存在"); return; }
         this.data.push({ brand, items: this.emptyRows(5) });
         this.render(); this.save(); this.closeModal(); this.toast(`已添加品牌: ${brand}`);
     },
@@ -383,16 +421,20 @@ const app = {
                 <div class="brand-header"><span class="brand-name">${this.escape(b.brand)}</span><button onclick="app.delBrand(${bi})" style="color:var(--danger);border:none;background:none;font-size:12px;">删除品牌</button></div>
                 <div class="table-wrapper">
                     <table>
-                        <thead><tr><th class="col-model">型号</th><th class="col-status">机况/规格</th><th class="col-qty">数量</th><th class="col-price">成交价</th><th class="ref-column col-ref">参考价</th><th class="col-del"></th></tr></thead>
+                        <thead><tr><th>型号</th><th>机况/规格</th><th>数量</th><th>成交价</th><th class="ref-column">参考价</th><th></th></tr></thead>
                         <tbody>`;
             b.items.forEach((i, ri) => {
                 html += `<tr>
-                    <td class="col-model"><div class="model-input-wrapper" id="mw-${bi}-${ri}"><input type="text" class="cell-input" value="${this.escape(i.m)}" placeholder="型号" onfocus="app.showSuggestions(${bi}, ${ri}, this)" oninput="app.update(${bi}, ${ri}, 'm', this.value); app.showSuggestions(${bi}, ${ri}, this)" onblur="app.hideSuggestionsDelayed(${bi}, ${ri})"></div></td>
-                    <td class="col-status"><div class="status-wrapper"><select class="status-select" onchange="app.update(${bi},${ri},'s',this.value)">${STATUS_LIST.map(s => `<option ${i.s===s?'selected':''}>${s}</option>`).join('')}</select><select class="config-select" onchange="app.update(${bi},${ri},'c',this.value)">${CONFIG_LIST.map(c => `<option ${i.c===c?'selected':''}>${c}</option>`).join('')}</select></div></td>
-                    <td class="col-qty"><div class="qty-container"><div class="btn-qty" onclick="app.changeQty(${bi},${ri},-1)">-</div><span style="min-width:24px">${i.q}</span><div class="btn-qty" onclick="app.changeQty(${bi},${ri},1)">+</div></div></td>
-                    <td class="col-price"><input type="text" class="cell-input" value="${i.p}" oninput="app.filterPriceInput(this,${bi},${ri},'p')"></td>
-                    <td class="ref-column col-ref"><input type="text" class="cell-input" value="${i.r}" oninput="app.filterPriceInput(this,${bi},${ri},'r')"></td>
-                    <td class="col-del"><button onclick="app.delRow(${bi},${ri})" style="border:none;background:none;color:var(--danger);font-size:16px;">✕</button></td>
+                    <td><div class="model-input-wrapper" id="mw-${bi}-${ri}"><input type="text" class="cell-input" value="${this.escape(i.m)}" placeholder="型号" onfocus="app.showSuggestions(${bi}, ${ri}, this)" oninput="app.update(${bi}, ${ri}, 'm', this.value); app.showSuggestions(${bi}, ${ri}, this)" onblur="app.hideSuggestionsDelayed(${bi}, ${ri})"></div></td>
+                    <td><div class="status-wrapper"><select class="status-select" onchange="app.update(${bi},${ri},'s',this.value)">${STATUS_LIST.map(s => `<option ${i.s===s?'selected':''}>${s}</option>`).join('')}</select><select class="config-select" onchange="app.update(${bi},${ri},'c',this.value)">${CONFIG_LIST.map(c => `<option ${i.c===c?'selected':''}>${c}</option>`).join('')}</select></div></td>
+                    <td><div class="qty-container">
+                        <div class="btn-qty" onclick="app.changeQty(${bi},${ri},-1)">-</div>
+                        <input type="number" class="qty-input" value="${i.q}" min="1" onchange="app.updateQty(${bi},${ri},this.value)">
+                        <div class="btn-qty" onclick="app.changeQty(${bi},${ri},1)">+</div>
+                    </div></td>
+                    <td><input type="text" class="cell-input" value="${i.p}" oninput="app.filterPriceInput(this,${bi},${ri},'p')"></td>
+                    <td class="ref-column"><input type="text" class="cell-input" value="${i.r}" oninput="app.filterPriceInput(this,${bi},${ri},'r')"></td>
+                    <td><button onclick="app.delRow(${bi},${ri})" style="border:none;background:none;color:var(--danger);font-size:16px;">✕</button></td>
                 </tr>`;
             });
             html += `</tbody></table></div><button onclick="app.addRow(${bi})" style="width:100%;padding:10px;background:none;color:var(--info);border:none;border-top:1px solid var(--border);font-size:13px;">➕ 继续添加一行</button></div>`;
