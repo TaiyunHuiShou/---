@@ -14,16 +14,18 @@
         .dark { --bg: #000000; --card: #1c1c1e; --text: #f2f2f7; --border: #38383a; }
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 90px; transition: 0.3s; }
         
-        /* 表格 - 手机屏幕完整显示，不需要滑动 */
+        .ref-column { display: none; }
+        body.show-ref .ref-column { display: table-cell; }
+        
         table { width: 100%; border-collapse: collapse; font-size: 11px; }
         th, td { padding: 5px 3px; text-align: center; border-bottom: 1px solid var(--border); vertical-align: middle; }
         th { background: var(--bg); font-weight: 500; }
         
-        /* 列宽固定比例 */
-        .col-model { width: 28%; }
-        .col-spec { width: 24%; }
-        .col-qty { width: 12%; }
-        .col-price { width: 22%; }
+        .col-model { width: 30%; }
+        .col-spec { width: 26%; }
+        .col-qty { width: 14%; }
+        .col-price { width: 16%; }
+        .col-ref { width: 16%; }
         .col-del { width: 8%; }
         
         .brand-card { background: var(--card); border-radius: 12px; margin-bottom: 16px; overflow: hidden; border: 1px solid var(--border); }
@@ -36,12 +38,10 @@
         .spec-col { display: flex; flex-direction: column; gap: 3px; }
         .spec-col select { width: 100%; font-size: 10px; padding: 3px 2px; }
         
-        .price-col { display: flex; flex-direction: column; gap: 3px; }
-        .price-col input { width: 100%; font-size: 10px; padding: 3px 2px; }
-        
         .model-wrapper { position: relative; }
-        .suggest-list { position: absolute; top: 100%; left: 0; right: 0; z-index: 9999; background: var(--card); border: 1px solid var(--border); border-radius: 4px; max-height: 100px; overflow-y: auto; list-style: none; margin: 2px 0 0; padding: 0; }
-        .suggest-list li { padding: 3px 5px; font-size: 10px; cursor: pointer; border-bottom: 1px solid var(--border); }
+        .suggest-list { position: absolute; top: 100%; left: 0; right: 0; z-index: 9999; background: var(--card); border: 1px solid var(--border); border-radius: 4px; max-height: 120px; overflow-y: auto; list-style: none; margin: 2px 0 0; padding: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+        .suggest-list li { padding: 5px 6px; font-size: 10px; cursor: pointer; border-bottom: 1px solid var(--border); }
+        .suggest-list li:active { background: var(--primary); color: white; }
         
         .qty-input { width: 100%; text-align: center; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); font-size: 12px; padding: 5px 0; }
         
@@ -54,6 +54,15 @@
         .drawer-content { position: absolute; bottom: 0; left: 0; right: 0; background: var(--card); border-radius: 16px 16px 0 0; padding: 15px; transform: translateY(100%); transition: 0.3s; max-height: 70vh; overflow-y: auto; }
         .drawer.active .drawer-content { transform: translateY(0); }
         .drawer-item { display: flex; align-items: center; gap: 10px; padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text); cursor: pointer; }
+        
+        .confirm-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); display: none; z-index: 3000; align-items: center; justify-content: center; padding: 20px; }
+        .confirm-modal.active { display: flex; }
+        .confirm-body { background: var(--card); width: 100%; max-width: 280px; border-radius: 16px; padding: 20px; text-align: center; }
+        .confirm-title { font-weight: bold; font-size: 16px; margin-bottom: 12px; color: var(--text); }
+        .confirm-message { font-size: 13px; margin-bottom: 20px; color: var(--text); line-height: 1.4; }
+        .confirm-buttons { display: flex; gap: 12px; }
+        .confirm-cancel { flex: 1; padding: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 14px; }
+        .confirm-danger { flex: 1; padding: 10px; border: none; background: var(--danger); color: white; border-radius: 8px; cursor: pointer; font-size: 14px; }
         
         .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); display: none; z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
         .modal-body { background: var(--card); width: 100%; max-width: 300px; border-radius: 16px; padding: 16px; }
@@ -75,7 +84,6 @@
         #toast.show { opacity: 1; }
         
         .add-row-btn { width: 100%; padding: 8px; background: none; color: var(--info); border: none; border-top: 1px solid var(--border); font-size: 12px; cursor: pointer; }
-        
         .del-brand-btn { color: var(--danger); border: none; background: none; font-size: 11px; cursor: pointer; }
         .del-row-btn { border: none; background: none; color: var(--danger); font-size: 14px; cursor: pointer; }
     </style>
@@ -109,6 +117,7 @@
 <div class="drawer" id="manageDrawer" onclick="app.toggleDrawer(false)">
     <div class="drawer-content" onclick="event.stopPropagation()">
         <div class="drawer-item" onclick="app.toggleTheme()">🌓 切换亮/暗模式</div>
+        <div class="drawer-item" onclick="app.toggleRefColumn()">🔍 显示/隐藏参考价</div>
         <div class="drawer-item" onclick="app.generateLongImage()">📸 生成长图预览</div>
         <div class="drawer-item" onclick="app.printPage()">🖨️ 打印清单</div>
         <div class="drawer-item" onclick="app.showBackupCode()">📂 备份数据</div>
@@ -121,10 +130,21 @@
 <div class="modal" id="appModal" onclick="app.closeModal()">
     <div class="modal-body" onclick="event.stopPropagation()" id="modalContent"></div>
 </div>
+
+<div class="confirm-modal" id="deleteConfirmModal" onclick="app.hideDeleteConfirm()">
+    <div class="confirm-body" onclick="event.stopPropagation()">
+        <div class="confirm-title">删除品牌</div>
+        <div class="confirm-message" id="deleteConfirmMsg">确定删除该品牌吗？</div>
+        <div class="confirm-buttons">
+            <button class="confirm-cancel" id="deleteCancelBtn">取消</button>
+            <button class="confirm-danger" id="deleteOkBtn">确认删除</button>
+        </div>
+    </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
-// 型号数据库
 const MODEL_DB = {
     "OPPO": ["Find X9 Ultra","Find X9 Pro","Find X9","Find X8 Pro","Find X8","Find X7 Ultra","Find X7","Find X6 Pro","Find X6","Reno13 Pro","Reno13","Reno12 Pro","Reno12","Reno11 Pro","Reno11","Reno10 Pro+","Reno10 Pro","Reno10","K12x","K12","K11x","K11","A3 Pro","A3x","A2 Pro","A2x","A2"],
     "vivo": ["X300 Ultra","X300 Pro","X300","X200 Ultra","X200 Pro","X200","X100 Ultra","X100 Pro","X100","X90 Pro+","X90 Pro","X90","S20 Pro","S20","S19 Pro","S19","S18 Pro","S18","Y500 Pro","Y500","Y300 Pro","Y300","iQOO 13","iQOO 12 Pro","iQOO 12","iQOO 11S","iQOO 11"],
@@ -142,13 +162,23 @@ const BRAND_OPTIONS = ["OPPO", "vivo", "华为", "荣耀", "苹果", "小米", "
 const app = {
     data: [],
     isWechat: /MicroMessenger/i.test(navigator.userAgent),
+    pendingDeleteBrandIdx: null,
+    suggestTimeouts: {},
 
     init() {
-        const saved = localStorage.getItem("feijibao_mobile_v1");
+        const saved = localStorage.getItem("feijibao_mobile_v3");
         if (saved) { try { this.data = JSON.parse(saved); } catch(e) { this.resetData(); } }
         else { this.resetData(); }
+        
+        // 恢复参考价显示状态
+        const refPref = localStorage.getItem('ref_display_pref');
+        if (refPref === 'show') document.body.classList.add('show-ref');
+        
         this.render();
         if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
+        
+        document.getElementById('deleteCancelBtn').onclick = () => this.hideDeleteConfirm();
+        document.getElementById('deleteOkBtn').onclick = () => this.confirmDeleteBrand();
     },
 
     resetData() {
@@ -162,7 +192,7 @@ const app = {
     },
 
     emptyRows(n) { return Array(n).fill().map(() => ({ m: "", s: "废机整机", c: "—", q: 1, p: "", r: "" })); },
-    save() { localStorage.setItem("feijibao_mobile_v1", JSON.stringify(this.data)); this.updateStats(); },
+    save() { localStorage.setItem("feijibao_mobile_v3", JSON.stringify(this.data)); this.updateStats(); },
 
     update(bIdx, rIdx, key, val) {
         if (this.data[bIdx] && this.data[bIdx].items[rIdx]) {
@@ -218,12 +248,24 @@ const app = {
 
     delBrand(bIdx) {
         if (this.data.length <= 1) { this.toast("至少保留一个品牌"); return; }
-        if (confirm(`确定删除品牌「${this.data[bIdx].brand}」吗？`)) {
-            this.data.splice(bIdx, 1);
+        this.pendingDeleteBrandIdx = bIdx;
+        document.getElementById('deleteConfirmMsg').innerText = `确定删除品牌「${this.data[bIdx].brand}」吗？`;
+        document.getElementById('deleteConfirmModal').classList.add('active');
+    },
+
+    hideDeleteConfirm() {
+        document.getElementById('deleteConfirmModal').classList.remove('active');
+        this.pendingDeleteBrandIdx = null;
+    },
+
+    confirmDeleteBrand() {
+        if (this.pendingDeleteBrandIdx !== null) {
+            this.data.splice(this.pendingDeleteBrandIdx, 1);
             this.render();
             this.save();
             this.toast("品牌已删除");
         }
+        this.hideDeleteConfirm();
     },
 
     resetToInitial() {
@@ -233,6 +275,13 @@ const app = {
             this.save();
             this.toast("已恢复初始");
         }
+    },
+
+    toggleRefColumn() {
+        document.body.classList.toggle('show-ref');
+        const isShow = document.body.classList.contains('show-ref');
+        localStorage.setItem('ref_display_pref', isShow ? 'show' : 'hide');
+        this.toggleDrawer(false);
     },
 
     showAddBrandModal() {
@@ -347,7 +396,16 @@ const app = {
 
     escape(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m]); },
 
+    // 防抖型号匹配
     filterModels(bIdx, rIdx, inputEl) {
+        const key = `${bIdx}_${rIdx}`;
+        if (this.suggestTimeouts[key]) clearTimeout(this.suggestTimeouts[key]);
+        this.suggestTimeouts[key] = setTimeout(() => {
+            this.doFilterModels(bIdx, rIdx, inputEl);
+        }, 300);
+    },
+
+    doFilterModels(bIdx, rIdx, inputEl) {
         const wrapper = document.getElementById(`mw-${bIdx}-${rIdx}`);
         if (!wrapper) return;
         const old = wrapper.querySelector('.suggest-list');
@@ -393,7 +451,7 @@ const app = {
                 <div class="table-wrapper">
                     <table>
                         <thead>
-                            <tr><th class="col-model">型号</th><th class="col-spec">机况/高低配</th><th class="col-qty">数量</th><th class="col-price">价格</th><th class="col-del"></th></tr>
+                            <tr><th class="col-model">型号</th><th class="col-spec">机况/高低配</th><th class="col-qty">数量</th><th class="col-price">成交价</th><th class="ref-column col-ref">参考价</th><th class="col-del"></th></tr>
                         </thead>
                         <tbody>`;
             b.items.forEach((i, ri) => {
@@ -407,10 +465,8 @@ const app = {
                         <select class="cell-input" onchange="app.update(${bi},${ri},'c',this.value)">${CONFIG_LIST.map(c => `<option ${i.c===c?'selected':''}>${c}</option>`).join('')}</select>
                     </div></td>
                     <td class="col-qty"><input type="number" class="qty-input" value="${i.q}" min="1" onchange="app.updateQty(${bi},${ri},this.value)"></td>
-                    <td class="col-price"><div class="price-col">
-                        <input type="number" class="cell-input" value="${i.p}" oninput="app.update(${bi},${ri},'p',this.value)" placeholder="成交价">
-                        <input type="number" class="cell-input" value="${i.r}" oninput="app.update(${bi},${ri},'r',this.value)" placeholder="参考价">
-                    </div></td>
+                    <td class="col-price"><input type="number" class="cell-input" value="${i.p}" oninput="app.update(${bi},${ri},'p',this.value)" placeholder="成交价"></td>
+                    <td class="ref-column col-ref"><input type="number" class="cell-input" value="${i.r}" oninput="app.update(${bi},${ri},'r',this.value)" placeholder="参考价"></td>
                     <td class="col-del"><button class="del-row-btn" onclick="app.delRow(${bi},${ri})">✕</button></td>
                 </tr>`;
             });
