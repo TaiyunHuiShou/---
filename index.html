@@ -115,16 +115,56 @@
         .add-row-btn { width: 100%; padding: 8px; background: none; color: var(--info); border: none; border-top: 1px solid var(--border); font-size: 12px; cursor: pointer; }
         .del-brand-btn { color: var(--danger); border: none; background: none; font-size: 11px; cursor: pointer; }
         .del-row-btn { border: none; background: none; color: var(--danger); font-size: 14px; cursor: pointer; }
+        
+        /* 对账信息行样式 */
+        .top-bill-info {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            background: var(--card);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .top-bill-info input {
+            flex: 1;
+            min-width: 100px;
+            border: none;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+            padding: 6px 4px;
+            background: transparent;
+            color: var(--text);
+            font-size: 12px;
+        }
+        .top-bill-info span {
+            color: var(--gray);
+            font-size: 14px;
+        }
+        @media (max-width: 550px) {
+            .top-bill-info { flex-direction: column; align-items: stretch; }
+            .top-bill-info input { text-align: left; }
+        }
     </style>
 </head>
 <body>
 
 <div style="background: var(--card); padding: 8px 10px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between;">
     <div style="font-weight: bold; font-size: 16px; color: var(--primary);">废机宝</div>
-    <div style="font-size: 10px; color: var(--gray);">手机版</div>
+    <div style="font-size: 10px; color: var(--gray);">手机电脑通用版</div>
 </div>
 
 <div id="screenshot-area">
+    <!-- 对账信息行：卖家、买家、日期 -->
+    <div class="top-bill-info">
+        <input type="text" id="sellerName" placeholder="卖家名称" value="" oninput="this.setAttribute('value', this.value)">
+        <span>➡</span>
+        <input type="text" id="buyerName" placeholder="买家名称" value="" oninput="this.setAttribute('value', this.value)">
+        <input type="date" id="billDate" value="" oninput="this.setAttribute('value', this.value)">
+    </div>
+    
     <div class="stats-card">
         <div class="stats-grid">
             <div>总台数<div class="stats-value" id="totalQty">0</div></div>
@@ -204,6 +244,17 @@ const app = {
         if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
         document.getElementById('deleteCancelBtn').onclick = () => this.hideDeleteConfirm();
         document.getElementById('deleteOkBtn').onclick = () => this.confirmDeleteBrand();
+        
+        // 初始化日期：默认今天
+        const dateInput = document.getElementById('billDate');
+        if (dateInput) {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            dateInput.value = `${yyyy}-${mm}-${dd}`;
+            dateInput.setAttribute('value', dateInput.value);
+        }
     },
 
     resetData() {
@@ -350,8 +401,21 @@ const app = {
 
     exportToExcel() { if (this.isWechat) this.generateLongImage(); else this.downloadExcel(); },
     downloadExcel() {
-        const rows = [["品牌", "型号", "机况", "高低配", "数量", "成交价", "参考价"]];
-        this.data.forEach(b => b.items.forEach(i => rows.push([b.brand, i.m, i.s, i.c, i.q, i.p || "0", i.r || "0"])));
+        // 获取对账信息
+        const seller = document.getElementById('sellerName')?.value || '';
+        const buyer = document.getElementById('buyerName')?.value || '';
+        const billDate = document.getElementById('billDate')?.value || '';
+        
+        const rows = [];
+        // 插入对账头信息
+        rows.push(["对账日期:", billDate, "卖家:", seller, "买家:", buyer]);
+        rows.push([]); // 空行分隔
+        rows.push(["品牌", "型号", "机况", "高低配", "数量", "成交价", "参考价"]);
+        
+        this.data.forEach(b => b.items.forEach(i => {
+            rows.push([b.brand, i.m, i.s, i.c, i.q, i.p || "0", i.r || "0"]);
+        }));
+        
         const ws = XLSX.utils.aoa_to_sheet(rows);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "废机宝清单");
@@ -365,7 +429,6 @@ const app = {
 
         try {
             const area = document.getElementById('screenshot-area');
-            
             const canvas = await html2canvas(area, {
                 scale: 3,
                 useCORS: true,
@@ -380,12 +443,11 @@ const app = {
                         el.parentNode.appendChild(span);
                         el.style.display = 'none';
                     });
-
                     // 处理下拉框
                     const selects = clonedDoc.querySelectorAll('select');
                     selects.forEach(el => {
                         const span = clonedDoc.createElement('span');
-                        span.innerText = el.options[el.selectedIndex].text;
+                        span.innerText = el.options[el.selectedIndex]?.text || '';
                         span.style.cssText = "display:inline-block;width:100%;text-align:center;font-size:10px;color:#1c1c1e;";
                         el.parentNode.appendChild(span);
                         el.style.display = 'none';
