@@ -61,15 +61,22 @@
         .suggest-list li { padding: 5px 6px; font-size: 10px; cursor: pointer; border-bottom: 1px solid var(--border); }
         .suggest-list li:active { background: var(--primary); color: white; }
         
-        .qty-input { 
-            width: 55px; 
-            text-align: center; 
-            border: 1px solid var(--border); 
-            border-radius: 4px; 
-            background: var(--bg); 
-            color: var(--text); 
-            font-size: 12px; 
-            padding: 5px 0; 
+        /* 原生数字输入框样式 */
+        .qty-number {
+            width: 55px;
+            text-align: center;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 12px;
+            padding: 5px 0;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .qty-number:focus {
+            outline: none;
+            border-color: var(--primary);
         }
         
         .price-input, .ref-input {
@@ -500,7 +507,9 @@ const app = {
                         <select class="cell-input" onchange="app.update(${bi},${ri},'s',this.value)">${STATUS_LIST.map(s => `<option ${i.s===s?'selected':''}>${s}</option>`).join('')}</select>
                         <select class="cell-input" onchange="app.update(${bi},${ri},'c',this.value)">${CONFIG_LIST.map(c => `<option ${i.c===c?'selected':''}>${c}</option>`).join('')}</select>
                     </div></td>
-                    <td class="col-qty"><input type="number" class="qty-input" value="${i.q}" min="1" onchange="app.updateQty(${bi},${ri},this.value)" ontouchstart=""></td>
+                    <td class="col-qty"><input type="number" class="qty-number" value="${i.q}" min="1" step="1" 
+                        ontouchstart=""
+                        onchange="app.updateQty(${bi},${ri},this.value)"></td>
                     <td class="col-price"><input type="tel" inputmode="decimal" class="price-input" value="${i.p}" 
                         ontouchstart=""
                         oninput="app.filterPriceInput(this,${bi},${ri},'p')" 
@@ -512,7 +521,7 @@ const app = {
                     <td class="col-del"><button class="del-row-btn" onclick="app.delRow(${bi},${ri})">✕</button></td>
                 </tr>`;
             });
-            html += `</tbody></td></div>
+            html += `</tbody></table></div>
                 <button class="add-row-btn" onclick="app.addRow(${bi})">➕ 继续添加一行</button>
             </div>`;
         });
