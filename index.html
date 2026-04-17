@@ -38,12 +38,33 @@
         .spec-col { display: flex; flex-direction: column; gap: 3px; }
         .spec-col select { width: 100%; font-size: 10px; padding: 3px 2px; }
         
-        .model-wrapper { position: relative; }
-        .suggest-list { position: absolute; top: 100%; left: 0; right: 0; z-index: 9999; background: var(--card); border: 1px solid var(--border); border-radius: 4px; max-height: 120px; overflow-y: auto; list-style: none; margin: 2px 0 0; padding: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+        /* 型号输入防抖专用 - 防止界面抖动 */
+        .model-wrapper { position: relative; min-height: 28px; }
+        .suggest-list { 
+            position: absolute; top: 100%; left: 0; right: 0; z-index: 9999; 
+            background: var(--card); border: 1px solid var(--border); border-radius: 4px; 
+            max-height: 120px; overflow-y: auto; list-style: none; margin: 2px 0 0; padding: 0; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
         .suggest-list li { padding: 5px 6px; font-size: 10px; cursor: pointer; border-bottom: 1px solid var(--border); }
         .suggest-list li:active { background: var(--primary); color: white; }
         
-        .qty-input { width: 100%; text-align: center; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); font-size: 12px; padding: 5px 0; }
+        /* 数量加减按钮 - 修复手机端显示 */
+        .qty-container { display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-qty { 
+            width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+            border: 1px solid var(--border); background: var(--bg); color: var(--text);
+            border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold;
+            -webkit-appearance: none; appearance: none;
+        }
+        .qty-value { min-width: 30px; text-align: center; font-size: 12px; font-weight: 500; }
+        
+        /* 数字输入框 - 手机键盘优化 */
+        .price-input, .ref-input {
+            width: 100%; padding: 4px 2px; border: 1px solid var(--border); border-radius: 4px;
+            background: var(--bg); color: var(--text); font-size: 10px; text-align: center;
+            -webkit-appearance: none; appearance: none;
+        }
         
         .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(4, 1fr); padding: 6px 0 calc(6px + env(safe-area-inset-bottom)); z-index: 500; }
         .tab-item { display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--gray); font-size: 9px; border: none; background: none; cursor: pointer; }
@@ -169,14 +190,10 @@ const app = {
         const saved = localStorage.getItem("feijibao_mobile_v3");
         if (saved) { try { this.data = JSON.parse(saved); } catch(e) { this.resetData(); } }
         else { this.resetData(); }
-        
-        // 恢复参考价显示状态
         const refPref = localStorage.getItem('ref_display_pref');
         if (refPref === 'show') document.body.classList.add('show-ref');
-        
         this.render();
         if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
-        
         document.getElementById('deleteCancelBtn').onclick = () => this.hideDeleteConfirm();
         document.getElementById('deleteOkBtn').onclick = () => this.confirmDeleteBrand();
     },
@@ -204,23 +221,33 @@ const app = {
         }
     },
 
-    updateQty(bIdx, rIdx, val) {
-        let v = parseInt(val) || 1;
-        if (v < 1) v = 1;
-        this.data[bIdx].items[rIdx].q = v;
+    updateQty(bIdx, rIdx, delta) {
+        let current = parseInt(this.data[bIdx].items[rIdx].q) || 1;
+        let newVal = current + delta;
+        if (newVal < 1) newVal = 1;
+        this.data[bIdx].items[rIdx].q = newVal;
         this.save();
-        this.updateStats();
+        this.render();
+    },
+
+    // 过滤价格输入（只允许数字和小数点）
+    filterPriceInput(input, bIdx, rIdx, key) {
+        let val = input.value;
+        val = val.replace(/[^\d.]/g, '');
+        let parts = val.split('.');
+        if (parts.length > 2) val = parts[0] + '.' + parts[1];
+        if (parts[1] && parts[1].length > 2) val = parts[0] + '.' + parts[1].slice(0,2);
+        input.value = val;
+        this.update(bIdx, rIdx, key, val);
     },
 
     checkAndMerge(bIdx, rIdx) {
         const items = this.data[bIdx].items;
         const current = items[rIdx];
         if (!current.m) return;
-        
         const duplicateIdx = items.findIndex((item, idx) => 
             idx !== rIdx && item.m === current.m && item.s === current.s && item.c === current.c
         );
-        
         if (duplicateIdx !== -1) {
             const duplicate = items[duplicateIdx];
             if (confirm(`发现相同记录：\n${this.data[bIdx].brand} ${current.m}\n机况:${current.s} 配置:${current.c}\n当前数量:${current.q} 已有:${duplicate.q}\n是否合并？`)) {
@@ -396,7 +423,7 @@ const app = {
 
     escape(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m]); },
 
-    // 防抖型号匹配
+    // 防抖型号匹配（修复界面抖动）
     filterModels(bIdx, rIdx, inputEl) {
         const key = `${bIdx}_${rIdx}`;
         if (this.suggestTimeouts[key]) clearTimeout(this.suggestTimeouts[key]);
@@ -464,9 +491,17 @@ const app = {
                         <select class="cell-input" onchange="app.update(${bi},${ri},'s',this.value)">${STATUS_LIST.map(s => `<option ${i.s===s?'selected':''}>${s}</option>`).join('')}</select>
                         <select class="cell-input" onchange="app.update(${bi},${ri},'c',this.value)">${CONFIG_LIST.map(c => `<option ${i.c===c?'selected':''}>${c}</option>`).join('')}</select>
                     </div></td>
-                    <td class="col-qty"><input type="number" class="qty-input" value="${i.q}" min="1" onchange="app.updateQty(${bi},${ri},this.value)"></td>
-                    <td class="col-price"><input type="number" class="cell-input" value="${i.p}" oninput="app.update(${bi},${ri},'p',this.value)" placeholder="成交价"></td>
-                    <td class="ref-column col-ref"><input type="number" class="cell-input" value="${i.r}" oninput="app.update(${bi},${ri},'r',this.value)" placeholder="参考价"></td>
+                    <td class="col-qty"><div class="qty-container">
+                        <button class="btn-qty" onclick="app.updateQty(${bi},${ri},-1)">-</button>
+                        <span class="qty-value">${i.q}</span>
+                        <button class="btn-qty" onclick="app.updateQty(${bi},${ri},1)">+</button>
+                    </div></td>
+                    <td class="col-price"><input type="tel" inputmode="decimal" class="price-input" value="${i.p}" 
+                        oninput="app.filterPriceInput(this,${bi},${ri},'p')" 
+                        onchange="app.filterPriceInput(this,${bi},${ri},'p')" placeholder="成交价"></td>
+                    <td class="ref-column col-ref"><input type="tel" inputmode="decimal" class="price-input" value="${i.r}" 
+                        oninput="app.filterPriceInput(this,${bi},${ri},'r')" 
+                        onchange="app.filterPriceInput(this,${bi},${ri},'r')" placeholder="参考价"></td>
                     <td class="col-del"><button class="del-row-btn" onclick="app.delRow(${bi},${ri})">✕</button></td>
                 </tr>`;
             });
