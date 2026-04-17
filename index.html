@@ -16,7 +16,7 @@
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 12px; padding-bottom: 100px; transition: 0.3s; }
         
         .table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 580px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 680px; }
         th, td { padding: 6px 3px; text-align: center; border-bottom: 1px solid var(--border); vertical-align: middle; }
         th { background: var(--bg); font-weight: 500; }
         
@@ -27,7 +27,6 @@
         .cell-input { width: 100%; padding: 5px 2px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); font-size: 10px; text-align: center; }
         select.cell-input { padding: 5px 2px; }
         
-        /* 机况/高低配垂直布局 */
         .spec-col { display: flex; flex-direction: column; gap: 4px; }
         .spec-col select { width: 100%; }
         
@@ -115,7 +114,7 @@
 <div id="toast"></div>
 
 <script>
-// 型号数据库
+// ==================== 完整型号数据库 ====================
 const MODEL_DB = {
     "OPPO": ["Find X9 Ultra","Find X9 Pro","Find X9","Find X8 Pro","Find X8","Find X7 Ultra","Find X7","Find X6 Pro","Find X6","Reno13 Pro","Reno13","Reno12 Pro","Reno12","Reno11 Pro","Reno11","Reno10 Pro+","Reno10 Pro","Reno10","K12x","K12","K11x","K11","A3 Pro","A3x","A2 Pro","A2x","A2"],
     "vivo": ["X300 Ultra","X300 Pro","X300","X200 Ultra","X200 Pro","X200","X100 Ultra","X100 Pro","X100","X90 Pro+","X90 Pro","X90","S20 Pro","S20","S19 Pro","S19","S18 Pro","S18","Y500 Pro","Y500","Y300 Pro","Y300","iQOO 13","iQOO 12 Pro","iQOO 12","iQOO 11S","iQOO 11"],
@@ -135,7 +134,7 @@ const app = {
     isWechat: /MicroMessenger/i.test(navigator.userAgent),
 
     init() {
-        const saved = localStorage.getItem("feijibao_v22");
+        const saved = localStorage.getItem("feijibao_stable");
         if (saved) { try { this.data = JSON.parse(saved); } catch(e) { this.resetData(); } }
         else { this.resetData(); }
         this.render();
@@ -153,12 +152,16 @@ const app = {
     },
 
     emptyRows(n) { return Array(n).fill().map(() => ({ m: "", s: "废机整机", c: "—", q: 1, p: "", r: "" })); },
-    save() { localStorage.setItem("feijibao_v22", JSON.stringify(this.data)); this.updateStats(); },
+    save() { localStorage.setItem("feijibao_stable", JSON.stringify(this.data)); this.updateStats(); },
 
     update(bIdx, rIdx, key, val) {
         if (this.data[bIdx] && this.data[bIdx].items[rIdx]) {
             this.data[bIdx].items[rIdx][key] = val;
             this.save();
+            // 型号更新后检查是否合并
+            if (key === 'm' || key === 's' || key === 'c') {
+                this.checkAndMerge(bIdx, rIdx);
+            }
         }
     },
 
@@ -170,6 +173,31 @@ const app = {
         this.updateStats();
     },
 
+    // 相同型号合并
+    checkAndMerge(bIdx, rIdx) {
+        const items = this.data[bIdx].items;
+        const current = items[rIdx];
+        if (!current.m) return;
+        
+        const duplicateIdx = items.findIndex((item, idx) => 
+            idx !== rIdx && 
+            item.m === current.m && 
+            item.s === current.s && 
+            item.c === current.c
+        );
+        
+        if (duplicateIdx !== -1) {
+            const duplicate = items[duplicateIdx];
+            if (confirm(`发现相同的手机记录：\n品牌：${this.data[bIdx].brand}\n型号：${current.m}\n机况：${current.s}\n配置：${current.c}\n\n当前数量：${current.q}\n已有数量：${duplicate.q}\n\n是否合并数量？`)) {
+                duplicate.q = (parseInt(duplicate.q) || 1) + (parseInt(current.q) || 1);
+                items.splice(rIdx, 1);
+                this.render();
+                this.save();
+                this.toast("已合并相同手机");
+            }
+        }
+    },
+
     delRow(bIdx, rIdx) {
         if (this.data[bIdx].items.length <= 1) { this.toast("每个品牌至少保留一行"); return; }
         this.data[bIdx].items.splice(rIdx, 1);
@@ -178,7 +206,6 @@ const app = {
     },
 
     addRow(bIdx) {
-        this.save();
         this.data[bIdx].items.push({ m: "", s: "废机整机", c: "—", q: 1, p: "", r: "" });
         this.render();
         this.save();
@@ -186,8 +213,7 @@ const app = {
 
     delBrand(bIdx) {
         if (this.data.length <= 1) { this.toast("至少保留一个品牌"); return; }
-        const brandName = this.data[bIdx].brand;
-        if (confirm(`确定删除品牌「${brandName}」吗？`)) {
+        if (confirm(`确定删除品牌「${this.data[bIdx].brand}」吗？`)) {
             this.data.splice(bIdx, 1);
             this.render();
             this.save();
@@ -369,12 +395,12 @@ const app = {
                         <select class="cell-input" onchange="app.update(${bi},${ri},'c',this.value)">${CONFIG_LIST.map(c => `<option ${i.c===c?'selected':''}>${c}</option>`).join('')}</select>
                     </div></td>
                     <td><input type="number" class="qty-input" value="${i.q}" min="1" onchange="app.updateQty(${bi},${ri},this.value)"></td>
-                    <td><input type="text" class="cell-input" value="${i.p}" oninput="app.update(${bi},${ri},'p',this.value)"></td>
-                    <td><input type="text" class="cell-input" value="${i.r}" oninput="app.update(${bi},${ri},'r',this.value)"></td>
+                    <td><input type="number" class="cell-input" value="${i.p}" oninput="app.update(${bi},${ri},'p',this.value)" step="1"></td>
+                    <td><input type="number" class="cell-input" value="${i.r}" oninput="app.update(${bi},${ri},'r',this.value)" step="1"></td>
                     <td><button onclick="app.delRow(${bi},${ri})" style="border:none;background:none;color:var(--danger);font-size:14px;">✕</button></td>
                 </tr>`;
             });
-            html += `</tbody></td></div>
+            html += `</tbody></table></div>
                 <button class="add-row-btn" onclick="app.addRow(${bi})">➕ 继续添加一行</button>
             </div>`;
         });
