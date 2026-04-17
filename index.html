@@ -23,92 +23,108 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 100px; transition: 0.3s; }
         
-        /* 手机端默认隐藏参考价列 */
+        /* 参考价列默认隐藏，可通过按钮显示 */
         .ref-column { display: none; }
         body.show-ref .ref-column { display: table-cell !important; }
-        /* 电脑端默认显示参考价列 */
-        @media (min-width: 768px) {
-            body:not(.hide-ref) .ref-column { display: table-cell; }
-        }
         
         .navbar { background: var(--card); padding: 12px 15px; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 5px rgba(0,0,0,0.05); }
         .brand-card { background: var(--card); margin: 12px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
         .brand-header { padding: 10px 15px; background: rgba(0,0,0,0.02); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .brand-name { font-weight: bold; color: var(--primary); }
+        .brand-name { font-weight: bold; color: var(--primary); font-size: 14px; }
+        
+        /* 手机端优化：表格不溢出屏幕 */
         .table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 580px; }
-        th { padding: 8px 4px; text-align: center; color: var(--gray); border-bottom: 1px solid var(--border); background: var(--bg); }
-        td { padding: 6px 4px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-        .qty-container { display: flex; align-items: center; justify-content: center; gap: 5px; }
-        .btn-qty { border: 1px solid var(--border); background: var(--bg); color: var(--text); width: 26px; height: 26px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
-        .model-input-wrapper { position: relative; width: 100%; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
+        th, td { padding: 6px 4px; text-align: center; border-bottom: 1px solid var(--border); }
+        th { background: var(--bg); color: var(--gray); font-weight: 500; }
+        
+        /* 手机端列宽分配 */
+        .col-model { width: 25%; }      /* 型号 */
+        .col-status { width: 22%; }     /* 机况/规格 */
+        .col-qty { width: 15%; }        /* 数量 */
+        .col-price { width: 18%; }      /* 成交价 */
+        .col-ref { width: 18%; }        /* 参考价 */
+        .col-del { width: 8%; }         /* 删除 */
+        
+        /* 机况/规格内部布局 */
+        .status-wrapper { display: flex; flex-direction: column; gap: 4px; }
+        .status-select, .config-select { width: 100%; padding: 4px 2px; font-size: 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); text-align: center; }
+        
+        .qty-container { display: flex; align-items: center; justify-content: center; gap: 3px; }
+        .btn-qty { width: 22px; height: 22px; border: 1px solid var(--border); background: var(--bg); border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; }
         .cell-input {
-            width: 100%; padding: 6px 4px; border: 1px solid var(--border); border-radius: 6px;
-            background: var(--bg); color: var(--text); font-size: 12px; outline: none; text-align: center;
+            width: 100%; padding: 4px 2px; border: 1px solid var(--border); border-radius: 4px;
+            background: var(--bg); color: var(--text); font-size: 11px; text-align: center;
         }
-        .cell-input:focus { border-color: var(--primary); }
+        .model-input-wrapper { position: relative; width: 100%; }
+        
+        /* 建议列表 */
         .suggest-list {
             position: absolute; top: 100%; left: 0; right: 0; z-index: 9999;
             background: var(--suggest-bg); border: 1px solid var(--border);
-            border-radius: 8px; max-height: 180px; overflow-y: auto;
+            border-radius: 6px; max-height: 150px; overflow-y: auto;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             list-style: none; margin: 2px 0 0; padding: 0;
         }
-        .suggest-list li {
-            padding: 8px 10px; font-size: 12px; cursor: pointer;
-            border-bottom: 1px solid var(--border);
-        }
+        .suggest-list li { padding: 6px 8px; font-size: 11px; cursor: pointer; border-bottom: 1px solid var(--border); }
         .suggest-list li:last-child { border-bottom: none; }
-        .suggest-list li:hover { background: rgba(7,193,96,0.1); }
+        
+        /* 底部工具栏 */
         .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border);
             display: grid; grid-template-columns: repeat(4, 1fr); padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); z-index: 500; }
         .tab-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--gray); font-size: 10px; border: none; background: none; cursor: pointer; }
+        
+        /* 抽屉菜单 */
         .drawer { position: fixed; bottom: 0; left: 0; right: 0; top: 0; background: rgba(0,0,0,0.5); visibility: hidden; opacity: 0; transition: 0.3s; z-index: 1000; }
         .drawer.active { visibility: visible; opacity: 1; }
         .drawer-content { position: absolute; bottom: 0; left: 0; right: 0; background: var(--card); border-radius: 20px 20px 0 0;
             padding: 20px 15px; transform: translateY(100%); transition: 0.3s; max-height: 80vh; overflow-y: auto; }
         .drawer.active .drawer-content { transform: translateY(0); }
         .drawer-item { display: flex; align-items: center; gap: 12px; padding: 15px; border-bottom: 1px solid var(--border); font-size: 15px; color: var(--text); cursor: pointer; }
+        
+        /* 模态框 */
         .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); display: none; z-index: 2000;
             align-items: center; justify-content: center; padding: 20px; }
-        .modal-body { background: var(--card); width: 100%; max-width: 400px; border-radius: 16px; padding: 20px; }
-        .modal-title { font-weight: bold; font-size: 18px; text-align: center; margin-bottom: 12px; }
-        .modal-message { font-size: 14px; text-align: center; margin-bottom: 20px; }
+        .modal-body { background: var(--card); width: 100%; max-width: 350px; border-radius: 16px; padding: 20px; }
+        .modal-title { font-weight: bold; font-size: 16px; text-align: center; margin-bottom: 12px; }
+        .modal-message { font-size: 13px; text-align: center; margin-bottom: 20px; }
         .modal-footer { display: flex; gap: 12px; }
-        .btn-cancel { flex: 1; padding: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 10px; font-weight: bold; cursor: pointer; text-align: center; }
-        .btn-confirm { flex: 1; padding: 12px; border: none; background: var(--primary); color: white; border-radius: 10px; font-weight: bold; cursor: pointer; text-align: center; }
-        .btn-danger { flex: 1; padding: 12px; border: none; background: var(--danger); color: white; border-radius: 10px; font-weight: bold; cursor: pointer; text-align: center; }
-        .brand-select-full { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px; margin-bottom: 12px; }
-        #toast {
-            position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.85); color: white; padding: 10px 20px; border-radius: 20px;
-            font-size: 13px; z-index: 3000; opacity: 0; transition: 0.2s; white-space: nowrap;
-        }
-        #toast.show { opacity: 1; }
-        canvas#statChart { max-height: 250px; width: 100%; margin: 15px 0; }
+        .btn-cancel { flex: 1; padding: 10px; border: 1px solid var(--border); background: var(--bg); border-radius: 8px; text-align: center; cursor: pointer; }
+        .btn-confirm { flex: 1; padding: 10px; border: none; background: var(--primary); color: white; border-radius: 8px; text-align: center; cursor: pointer; }
+        .btn-danger { flex: 1; padding: 10px; border: none; background: var(--danger); color: white; border-radius: 8px; text-align: center; cursor: pointer; }
+        .brand-select-full { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); margin-bottom: 12px; font-size: 14px; }
         
-        /* 手机端优化：表格字体略小，列宽调整 */
-        @media (max-width: 768px) {
-            th, td { font-size: 11px; padding: 5px 3px; }
-            .cell-input { font-size: 11px; padding: 4px 2px; }
-            .btn-qty { width: 24px; height: 24px; font-size: 14px; }
-            .brand-name { font-size: 14px; }
+        #toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; z-index: 3000; opacity: 0; transition: 0.2s; white-space: nowrap; }
+        #toast.show { opacity: 1; }
+        
+        /* 统计卡片 */
+        .summary-card { background: var(--card); margin: 12px; padding: 12px; border-radius: 12px; border: 1px dashed var(--border); }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center; }
+        .stats-item { font-size: 12px; }
+        .stats-value { font-size: 16px; font-weight: bold; margin-top: 4px; }
+        
+        /* 电脑端稍微放大 */
+        @media (min-width: 768px) {
+            table { font-size: 13px; }
+            .cell-input { font-size: 13px; padding: 6px 4px; }
+            .status-select, .config-select { font-size: 12px; padding: 5px; }
+            .stats-value { font-size: 18px; }
         }
     </style>
 </head>
 <body class="show-ref">
 <div class="navbar">
     <div class="nav-title">废机宝 12.0</div>
-    <div style="font-size: 12px; color: var(--gray);">稳定版</div>
+    <div style="font-size: 12px; color: var(--gray);">手机优化版</div>
 </div>
 <div id="screenshot-area">
     <div id="brand-container"></div>
-    <div class="summary-card" style="padding:12px; margin:12px; background:var(--card); border-radius:12px; border:1px dashed var(--border);">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; text-align:center;">
-            <div>总台数: <span id="totalQty" style="font-weight:bold;">0</span></div>
-            <div>成交额: <span style="color:var(--warning);font-weight:bold;" id="totalActual">¥0</span></div>
-            <div style="color:var(--gray)">参考总额: <span id="totalRef" style="font-weight:bold;">¥0</span></div>
-            <div>📊 对比参考: <span id="profitRate" style="font-weight:bold;">0%</span></div>
+    <div class="summary-card">
+        <div class="stats-grid">
+            <div class="stats-item">总台数<div class="stats-value" id="totalQty">0</div></div>
+            <div class="stats-item">成交额<div class="stats-value" style="color:var(--warning)" id="totalActual">¥0</div></div>
+            <div class="stats-item">参考总额<div class="stats-value" style="color:var(--gray)" id="totalRef">¥0</div></div>
+            <div class="stats-item">对比参考<div class="stats-value" id="profitRate">0%</div></div>
         </div>
     </div>
 </div>
@@ -157,21 +173,13 @@ const app = {
     isWechat: /MicroMessenger/i.test(navigator.userAgent),
 
     init() {
-        const saved = localStorage.getItem("feijibao_v12");
+        const saved = localStorage.getItem("feijibao_v13");
         if (saved) {
-            try {
-                this.data = JSON.parse(saved);
-            } catch(e) { this.resetData(); }
-        } else {
-            this.resetData();
-        }
-        // 恢复参考价显示偏好
+            try { this.data = JSON.parse(saved); } catch(e) { this.resetData(); }
+        } else { this.resetData(); }
         const refPref = localStorage.getItem('ref_display_pref');
-        if (refPref === 'hide') {
-            document.body.classList.remove('show-ref');
-        } else {
-            document.body.classList.add('show-ref');
-        }
+        if (refPref === 'hide') document.body.classList.remove('show-ref');
+        else document.body.classList.add('show-ref');
         this.render();
         if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
     },
@@ -186,14 +194,8 @@ const app = {
         ];
     },
 
-    emptyRows(n) {
-        return Array(n).fill().map(() => ({ m: "", s: "废机整机", c: "—", q: 1, p: "", r: "" }));
-    },
-
-    save() {
-        localStorage.setItem("feijibao_v12", JSON.stringify(this.data));
-        this.updateStats();
-    },
+    emptyRows(n) { return Array(n).fill().map(() => ({ m: "", s: "废机整机", c: "—", q: 1, p: "", r: "" })); },
+    save() { localStorage.setItem("feijibao_v13", JSON.stringify(this.data)); this.updateStats(); },
 
     update(bIdx, rIdx, key, val) {
         if (this.data[bIdx] && this.data[bIdx].items[rIdx]) {
@@ -228,9 +230,7 @@ const app = {
         if (!kw) return;
         const brand = this.data[bIdx].brand;
         let models = FULL_MODEL_MAP[brand] || [];
-        if (models.length === 0) {
-            Object.values(FULL_MODEL_MAP).forEach(list => models = models.concat(list));
-        }
+        if (models.length === 0) Object.values(FULL_MODEL_MAP).forEach(list => models = models.concat(list));
         const matched = models.filter(m => m.toLowerCase().includes(kw)).slice(0, 8);
         if (matched.length === 0) return;
         const ul = document.createElement('ul');
@@ -251,128 +251,64 @@ const app = {
 
     hideSuggestions(bIdx, rIdx) {
         const wrapper = document.getElementById(`mw-${bIdx}-${rIdx}`);
-        if (wrapper) {
-            const s = wrapper.querySelector('.suggest-list');
-            if (s) s.remove();
-        }
+        if (wrapper) { const s = wrapper.querySelector('.suggest-list'); if (s) s.remove(); }
     },
-
-    hideSuggestionsDelayed(bIdx, rIdx) {
-        setTimeout(() => this.hideSuggestions(bIdx, rIdx), 200);
-    },
-
-    addRow(bIdx) {
-        this.data[bIdx].items.push({ m: "", s: "废机整机", c: "—", q: 1, p: "", r: "" });
-        this.render();
-        this.save();
-    },
-
+    hideSuggestionsDelayed(bIdx, rIdx) { setTimeout(() => this.hideSuggestions(bIdx, rIdx), 200); },
+    addRow(bIdx) { this.data[bIdx].items.push({ m: "", s: "废机整机", c: "—", q: 1, p: "", r: "" }); this.render(); this.save(); },
     delRow(bIdx, rIdx) {
-        if (this.data[bIdx].items.length <= 1) {
-            this.toast("每个品牌至少保留一行");
-            return;
-        }
-        this.data[bIdx].items.splice(rIdx, 1);
-        this.render();
-        this.save();
+        if (this.data[bIdx].items.length <= 1) { this.toast("每个品牌至少保留一行"); return; }
+        this.data[bIdx].items.splice(rIdx, 1); this.render(); this.save();
     },
 
     delBrand(bIdx) {
-        if (this.data.length <= 1) {
-            this.toast("至少保留一个品牌");
-            return;
-        }
+        if (this.data.length <= 1) { this.toast("至少保留一个品牌"); return; }
         const brandName = this.data[bIdx].brand;
         const modal = document.getElementById('appModal');
         const content = document.getElementById('modalContent');
-        content.innerHTML = `
-            <div class="modal-title">删除品牌</div>
-            <div class="modal-message">确定删除品牌「${brandName}」吗？删除后该品牌下的所有数据将丢失。</div>
-            <div class="modal-footer">
-                <div class="btn-cancel" onclick="app.closeModal()">取消</div>
-                <div class="btn-danger" onclick="app.confirmDeleteBrand(${bIdx})">确认删除</div>
-            </div>
-        `;
+        content.innerHTML = `<div class="modal-title">删除品牌</div><div class="modal-message">确定删除品牌「${brandName}」吗？</div>
+            <div class="modal-footer"><div class="btn-cancel" onclick="app.closeModal()">取消</div>
+            <div class="btn-danger" onclick="app.confirmDeleteBrand(${bIdx})">确认删除</div></div>`;
         modal.style.display = 'flex';
     },
-
-    confirmDeleteBrand(bIdx) {
-        this.data.splice(bIdx, 1);
-        this.render();
-        this.save();
-        this.closeModal();
-        this.toast("品牌已删除");
-    },
+    confirmDeleteBrand(bIdx) { this.data.splice(bIdx, 1); this.render(); this.save(); this.closeModal(); this.toast("品牌已删除"); },
 
     resetToInitial() {
         const modal = document.getElementById('appModal');
         const content = document.getElementById('modalContent');
-        content.innerHTML = `
-            <div class="modal-title">恢复初始</div>
-            <div class="modal-message">确定恢复初始状态吗？所有数据将被清空，恢复为默认的5个品牌。</div>
-            <div class="modal-footer">
-                <div class="btn-cancel" onclick="app.closeModal()">取消</div>
-                <div class="btn-confirm" onclick="app.confirmReset()">确认恢复</div>
-            </div>
-        `;
+        content.innerHTML = `<div class="modal-title">恢复初始</div><div class="modal-message">确定恢复初始状态？所有数据将被清空。</div>
+            <div class="modal-footer"><div class="btn-cancel" onclick="app.closeModal()">取消</div>
+            <div class="btn-confirm" onclick="app.confirmReset()">确认恢复</div></div>`;
         modal.style.display = 'flex';
     },
-
-    confirmReset() {
-        this.resetData();
-        this.render();
-        this.save();
-        this.closeModal();
-        this.toast("已恢复初始");
-    },
+    confirmReset() { this.resetData(); this.render(); this.save(); this.closeModal(); this.toast("已恢复初始"); },
 
     showAddBrandModal() {
         const modal = document.getElementById('appModal');
         const content = document.getElementById('modalContent');
-        content.innerHTML = `
-            <div style="font-weight:bold;margin-bottom:12px;text-align:center;">添加品牌</div>
-            <select id="newBrandSelect" class="brand-select-full">
-                ${BRAND_OPTIONS.map(b => `<option value="${b}">${b}</option>`).join('')}
-            </select>
+        content.innerHTML = `<div style="font-weight:bold;margin-bottom:12px;text-align:center;">添加品牌</div>
+            <select id="newBrandSelect" class="brand-select-full">${BRAND_OPTIONS.map(b => `<option value="${b}">${b}</option>`).join('')}</select>
             <input id="manualBrandInput" class="brand-select-full" style="display:none;" placeholder="输入品牌名称">
-            <button class="btn-confirm" onclick="app.confirmAddBrand()">确认添加</button>
-        `;
+            <button class="btn-confirm" onclick="app.confirmAddBrand()">确认添加</button>`;
         modal.style.display = 'flex';
     },
-
     confirmAddBrand() {
         const sel = document.getElementById('newBrandSelect');
         const manual = document.getElementById('manualBrandInput');
         let brand = sel.value === "手动输入" ? (manual.value.trim() || "新品牌") : sel.value;
         this.data.push({ brand, items: this.emptyRows(5) });
-        this.render();
-        this.save();
-        this.closeModal();
-        this.toast(`已添加品牌: ${brand}`);
+        this.render(); this.save(); this.closeModal(); this.toast(`已添加品牌: ${brand}`);
     },
 
-    exportToExcel() {
-        if (this.isWechat) {
-            this.generateLongImage();
-        } else {
-            this.downloadExcel();
-        }
-    },
-
+    exportToExcel() { if (this.isWechat) this.generateLongImage(); else this.downloadExcel(); },
     downloadExcel() {
         const rows = [["品牌", "型号", "机况", "高低配", "数量", "成交价", "参考价"]];
-        this.data.forEach(b => {
-            b.items.forEach(i => {
-                rows.push([b.brand, i.m, i.s, i.c, i.q, i.p || "0", i.r || "0"]);
-            });
-        });
+        this.data.forEach(b => b.items.forEach(i => rows.push([b.brand, i.m, i.s, i.c, i.q, i.p || "0", i.r || "0"])));
         const ws = XLSX.utils.aoa_to_sheet(rows);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "废机宝清单");
         XLSX.writeFile(wb, `废机宝_${Date.now()}.xlsx`);
         this.toast("导出成功");
     },
-
     async generateLongImage() {
         this.toggleDrawer(false);
         this.toast("生成图片中...");
@@ -381,123 +317,55 @@ const app = {
         const img = canvas.toDataURL('image/png');
         const modal = document.getElementById('appModal');
         const content = document.getElementById('modalContent');
-        content.innerHTML = `
-            <div class="modal-title">长图预览</div>
-            <img src="${img}" style="width:100%;border-radius:8px;margin-bottom:15px;">
-            <div class="btn-cancel" onclick="app.closeModal()">关闭</div>
-        `;
+        content.innerHTML = `<div class="modal-title">长图预览</div><img src="${img}" style="width:100%;border-radius:8px;margin-bottom:15px;"><div class="btn-cancel" onclick="app.closeModal()">关闭</div>`;
         modal.style.display = 'flex';
     },
-
     showCharts() {
         const map = new Map();
-        this.data.forEach(b => {
-            let sum = 0;
-            b.items.forEach(i => sum += (parseFloat(i.p) || 0) * (i.q || 1));
-            if (sum > 0) map.set(b.brand, sum);
-        });
+        this.data.forEach(b => { let sum = 0; b.items.forEach(i => sum += (parseFloat(i.p) || 0) * (i.q || 1)); if (sum > 0) map.set(b.brand, sum); });
         if (map.size === 0) return this.toast("暂无数据");
         const modal = document.getElementById('appModal');
         const content = document.getElementById('modalContent');
         content.innerHTML = `<div class="modal-title">📊 品牌成交占比</div><canvas id="statChart"></canvas><div class="btn-cancel" style="margin-top:15px;" onclick="app.closeModal()">关闭</div>`;
         modal.style.display = 'flex';
-        setTimeout(() => {
-            new Chart(document.getElementById('statChart'), {
-                type: 'pie',
-                data: { labels: Array.from(map.keys()), datasets: [{ data: Array.from(map.values()), backgroundColor: ['#07c160','#fa5151','#ff9500','#2782D7','#8e8e93'] }] }
-            });
-        }, 100);
+        setTimeout(() => { new Chart(document.getElementById('statChart'), { type: 'pie', data: { labels: Array.from(map.keys()), datasets: [{ data: Array.from(map.values()), backgroundColor: ['#07c160','#fa5151','#ff9500','#2782D7','#8e8e93'] }] } }); }, 100);
     },
-
-    printPage() { 
-        if (this.isWechat) {
-            this.toast("微信内请使用「导出」功能生成图片");
-        } else {
-            window.print();
-        }
-        this.toggleDrawer(false);
-    },
-    
+    printPage() { if (this.isWechat) this.toast("微信内请使用「导出」功能生成图片"); else window.print(); this.toggleDrawer(false); },
     toggleDrawer(s) { document.getElementById('manageDrawer').classList.toggle('active', !!s); },
-    
-    toggleTheme() {
-        document.body.classList.toggle('dark');
-        localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
-        this.toggleDrawer(false);
-    },
-    
-    toggleRefColumn() {
-        document.body.classList.toggle('show-ref');
-        const isShowing = document.body.classList.contains('show-ref');
-        localStorage.setItem('ref_display_pref', isShowing ? 'show' : 'hide');
-        this.toggleDrawer(false);
-    },
-
+    toggleTheme() { document.body.classList.toggle('dark'); localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light'); this.toggleDrawer(false); },
+    toggleRefColumn() { document.body.classList.toggle('show-ref'); localStorage.setItem('ref_display_pref', document.body.classList.contains('show-ref') ? 'show' : 'hide'); this.toggleDrawer(false); },
     showBackupCode() {
         const compressed = LZString.compressToBase64(JSON.stringify(this.data));
         const code = `📱回收#${compressed}`;
         const modal = document.getElementById('appModal');
         const content = document.getElementById('modalContent');
-        content.innerHTML = `
-            <div class="modal-title">备份短码</div>
-            <div style="background:#eee;padding:10px;border-radius:8px;word-break:break-all;margin-bottom:15px;">${code}</div>
-            <div class="btn-confirm" onclick="app.copyBackupCode('${code}')">复制短码</div>
-        `;
+        content.innerHTML = `<div class="modal-title">备份短码</div><div style="background:#eee;padding:10px;border-radius:8px;word-break:break-all;margin-bottom:15px;">${code}</div><div class="btn-confirm" onclick="app.copyBackupCode('${code}')">复制短码</div>`;
         modal.style.display = 'flex';
     },
-
-    copyBackupCode(code) {
-        navigator.clipboard.writeText(code);
-        this.closeModal();
-        this.toast("已复制");
-    },
-
+    copyBackupCode(code) { navigator.clipboard.writeText(code); this.closeModal(); this.toast("已复制"); },
     showRecoverByCode() {
         const modal = document.getElementById('appModal');
         const content = document.getElementById('modalContent');
-        content.innerHTML = `
-            <div class="modal-title">恢复数据</div>
-            <textarea id="recoverCode" class="brand-select-full" rows="2" placeholder="粘贴短码"></textarea>
-            <div class="modal-footer">
-                <div class="btn-cancel" onclick="app.closeModal()">取消</div>
-                <div class="btn-confirm" onclick="app.doRecover()">恢复</div>
-            </div>
-        `;
+        content.innerHTML = `<div class="modal-title">恢复数据</div><textarea id="recoverCode" class="brand-select-full" rows="2" placeholder="粘贴短码"></textarea>
+            <div class="modal-footer"><div class="btn-cancel" onclick="app.closeModal()">取消</div><div class="btn-confirm" onclick="app.doRecover()">恢复</div></div>`;
         modal.style.display = 'flex';
     },
-
     doRecover() {
         const code = document.getElementById('recoverCode').value.trim();
         if (!code.startsWith('📱回收#')) return this.toast("无效短码");
         try {
             const decompressed = LZString.decompressFromBase64(code.split('#')[1]);
-            if (decompressed) {
-                this.data = JSON.parse(decompressed);
-                this.render();
-                this.save();
-                this.closeModal();
-                this.toast("恢复成功");
-            } else throw new Error();
+            if (decompressed) { this.data = JSON.parse(decompressed); this.render(); this.save(); this.closeModal(); this.toast("恢复成功"); }
+            else throw new Error();
         } catch(e) { this.toast("短码无效"); }
     },
-
     showContact() { alert("📧 联系作者：Egg77Egg88"); },
-    closeModal() { document.getElementById('appModal').style.display = 'none'; },
-    toast(msg) {
-        const t = document.getElementById('toast');
-        t.textContent = msg;
-        t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 2000);
-    },
+    closeModal() { document.getElementById('appModal').style.display = 'none'; document.getElementById('modalContent').innerHTML = ''; },
+    toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); },
 
     updateStats() {
         let q = 0, p = 0, r = 0;
-        this.data.forEach(b => b.items.forEach(i => {
-            const n = parseInt(i.q) || 0;
-            q += n;
-            p += n * (parseFloat(i.p) || 0);
-            r += n * (parseFloat(i.r) || 0);
-        }));
+        this.data.forEach(b => b.items.forEach(i => { const n = parseInt(i.q) || 0; q += n; p += n * (parseFloat(i.p) || 0); r += n * (parseFloat(i.r) || 0); }));
         document.getElementById('totalQty').innerText = q;
         document.getElementById('totalActual').innerText = '¥' + Math.round(p).toLocaleString();
         document.getElementById('totalRef').innerText = '¥' + Math.round(r).toLocaleString();
@@ -512,44 +380,22 @@ const app = {
         let html = '';
         this.data.forEach((b, bi) => {
             html += `<div class="brand-card">
-                <div class="brand-header">
-                    <span class="brand-name">${this.escape(b.brand)}</span>
-                    <button onclick="app.delBrand(${bi})" style="color:var(--danger);border:none;background:none;font-size:12px;">删除品牌</button>
-                </div>
+                <div class="brand-header"><span class="brand-name">${this.escape(b.brand)}</span><button onclick="app.delBrand(${bi})" style="color:var(--danger);border:none;background:none;font-size:12px;">删除品牌</button></div>
                 <div class="table-wrapper">
-                    <table><thead><tr>
-                        <th style="width:28%">型号</th>
-                        <th style="width:28%">机况/规格</th>
-                        <th style="width:12%">数量</th>
-                        <th style="width:16%">成交价</th>
-                        <th class="ref-column" style="width:16%">参考价</th>
-                        <th style="width:8%"></th>
-                    </tr></thead><tbody>`;
+                    <table>
+                        <thead><tr><th class="col-model">型号</th><th class="col-status">机况/规格</th><th class="col-qty">数量</th><th class="col-price">成交价</th><th class="ref-column col-ref">参考价</th><th class="col-del"></th></tr></thead>
+                        <tbody>`;
             b.items.forEach((i, ri) => {
                 html += `<tr>
-                    <td><div class="model-input-wrapper" id="mw-${bi}-${ri}">
-                        <input type="text" class="cell-input" value="${this.escape(i.m)}" placeholder="型号"
-                            onfocus="app.showSuggestions(${bi}, ${ri}, this)"
-                            oninput="app.update(${bi}, ${ri}, 'm', this.value); app.showSuggestions(${bi}, ${ri}, this)"
-                            onblur="app.hideSuggestionsDelayed(${bi}, ${ri})">
-                    </div></td>
-                    <td><div style="display:flex;flex-direction:column;gap:3px;">
-                        <select class="cell-input" onchange="app.update(${bi},${ri},'s',this.value)">${STATUS_LIST.map(s => `<option ${i.s===s?'selected':''}>${s}</option>`).join('')}</select>
-                        <select class="cell-input" onchange="app.update(${bi},${ri},'c',this.value)">${CONFIG_LIST.map(c => `<option ${i.c===c?'selected':''}>${c}</option>`).join('')}</select>
-                    </div></td>
-                    <td><div class="qty-container">
-                        <div class="btn-qty" onclick="app.changeQty(${bi},${ri},-1)">-</div>
-                        <span style="min-width:28px">${i.q}</span>
-                        <div class="btn-qty" onclick="app.changeQty(${bi},${ri},1)">+</div>
-                    </div></td>
-                    <td><input type="text" class="cell-input" value="${i.p}" oninput="app.filterPriceInput(this,${bi},${ri},'p')"></td>
-                    <td class="ref-column"><input type="text" class="cell-input" value="${i.r}" oninput="app.filterPriceInput(this,${bi},${ri},'r')"></td>
-                    <td><button onclick="app.delRow(${bi},${ri})" style="border:none;background:none;color:var(--danger);font-size:18px;">✕</button></td>
+                    <td class="col-model"><div class="model-input-wrapper" id="mw-${bi}-${ri}"><input type="text" class="cell-input" value="${this.escape(i.m)}" placeholder="型号" onfocus="app.showSuggestions(${bi}, ${ri}, this)" oninput="app.update(${bi}, ${ri}, 'm', this.value); app.showSuggestions(${bi}, ${ri}, this)" onblur="app.hideSuggestionsDelayed(${bi}, ${ri})"></div></td>
+                    <td class="col-status"><div class="status-wrapper"><select class="status-select" onchange="app.update(${bi},${ri},'s',this.value)">${STATUS_LIST.map(s => `<option ${i.s===s?'selected':''}>${s}</option>`).join('')}</select><select class="config-select" onchange="app.update(${bi},${ri},'c',this.value)">${CONFIG_LIST.map(c => `<option ${i.c===c?'selected':''}>${c}</option>`).join('')}</select></div></td>
+                    <td class="col-qty"><div class="qty-container"><div class="btn-qty" onclick="app.changeQty(${bi},${ri},-1)">-</div><span style="min-width:24px">${i.q}</span><div class="btn-qty" onclick="app.changeQty(${bi},${ri},1)">+</div></div></td>
+                    <td class="col-price"><input type="text" class="cell-input" value="${i.p}" oninput="app.filterPriceInput(this,${bi},${ri},'p')"></td>
+                    <td class="ref-column col-ref"><input type="text" class="cell-input" value="${i.r}" oninput="app.filterPriceInput(this,${bi},${ri},'r')"></td>
+                    <td class="col-del"><button onclick="app.delRow(${bi},${ri})" style="border:none;background:none;color:var(--danger);font-size:16px;">✕</button></td>
                 </tr>`;
             });
-            html += `</tbody></table></div>
-                <button onclick="app.addRow(${bi})" style="width:100%;padding:12px;background:none;color:var(--info);border:none;border-top:1px solid var(--border);font-size:14px;">➕ 继续添加一行</button>
-            </div>`;
+            html += `</tbody></table></div><button onclick="app.addRow(${bi})" style="width:100%;padding:10px;background:none;color:var(--info);border:none;border-top:1px solid var(--border);font-size:13px;">➕ 继续添加一行</button></div>`;
         });
         container.innerHTML = html;
         this.updateStats();
