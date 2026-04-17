@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>废机宝 - 专业回收工具</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
@@ -22,14 +22,21 @@
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 100px; transition: 0.3s; }
+        
+        /* 手机端默认隐藏参考价列 */
         .ref-column { display: none; }
         body.show-ref .ref-column { display: table-cell !important; }
+        /* 电脑端默认显示参考价列 */
+        @media (min-width: 768px) {
+            body:not(.hide-ref) .ref-column { display: table-cell; }
+        }
+        
         .navbar { background: var(--card); padding: 12px 15px; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 5px rgba(0,0,0,0.05); }
         .brand-card { background: var(--card); margin: 12px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
         .brand-header { padding: 10px 15px; background: rgba(0,0,0,0.02); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .brand-name { font-weight: bold; color: var(--primary); }
-        .table-wrapper { width: 100%; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 680px; }
+        .table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 580px; }
         th { padding: 8px 4px; text-align: center; color: var(--gray); border-bottom: 1px solid var(--border); background: var(--bg); }
         td { padding: 6px 4px; border-bottom: 1px solid var(--border); vertical-align: middle; }
         .qty-container { display: flex; align-items: center; justify-content: center; gap: 5px; }
@@ -37,18 +44,18 @@
         .model-input-wrapper { position: relative; width: 100%; }
         .cell-input {
             width: 100%; padding: 6px 4px; border: 1px solid var(--border); border-radius: 6px;
-            background: var(--bg); color: var(--text); font-size: 13px; outline: none; text-align: center;
+            background: var(--bg); color: var(--text); font-size: 12px; outline: none; text-align: center;
         }
         .cell-input:focus { border-color: var(--primary); }
         .suggest-list {
             position: absolute; top: 100%; left: 0; right: 0; z-index: 9999;
             background: var(--suggest-bg); border: 1px solid var(--border);
-            border-radius: 8px; max-height: 200px; overflow-y: auto;
+            border-radius: 8px; max-height: 180px; overflow-y: auto;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             list-style: none; margin: 2px 0 0; padding: 0;
         }
         .suggest-list li {
-            padding: 8px 12px; font-size: 12px; cursor: pointer;
+            padding: 8px 10px; font-size: 12px; cursor: pointer;
             border-bottom: 1px solid var(--border);
         }
         .suggest-list li:last-child { border-bottom: none; }
@@ -79,6 +86,14 @@
         }
         #toast.show { opacity: 1; }
         canvas#statChart { max-height: 250px; width: 100%; margin: 15px 0; }
+        
+        /* 手机端优化：表格字体略小，列宽调整 */
+        @media (max-width: 768px) {
+            th, td { font-size: 11px; padding: 5px 3px; }
+            .cell-input { font-size: 11px; padding: 4px 2px; }
+            .btn-qty { width: 24px; height: 24px; font-size: 14px; }
+            .brand-name { font-size: 14px; }
+        }
     </style>
 </head>
 <body class="show-ref">
@@ -149,6 +164,13 @@ const app = {
             } catch(e) { this.resetData(); }
         } else {
             this.resetData();
+        }
+        // 恢复参考价显示偏好
+        const refPref = localStorage.getItem('ref_display_pref');
+        if (refPref === 'hide') {
+            document.body.classList.remove('show-ref');
+        } else {
+            document.body.classList.add('show-ref');
         }
         this.render();
         if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
@@ -255,7 +277,6 @@ const app = {
         this.save();
     },
 
-    // ========== 删除品牌 ==========
     delBrand(bIdx) {
         if (this.data.length <= 1) {
             this.toast("至少保留一个品牌");
@@ -283,7 +304,6 @@ const app = {
         this.toast("品牌已删除");
     },
 
-    // ========== 恢复初始（独立弹窗） ==========
     resetToInitial() {
         const modal = document.getElementById('appModal');
         const content = document.getElementById('modalContent');
@@ -306,7 +326,6 @@ const app = {
         this.toast("已恢复初始");
     },
 
-    // ========== 添加品牌 ==========
     showAddBrandModal() {
         const modal = document.getElementById('appModal');
         const content = document.getElementById('modalContent');
@@ -332,7 +351,6 @@ const app = {
         this.toast(`已添加品牌: ${brand}`);
     },
 
-    // ========== 导出 ==========
     exportToExcel() {
         if (this.isWechat) {
             this.generateLongImage();
@@ -391,14 +409,29 @@ const app = {
         }, 100);
     },
 
-    printPage() { window.print(); this.toggleDrawer(false); },
+    printPage() { 
+        if (this.isWechat) {
+            this.toast("微信内请使用「导出」功能生成图片");
+        } else {
+            window.print();
+        }
+        this.toggleDrawer(false);
+    },
+    
     toggleDrawer(s) { document.getElementById('manageDrawer').classList.toggle('active', !!s); },
+    
     toggleTheme() {
         document.body.classList.toggle('dark');
         localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
         this.toggleDrawer(false);
     },
-    toggleRefColumn() { document.body.classList.toggle('show-ref'); this.toggleDrawer(false); },
+    
+    toggleRefColumn() {
+        document.body.classList.toggle('show-ref');
+        const isShowing = document.body.classList.contains('show-ref');
+        localStorage.setItem('ref_display_pref', isShowing ? 'show' : 'hide');
+        this.toggleDrawer(false);
+    },
 
     showBackupCode() {
         const compressed = LZString.compressToBase64(JSON.stringify(this.data));
