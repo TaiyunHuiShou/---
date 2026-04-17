@@ -34,22 +34,12 @@
         th, td { padding: 5px 3px; text-align: center; border-bottom: 1px solid var(--border); vertical-align: middle; }
         th { background: var(--bg); font-weight: 500; }
         
-        .col-model { width: 30%; }
-        .col-spec { width: 26%; }
-        .col-qty { width: 14%; }
-        .col-price { width: 16%; }
-        .col-ref { width: 16%; }
-        .col-del { width: 8%; }
-        
         .brand-card { background: var(--card); border-radius: 12px; margin-bottom: 16px; overflow: hidden; border: 1px solid var(--border); }
         .brand-header { padding: 8px 10px; background: var(--bg); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .brand-name { font-weight: bold; font-size: 14px; color: var(--primary); }
         
         .cell-input { width: 100%; padding: 4px 2px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); font-size: 10px; text-align: center; }
         select.cell-input { padding: 4px 2px; }
-        
-        .spec-col { display: flex; flex-direction: column; gap: 3px; }
-        .spec-col select { width: 100%; font-size: 10px; padding: 3px 2px; }
         
         .model-wrapper { position: relative; min-height: 28px; }
         .suggest-list { 
@@ -360,7 +350,7 @@ const app = {
 
     exportToExcel() { if (this.isWechat) this.generateLongImage(); else this.downloadExcel(); },
     downloadExcel() {
-        const rows = [["品牌", "型号", "机况", "高低配", "数量", "成交价", "参考价"]];
+        const rows = [["品牌", "型号", "机况", "规格", "数量", "成交价", "参考价"]];
         this.data.forEach(b => b.items.forEach(i => rows.push([b.brand, i.m, i.s, i.c, i.q, i.p || "0", i.r || "0"])));
         const ws = XLSX.utils.aoa_to_sheet(rows);
         const wb = XLSX.utils.book_new();
@@ -377,43 +367,29 @@ const app = {
         m.style.display = 'flex';
         
         const element = document.getElementById('screenshot-area');
-        
-        // 保存原始样式
-        const originalOverflow = element.style.overflow;
+        const table = element.querySelector('table');
+        let actualWidth = element.scrollWidth;
+        if (table) {
+            actualWidth = table.scrollWidth;
+        }
         const originalWidth = element.style.width;
-        const originalMaxWidth = element.style.maxWidth;
-        
-        // 关键：临时移除宽度限制，让容器按实际内容宽度渲染
+        const originalOverflow = element.style.overflow;
+        element.style.width = actualWidth + 'px';
         element.style.overflow = 'visible';
-        element.style.width = 'auto';
-        element.style.maxWidth = 'none';
-        
-        // 强制重新计算布局
-        element.offsetHeight;
         
         try {
-            // 获取实际内容宽度
-            const actualWidth = element.scrollWidth;
-            const actualHeight = element.scrollHeight;
-            
             const canvas = await html2canvas(element, {
                 scale: 2.5,
                 backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg'),
                 useCORS: true,
                 logging: false,
                 windowWidth: actualWidth,
-                windowHeight: actualHeight,
                 x: 0,
                 y: 0,
-                width: actualWidth,
-                height: actualHeight
+                width: actualWidth
             });
-            
-            // 恢复原始样式
-            element.style.overflow = originalOverflow;
             element.style.width = originalWidth;
-            element.style.maxWidth = originalMaxWidth;
-            
+            element.style.overflow = originalOverflow;
             const imgData = canvas.toDataURL('image/png');
             c.innerHTML = `
                 <div style="text-align:center; overflow-x:auto;">
@@ -425,11 +401,8 @@ const app = {
                 </div>
             `;
         } catch (err) {
-            console.error('截图失败', err);
-            // 恢复样式
-            element.style.overflow = originalOverflow;
             element.style.width = originalWidth;
-            element.style.maxWidth = originalMaxWidth;
+            element.style.overflow = originalOverflow;
             c.innerHTML = `<div style="text-align:center;padding:20px;">截图失败，请重试</div>`;
         }
     },
@@ -546,7 +519,14 @@ const app = {
                 <div class="table-wrapper">
                     <table>
                         <thead>
-                            <tr><th class="col-model">型号</th><th class="col-spec">机况/高低配</th><th class="col-qty">数量</th><th class="col-price">成交价</th><th class="ref-column col-ref">参考价</th><th class="col-del"></th></tr>
+                            <tr><th style="width:27%">型号</th>
+                            <th style="width:13%">机况</th>
+                            <th style="width:13%">规格</th>
+                            <th style="width:10%">数量</th>
+                            <th style="width:15%">成交价</th>
+                            <th class="ref-column" style="width:13%">参考价</th>
+                            <th style="width:9%"></th>
+                        </tr>
                         </thead>
                         <tbody>`;
             b.items.forEach((i, ri) => {
@@ -556,22 +536,20 @@ const app = {
                         onfocus="app.filterModels(${bi},${ri},this)" 
                         oninput="app.update(${bi},${ri},'m',this.value); app.filterModels(${bi},${ri},this)" 
                         onblur="app.hideModelsDelayed(${bi},${ri})"></div></td>
-                    <td class="col-spec"><div class="spec-col">
-                        <select class="cell-input" onchange="app.update(${bi},${ri},'s',this.value)">${STATUS_LIST.map(s => `<option ${i.s===s?'selected':''}>${s}</option>`).join('')}</select>
-                        <select class="cell-input" onchange="app.update(${bi},${ri},'c',this.value)">${CONFIG_LIST.map(c => `<option ${i.c===c?'selected':''}>${c}</option>`).join('')}</select>
-                    </div></td>
-                    <td class="col-qty"><input type="number" class="qty-number" value="${i.q}" min="1" step="1" 
+                    <td><select class="cell-input" onchange="app.update(${bi},${ri},'s',this.value)">${STATUS_LIST.map(s => `<option value="${s}" ${i.s === s ? 'selected' : ''}>${s}</option>`).join('')}</select></td>
+                    <td><select class="cell-input" style="color:var(--gray); font-size:11px" onchange="app.update(${bi},${ri},'c',this.value)">${CONFIG_LIST.map(c => `<option value="${c}" ${i.c === c ? 'selected' : ''}>${c}</option>`).join('')}</select></td>
+                    <td><input type="number" class="qty-number" value="${i.q}" min="1" step="1" 
                         ontouchstart=""
                         onchange="app.updateQty(${bi},${ri},this.value)"></td>
-                    <td class="col-price"><input type="tel" inputmode="decimal" class="price-input" value="${i.p}" 
+                    <td><input type="tel" inputmode="decimal" class="price-input" value="${i.p}" 
                         ontouchstart=""
                         oninput="app.filterPriceInput(this,${bi},${ri},'p')" 
                         onchange="app.filterPriceInput(this,${bi},${ri},'p')" placeholder="成交价"></td>
-                    <td class="ref-column col-ref"><input type="tel" inputmode="decimal" class="price-input" value="${i.r}" 
+                    <td class="ref-column"><input type="tel" inputmode="decimal" class="price-input" value="${i.r}" 
                         ontouchstart=""
                         oninput="app.filterPriceInput(this,${bi},${ri},'r')" 
                         onchange="app.filterPriceInput(this,${bi},${ri},'r')" placeholder="参考价"></td>
-                    <td class="col-del"><button class="del-row-btn" onclick="app.delRow(${bi},${ri})">✕</button></td>
+                    <td><button class="del-row-btn" onclick="app.delRow(${bi},${ri})">✕</button></td>
                 </tr>`;
             });
             html += `</tbody></table></div>
