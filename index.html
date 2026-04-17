@@ -61,7 +61,6 @@
         .suggest-list li { padding: 5px 6px; font-size: 10px; cursor: pointer; border-bottom: 1px solid var(--border); }
         .suggest-list li:active { background: var(--primary); color: white; }
         
-        /* 原生数字输入框样式 */
         .qty-number {
             width: 55px;
             text-align: center;
@@ -372,13 +371,67 @@ const app = {
 
     async generateLongImage() {
         this.toggleDrawer(false);
-        this.toast("生成图片中...");
-        const canvas = await html2canvas(document.getElementById('screenshot-area'), { scale: 2 });
-        const img = canvas.toDataURL('image/png');
-        const modal = document.getElementById('appModal');
-        const content = document.getElementById('modalContent');
-        content.innerHTML = `<div class="modal-title">长图预览</div><img src="${img}" style="width:100%;border-radius:8px;margin-bottom:15px;"><div class="btn-cancel" onclick="app.closeModal()">关闭</div>`;
-        modal.style.display = 'flex';
+        const m = document.getElementById('appModal');
+        const c = document.getElementById('modalContent');
+        c.innerHTML = "<div style='text-align:center;padding:20px;'>正在渲染高清长图...</div>";
+        m.style.display = 'flex';
+        
+        const element = document.getElementById('screenshot-area');
+        
+        // 保存原始样式
+        const originalOverflow = element.style.overflow;
+        const originalWidth = element.style.width;
+        const originalMaxWidth = element.style.maxWidth;
+        
+        // 关键：临时移除宽度限制，让容器按实际内容宽度渲染
+        element.style.overflow = 'visible';
+        element.style.width = 'auto';
+        element.style.maxWidth = 'none';
+        
+        // 强制重新计算布局
+        element.offsetHeight;
+        
+        try {
+            // 获取实际内容宽度
+            const actualWidth = element.scrollWidth;
+            const actualHeight = element.scrollHeight;
+            
+            const canvas = await html2canvas(element, {
+                scale: 2.5,
+                backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg'),
+                useCORS: true,
+                logging: false,
+                windowWidth: actualWidth,
+                windowHeight: actualHeight,
+                x: 0,
+                y: 0,
+                width: actualWidth,
+                height: actualHeight
+            });
+            
+            // 恢复原始样式
+            element.style.overflow = originalOverflow;
+            element.style.width = originalWidth;
+            element.style.maxWidth = originalMaxWidth;
+            
+            const imgData = canvas.toDataURL('image/png');
+            c.innerHTML = `
+                <div style="text-align:center; overflow-x:auto;">
+                    <img src="${imgData}" style="max-width:100%; height:auto; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+                    <p style="font-size:12px;color:var(--gray);margin:12px 0;">长按图片保存到手机</p>
+                    <div class="modal-footer">
+                        <div class="btn-cancel" style="flex:1" onclick="app.closeModal()">返回编辑</div>
+                    </div>
+                </div>
+            `;
+        } catch (err) {
+            console.error('截图失败', err);
+            // 恢复样式
+            element.style.overflow = originalOverflow;
+            element.style.width = originalWidth;
+            element.style.maxWidth = originalMaxWidth;
+            c.innerHTML = `<div style="text-align:center;padding:20px;">截图失败，请重试</div>`;
+        }
     },
 
     showCharts() {
