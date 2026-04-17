@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>废机宝 - 专业回收工具</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -13,28 +12,38 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         :root { --primary: #07c160; --danger: #fa5151; --warning: #ff9500; --info: #2782D7; --gray: #8e8e93; --bg: #f2f2f7; --card: #ffffff; --text: #1c1c1e; --border: #e5e5ea; }
         .dark { --bg: #000000; --card: #1c1c1e; --text: #f2f2f7; --border: #38383a; }
-        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 12px; padding-bottom: 100px; transition: 0.3s; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 90px; transition: 0.3s; }
         
-        .table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 680px; }
-        th, td { padding: 6px 3px; text-align: center; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        /* 表格 - 手机屏幕完整显示，不需要滑动 */
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        th, td { padding: 5px 3px; text-align: center; border-bottom: 1px solid var(--border); vertical-align: middle; }
         th { background: var(--bg); font-weight: 500; }
         
+        /* 列宽固定比例 */
+        .col-model { width: 28%; }
+        .col-spec { width: 24%; }
+        .col-qty { width: 12%; }
+        .col-price { width: 22%; }
+        .col-del { width: 8%; }
+        
         .brand-card { background: var(--card); border-radius: 12px; margin-bottom: 16px; overflow: hidden; border: 1px solid var(--border); }
-        .brand-header { padding: 8px 12px; background: var(--bg); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .brand-header { padding: 8px 10px; background: var(--bg); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .brand-name { font-weight: bold; font-size: 14px; color: var(--primary); }
         
-        .cell-input { width: 100%; padding: 5px 2px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); font-size: 10px; text-align: center; }
-        select.cell-input { padding: 5px 2px; }
+        .cell-input { width: 100%; padding: 4px 2px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); font-size: 10px; text-align: center; }
+        select.cell-input { padding: 4px 2px; }
         
-        .spec-col { display: flex; flex-direction: column; gap: 4px; }
-        .spec-col select { width: 100%; }
+        .spec-col { display: flex; flex-direction: column; gap: 3px; }
+        .spec-col select { width: 100%; font-size: 10px; padding: 3px 2px; }
         
-        .model-wrapper { position: relative; width: 100%; }
-        .suggest-list { position: absolute; top: 100%; left: 0; right: 0; z-index: 9999; background: var(--card); border: 1px solid var(--border); border-radius: 4px; max-height: 120px; overflow-y: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.15); list-style: none; margin: 2px 0 0; padding: 0; }
-        .suggest-list li { padding: 4px 6px; font-size: 10px; cursor: pointer; border-bottom: 1px solid var(--border); }
+        .price-col { display: flex; flex-direction: column; gap: 3px; }
+        .price-col input { width: 100%; font-size: 10px; padding: 3px 2px; }
         
-        .qty-input { width: 50px; text-align: center; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); font-size: 12px; padding: 4px 0; }
+        .model-wrapper { position: relative; }
+        .suggest-list { position: absolute; top: 100%; left: 0; right: 0; z-index: 9999; background: var(--card); border: 1px solid var(--border); border-radius: 4px; max-height: 100px; overflow-y: auto; list-style: none; margin: 2px 0 0; padding: 0; }
+        .suggest-list li { padding: 3px 5px; font-size: 10px; cursor: pointer; border-bottom: 1px solid var(--border); }
+        
+        .qty-input { width: 100%; text-align: center; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); font-size: 12px; padding: 5px 0; }
         
         .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(4, 1fr); padding: 6px 0 calc(6px + env(safe-area-inset-bottom)); z-index: 500; }
         .tab-item { display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--gray); font-size: 9px; border: none; background: none; cursor: pointer; }
@@ -57,24 +66,25 @@
         .btn-danger { border: none; background: var(--danger); color: white; }
         .brand-select-full { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); margin-bottom: 10px; font-size: 13px; }
         
-        .stats-card { background: var(--card); border-radius: 10px; padding: 10px; margin-bottom: 12px; border: 1px solid var(--border); }
-        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; text-align: center; }
-        .stats-value { font-weight: bold; font-size: 15px; }
+        .stats-card { background: var(--card); border-radius: 10px; padding: 8px; margin-bottom: 12px; border: 1px solid var(--border); }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; text-align: center; }
+        .stats-value { font-weight: bold; font-size: 14px; }
         .stats-value.warning { color: var(--warning); }
         
-        #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: white; padding: 6px 12px; border-radius: 16px; font-size: 11px; z-index: 3000; opacity: 0; transition: 0.2s; white-space: nowrap; }
+        #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: white; padding: 5px 10px; border-radius: 16px; font-size: 10px; z-index: 3000; opacity: 0; transition: 0.2s; white-space: nowrap; }
         #toast.show { opacity: 1; }
         
         .add-row-btn { width: 100%; padding: 8px; background: none; color: var(--info); border: none; border-top: 1px solid var(--border); font-size: 12px; cursor: pointer; }
         
-        @media (min-width: 768px) { table { font-size: 12px; min-width: auto; } .cell-input { font-size: 11px; } }
+        .del-brand-btn { color: var(--danger); border: none; background: none; font-size: 11px; cursor: pointer; }
+        .del-row-btn { border: none; background: none; color: var(--danger); font-size: 14px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div style="background: var(--card); padding: 10px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between;">
+<div style="background: var(--card); padding: 8px 10px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between;">
     <div style="font-weight: bold; font-size: 16px; color: var(--primary);">废机宝</div>
-    <div style="font-size: 11px; color: var(--gray);">专业版</div>
+    <div style="font-size: 10px; color: var(--gray);">手机版</div>
 </div>
 
 <div id="screenshot-area">
@@ -114,7 +124,7 @@
 <div id="toast"></div>
 
 <script>
-// ==================== 完整型号数据库 ====================
+// 型号数据库
 const MODEL_DB = {
     "OPPO": ["Find X9 Ultra","Find X9 Pro","Find X9","Find X8 Pro","Find X8","Find X7 Ultra","Find X7","Find X6 Pro","Find X6","Reno13 Pro","Reno13","Reno12 Pro","Reno12","Reno11 Pro","Reno11","Reno10 Pro+","Reno10 Pro","Reno10","K12x","K12","K11x","K11","A3 Pro","A3x","A2 Pro","A2x","A2"],
     "vivo": ["X300 Ultra","X300 Pro","X300","X200 Ultra","X200 Pro","X200","X100 Ultra","X100 Pro","X100","X90 Pro+","X90 Pro","X90","S20 Pro","S20","S19 Pro","S19","S18 Pro","S18","Y500 Pro","Y500","Y300 Pro","Y300","iQOO 13","iQOO 12 Pro","iQOO 12","iQOO 11S","iQOO 11"],
@@ -134,7 +144,7 @@ const app = {
     isWechat: /MicroMessenger/i.test(navigator.userAgent),
 
     init() {
-        const saved = localStorage.getItem("feijibao_stable");
+        const saved = localStorage.getItem("feijibao_mobile_v1");
         if (saved) { try { this.data = JSON.parse(saved); } catch(e) { this.resetData(); } }
         else { this.resetData(); }
         this.render();
@@ -152,13 +162,12 @@ const app = {
     },
 
     emptyRows(n) { return Array(n).fill().map(() => ({ m: "", s: "废机整机", c: "—", q: 1, p: "", r: "" })); },
-    save() { localStorage.setItem("feijibao_stable", JSON.stringify(this.data)); this.updateStats(); },
+    save() { localStorage.setItem("feijibao_mobile_v1", JSON.stringify(this.data)); this.updateStats(); },
 
     update(bIdx, rIdx, key, val) {
         if (this.data[bIdx] && this.data[bIdx].items[rIdx]) {
             this.data[bIdx].items[rIdx][key] = val;
             this.save();
-            // 型号更新后检查是否合并
             if (key === 'm' || key === 's' || key === 'c') {
                 this.checkAndMerge(bIdx, rIdx);
             }
@@ -173,33 +182,29 @@ const app = {
         this.updateStats();
     },
 
-    // 相同型号合并
     checkAndMerge(bIdx, rIdx) {
         const items = this.data[bIdx].items;
         const current = items[rIdx];
         if (!current.m) return;
         
         const duplicateIdx = items.findIndex((item, idx) => 
-            idx !== rIdx && 
-            item.m === current.m && 
-            item.s === current.s && 
-            item.c === current.c
+            idx !== rIdx && item.m === current.m && item.s === current.s && item.c === current.c
         );
         
         if (duplicateIdx !== -1) {
             const duplicate = items[duplicateIdx];
-            if (confirm(`发现相同的手机记录：\n品牌：${this.data[bIdx].brand}\n型号：${current.m}\n机况：${current.s}\n配置：${current.c}\n\n当前数量：${current.q}\n已有数量：${duplicate.q}\n\n是否合并数量？`)) {
+            if (confirm(`发现相同记录：\n${this.data[bIdx].brand} ${current.m}\n机况:${current.s} 配置:${current.c}\n当前数量:${current.q} 已有:${duplicate.q}\n是否合并？`)) {
                 duplicate.q = (parseInt(duplicate.q) || 1) + (parseInt(current.q) || 1);
                 items.splice(rIdx, 1);
                 this.render();
                 this.save();
-                this.toast("已合并相同手机");
+                this.toast("已合并");
             }
         }
     },
 
     delRow(bIdx, rIdx) {
-        if (this.data[bIdx].items.length <= 1) { this.toast("每个品牌至少保留一行"); return; }
+        if (this.data[bIdx].items.length <= 1) { this.toast("至少保留一行"); return; }
         this.data[bIdx].items.splice(rIdx, 1);
         this.render();
         this.save();
@@ -381,23 +386,32 @@ const app = {
         let html = '';
         this.data.forEach((b, bi) => {
             html += `<div class="brand-card">
-                <div class="brand-header"><span class="brand-name">${this.escape(b.brand)}</span><button onclick="app.delBrand(${bi})" style="color:var(--danger);border:none;background:none;font-size:11px;">删除品牌</button></div>
+                <div class="brand-header">
+                    <span class="brand-name">${this.escape(b.brand)}</span>
+                    <button class="del-brand-btn" onclick="app.delBrand(${bi})">删除品牌</button>
+                </div>
                 <div class="table-wrapper">
-                    <table><thead><tr><th>型号</th><th>机况/高低配</th><th>数量</th><th>成交价</th><th>参考价</th><th></th></tr></thead><tbody>`;
+                    <table>
+                        <thead>
+                            <tr><th class="col-model">型号</th><th class="col-spec">机况/高低配</th><th class="col-qty">数量</th><th class="col-price">价格</th><th class="col-del"></th></tr>
+                        </thead>
+                        <tbody>`;
             b.items.forEach((i, ri) => {
                 html += `<tr>
-                    <td><div class="model-wrapper" id="mw-${bi}-${ri}"><input type="text" class="cell-input" value="${this.escape(i.m)}" placeholder="型号" 
+                    <td class="col-model"><div class="model-wrapper" id="mw-${bi}-${ri}"><input type="text" class="cell-input" value="${this.escape(i.m)}" placeholder="型号" 
                         onfocus="app.filterModels(${bi},${ri},this)" 
                         oninput="app.update(${bi},${ri},'m',this.value); app.filterModels(${bi},${ri},this)" 
                         onblur="app.hideModelsDelayed(${bi},${ri})"></div></td>
-                    <td><div class="spec-col">
+                    <td class="col-spec"><div class="spec-col">
                         <select class="cell-input" onchange="app.update(${bi},${ri},'s',this.value)">${STATUS_LIST.map(s => `<option ${i.s===s?'selected':''}>${s}</option>`).join('')}</select>
                         <select class="cell-input" onchange="app.update(${bi},${ri},'c',this.value)">${CONFIG_LIST.map(c => `<option ${i.c===c?'selected':''}>${c}</option>`).join('')}</select>
                     </div></td>
-                    <td><input type="number" class="qty-input" value="${i.q}" min="1" onchange="app.updateQty(${bi},${ri},this.value)"></td>
-                    <td><input type="number" class="cell-input" value="${i.p}" oninput="app.update(${bi},${ri},'p',this.value)" step="1"></td>
-                    <td><input type="number" class="cell-input" value="${i.r}" oninput="app.update(${bi},${ri},'r',this.value)" step="1"></td>
-                    <td><button onclick="app.delRow(${bi},${ri})" style="border:none;background:none;color:var(--danger);font-size:14px;">✕</button></td>
+                    <td class="col-qty"><input type="number" class="qty-input" value="${i.q}" min="1" onchange="app.updateQty(${bi},${ri},this.value)"></td>
+                    <td class="col-price"><div class="price-col">
+                        <input type="number" class="cell-input" value="${i.p}" oninput="app.update(${bi},${ri},'p',this.value)" placeholder="成交价">
+                        <input type="number" class="cell-input" value="${i.r}" oninput="app.update(${bi},${ri},'r',this.value)" placeholder="参考价">
+                    </div></td>
+                    <td class="col-del"><button class="del-row-btn" onclick="app.delRow(${bi},${ri})">✕</button></td>
                 </tr>`;
             });
             html += `</tbody></table></div>
