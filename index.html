@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>废机宝 - 专业回收工具</title>
+    <title>废机宝 - 移动端业务管理系统</title>
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -116,25 +116,28 @@
         .del-brand-btn { color: var(--danger); border: none; background: none; font-size: 11px; cursor: pointer; }
         .del-row-btn { border: none; background: none; color: var(--danger); font-size: 14px; cursor: pointer; }
         
-        /* 对账信息行样式 */
+        /* 手机版对账行加固样式 */
         .top-bill-info {
             display: flex;
-            gap: 10px;
+            flex-wrap: nowrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
             margin-bottom: 12px;
             padding: 8px 12px;
             background: var(--card);
-            border-radius: 10px;
+            border-radius: 12px;
             border: 1px solid var(--border);
-            align-items: center;
-            flex-wrap: wrap;
+            width: 100%;
         }
         .top-bill-info input {
             flex: 1;
-            min-width: 100px;
+            min-width: 0;
+            width: auto;
             border: none;
             border-bottom: 1px solid var(--border);
             text-align: center;
-            padding: 6px 4px;
+            padding: 8px 2px;
             background: transparent;
             color: var(--text);
             font-size: 12px;
@@ -142,10 +145,13 @@
         .top-bill-info span {
             color: var(--gray);
             font-size: 14px;
+            flex-shrink: 0;
         }
         @media (max-width: 550px) {
-            .top-bill-info { flex-direction: column; align-items: stretch; }
-            .top-bill-info input { text-align: left; }
+            .top-bill-info input {
+                font-size: 10px;
+                padding: 6px 0;
+            }
         }
     </style>
 </head>
@@ -153,11 +159,11 @@
 
 <div style="background: var(--card); padding: 8px 10px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between;">
     <div style="font-weight: bold; font-size: 16px; color: var(--primary);">废机宝</div>
-    <div style="font-size: 10px; color: var(--gray);">手机电脑通用版</div>
+    <div style="font-size: 10px; color: var(--gray);">移动端业务管理系统</div>
 </div>
 
-<div id="screenshot-area">
-    <!-- 对账信息行：卖家、买家、日期 -->
+<div id="screenshot-area" style="width:100%; overflow-x:visible;">
+    <!-- 对账信息行：卖家、买家、日期（完全水平对齐） -->
     <div class="top-bill-info">
         <input type="text" id="sellerName" placeholder="卖家名称" value="" oninput="this.setAttribute('value', this.value)">
         <span>➡</span>
@@ -245,9 +251,8 @@ const app = {
         document.getElementById('deleteCancelBtn').onclick = () => this.hideDeleteConfirm();
         document.getElementById('deleteOkBtn').onclick = () => this.confirmDeleteBrand();
         
-        // 初始化日期：默认今天
         const dateInput = document.getElementById('billDate');
-        if (dateInput) {
+        if (dateInput && !dateInput.value) {
             const today = new Date();
             const yyyy = today.getFullYear();
             const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -401,15 +406,13 @@ const app = {
 
     exportToExcel() { if (this.isWechat) this.generateLongImage(); else this.downloadExcel(); },
     downloadExcel() {
-        // 获取对账信息
         const seller = document.getElementById('sellerName')?.value || '';
         const buyer = document.getElementById('buyerName')?.value || '';
         const billDate = document.getElementById('billDate')?.value || '';
         
         const rows = [];
-        // 插入对账头信息
-        rows.push(["对账日期:", billDate, "卖家:", seller, "买家:", buyer]);
-        rows.push([]); // 空行分隔
+        rows.push(["业务日期:", billDate, "卖家:", seller, "买家:", buyer]);
+        rows.push([]);
         rows.push(["品牌", "型号", "机况", "高低配", "数量", "成交价", "参考价"]);
         
         this.data.forEach(b => b.items.forEach(i => {
@@ -429,12 +432,17 @@ const app = {
 
         try {
             const area = document.getElementById('screenshot-area');
+            const originalOverflow = area.style.overflow;
+            area.style.overflow = 'visible';
+            area.style.width = '100%';
+            
             const canvas = await html2canvas(area, {
                 scale: 3,
                 useCORS: true,
                 backgroundColor: "#f2f2f7",
+                windowWidth: area.scrollWidth,
+                windowHeight: area.scrollHeight,
                 onclone: (clonedDoc) => {
-                    // 处理输入框
                     const inputs = clonedDoc.querySelectorAll('input');
                     inputs.forEach(el => {
                         const span = clonedDoc.createElement('span');
@@ -443,7 +451,6 @@ const app = {
                         el.parentNode.appendChild(span);
                         el.style.display = 'none';
                     });
-                    // 处理下拉框
                     const selects = clonedDoc.querySelectorAll('select');
                     selects.forEach(el => {
                         const span = clonedDoc.createElement('span');
@@ -454,7 +461,8 @@ const app = {
                     });
                 }
             });
-
+            area.style.overflow = originalOverflow;
+            
             const imgData = canvas.toDataURL('image/png');
             const modal = document.getElementById('appModal');
             const content = document.getElementById('modalContent');
