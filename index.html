@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>废机宝 - 移动端业务管理系统</title>
+    <title>废机宝 - 电子产品贸易管理终端</title>
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -116,41 +116,102 @@
         .del-brand-btn { color: var(--danger); border: none; background: none; font-size: 11px; cursor: pointer; }
         .del-row-btn { border: none; background: none; color: var(--danger); font-size: 14px; cursor: pointer; }
         
-        /* 手机版对账行加固样式 */
+        /* 对账栏标签样式 */
         .top-bill-info {
             display: flex;
-            flex-wrap: nowrap;
-            justify-content: space-between;
             align-items: center;
-            gap: 6px;
-            margin-bottom: 12px;
-            padding: 8px 12px;
+            gap: 5px;
+            padding: 10px;
             background: var(--card);
-            border-radius: 12px;
             border: 1px solid var(--border);
-            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 11px;
+            flex-wrap: wrap;
         }
-        .top-bill-info input {
+        .bill-field {
             flex: 1;
+            display: flex;
+            align-items: center;
             min-width: 0;
-            width: auto;
+        }
+        .bill-field span {
+            color: var(--gray);
+            white-space: nowrap;
+            margin-right: 4px;
+        }
+        .bill-field input {
+            width: 100%;
             border: none;
             border-bottom: 1px solid var(--border);
             text-align: center;
-            padding: 8px 2px;
+            padding: 6px 2px;
             background: transparent;
             color: var(--text);
-            font-size: 12px;
+            font-size: 11px;
         }
-        .top-bill-info span {
-            color: var(--gray);
-            font-size: 14px;
+        .arrow-icon {
+            color: var(--primary);
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .date-input {
+            width: 95px;
+            border: none;
+            border-bottom: 1px solid var(--border);
+            background: transparent;
+            color: var(--text);
+            font-size: 11px;
+            padding: 6px 2px;
             flex-shrink: 0;
         }
         @media (max-width: 550px) {
+            .top-bill-info { flex-wrap: wrap; }
+            .bill-field { min-width: 120px; }
+        }
+        
+        /* 打印去广告及强制显示买卖双方信息 */
+        @media print {
+            a, footer, .tab-bar, .drawer, #toast, .add-row-btn, .del-brand-btn, .del-row-btn, .modal, .btn-confirm, .btn-cancel, .btn-danger, .brand-header button {
+                display: none !important;
+            }
+            @page { margin: 0 !important; }
+            body { margin: 1.5cm 1cm !important; background: white !important; padding: 0 !important; }
+            .brand-card {
+                break-inside: avoid;
+                page-break-inside: avoid;
+                border: 1px solid #ccc;
+                box-shadow: none;
+                background: white;
+            }
+            .top-bill-info {
+                display: flex !important;
+                border: 1px solid #000 !important;
+                border-bottom: 2px solid #000 !important;
+                padding: 10px !important;
+                background: white !important;
+                justify-content: space-between !important;
+            }
             .top-bill-info input {
-                font-size: 10px;
-                padding: 6px 0;
+                border: none !important;
+                font-weight: bold !important;
+                color: #000 !important;
+                display: inline-block !important;
+                background: transparent !important;
+            }
+            .stats-card {
+                border: 1px solid #aaa;
+                background: white;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            th, td {
+                border: 1px solid #aaa;
+            }
+            .ref-column {
+                display: table-cell !important;
             }
         }
     </style>
@@ -159,16 +220,22 @@
 
 <div style="background: var(--card); padding: 8px 10px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between;">
     <div style="font-weight: bold; font-size: 16px; color: var(--primary);">废机宝</div>
-    <div style="font-size: 10px; color: var(--gray);">移动端业务管理系统</div>
+    <div style="font-size: 10px; color: var(--gray);">电子产品贸易管理终端</div>
 </div>
 
 <div id="screenshot-area" style="width:100%; overflow-x:visible;">
-    <!-- 对账信息行：卖家、买家、日期（完全水平对齐） -->
+    <!-- 对账栏：卖家标签、买家标签、日期（位于截图区域最顶部，打印时强制显示） -->
     <div class="top-bill-info">
-        <input type="text" id="sellerName" placeholder="卖家名称" value="" oninput="this.setAttribute('value', this.value)">
-        <span>➡</span>
-        <input type="text" id="buyerName" placeholder="买家名称" value="" oninput="this.setAttribute('value', this.value)">
-        <input type="date" id="billDate" value="" oninput="this.setAttribute('value', this.value)">
+        <div class="bill-field">
+            <span>卖家:</span>
+            <input type="text" id="sellerName" placeholder="卖家名称" value="" oninput="this.setAttribute('value', this.value)">
+        </div>
+        <span class="arrow-icon">➡</span>
+        <div class="bill-field">
+            <span>买家:</span>
+            <input type="text" id="buyerName" placeholder="买家名称" value="" oninput="this.setAttribute('value', this.value)">
+        </div>
+        <input type="date" id="billDate" class="date-input" value="" oninput="this.setAttribute('value', this.value)">
     </div>
     
     <div class="stats-card">
@@ -409,9 +476,8 @@ const app = {
         const seller = document.getElementById('sellerName')?.value || '';
         const buyer = document.getElementById('buyerName')?.value || '';
         const billDate = document.getElementById('billDate')?.value || '';
-        
         const rows = [];
-        rows.push(["业务日期:", billDate, "卖家:", seller, "买家:", buyer]);
+        rows.push(["业务凭证", "日期:", billDate, "卖家身份:", seller, "买家身份:", buyer]);
         rows.push([]);
         rows.push(["品牌", "型号", "机况", "高低配", "数量", "成交价", "参考价"]);
         
@@ -499,7 +565,15 @@ const app = {
         }, 100);
     },
 
-    printPage() { if (this.isWechat) this.toast("微信内请使用「导出」功能生成图片"); else window.print(); this.toggleDrawer(false); },
+    printPage() {
+        this.toggleDrawer(false);
+        // 关键：将当前输入的文字同步到 DOM 属性，否则打印机抓不到 input 里的动态内容
+        document.querySelectorAll('.top-bill-info input').forEach(input => {
+            input.setAttribute('value', input.value);
+        });
+        setTimeout(() => { window.print(); }, 150);
+    },
+    
     toggleDrawer(s) { document.getElementById('manageDrawer').classList.toggle('active', !!s); },
     toggleTheme() { document.body.classList.toggle('dark'); localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light'); this.toggleDrawer(false); },
     showBackupCode() {
