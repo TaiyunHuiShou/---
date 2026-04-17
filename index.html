@@ -57,66 +57,41 @@
             border-color: var(--primary);
         }
         .suggest-list {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: var(--suggest-bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            max-height: 220px;
-            overflow-y: auto;
-            z-index: 1000;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            list-style: none;
-            margin: 2px 0 0;
-            padding: 0;
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: var(--suggest-bg); border: 1px solid var(--border);
+            border-radius: 8px; max-height: 220px; overflow-y: auto;
+            z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            list-style: none; margin: 2px 0 0; padding: 0;
         }
         .suggest-list li {
-            padding: 8px 10px;
-            font-size: 12px;
-            cursor: pointer;
-            border-bottom: 1px solid var(--border);
-            color: var(--text);
+            padding: 8px 10px; font-size: 12px; cursor: pointer;
+            border-bottom: 1px solid var(--border); color: var(--text);
         }
         .suggest-list li:last-child { border-bottom: none; }
         .suggest-list li:hover, .suggest-list li.active {
             background: rgba(7, 193, 96, 0.1);
         }
         
-        .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(4, 1fr); padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); z-index: 500; }
+        .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); 
+            display: grid; grid-template-columns: repeat(4, 1fr); padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); z-index: 500; }
         .tab-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--gray); font-size: 10px; border: none; background: none; cursor: pointer; }
         
         .drawer { position: fixed; bottom: 0; left: 0; right: 0; top: 0; background: rgba(0,0,0,0.5); visibility: hidden; opacity: 0; transition: 0.3s; z-index: 1000; }
         .drawer.active { visibility: visible; opacity: 1; }
-        .drawer-content { position: absolute; bottom: 0; left: 0; right: 0; background: var(--card); border-radius: 20px 20px 0 0; padding: 20px 15px; transform: translateY(100%); transition: 0.3s; max-height: 80vh; overflow-y: auto; }
+        .drawer-content { position: absolute; bottom: 0; left: 0; right: 0; background: var(--card); border-radius: 20px 20px 0 0; 
+            padding: 20px 15px; transform: translateY(100%); transition: 0.3s; max-height: 80vh; overflow-y: auto; }
         .drawer.active .drawer-content { transform: translateY(0); }
-        .drawer-item { display: flex; align-items: center; gap: 12px; padding: 15px; border-bottom: 1px solid var(--border); font-size: 15px; color: var(--text); }
+        .drawer-item { display: flex; align-items: center; gap: 12px; padding: 15px; border-bottom: 1px solid var(--border); font-size: 15px; color: var(--text); cursor: pointer; }
         
-        .modal { 
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
-            background: rgba(0,0,0,0.75); display: none; z-index: 2000; 
-            align-items: center; justify-content: center; padding: 20px; 
-        }
-        .modal-body { 
-            background: var(--card); width: 100%; max-width: 380px; 
-            border-radius: 16px; padding: 24px; position: relative; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); display: none; z-index: 2000; 
+            align-items: center; justify-content: center; padding: 20px; }
+        .modal-body { background: var(--card); width: 100%; max-width: 400px; border-radius: 16px; padding: 25px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .modal-title { font-weight: bold; font-size: 18px; text-align: center; margin-bottom: 12px; }
-        .modal-message { font-size: 15px; color: var(--text); line-height: 1.5; text-align: center; margin-bottom: 28px; }
-        
+        .modal-message { font-size: 15px; color: var(--text); line-height: 1.5; text-align: center; margin-bottom: 25px; }
         .modal-footer { display: flex; gap: 12px; }
-        .btn-cancel { 
-            flex: 1; padding: 14px; border: 1px solid var(--border); 
-            background: var(--bg); color: var(--text); border-radius: 10px; 
-            font-weight: bold; cursor: pointer; text-align: center; font-size: 16px;
-        }
-        .btn-confirm-danger { 
-            flex: 1; padding: 14px; border: none; 
-            background: var(--danger); color: white; border-radius: 10px; 
-            font-weight: bold; cursor: pointer; text-align: center; font-size: 16px;
-        }
+        .btn-cancel { flex: 1; padding: 14px; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 10px; font-weight: bold; cursor: pointer; text-align: center; }
+        .btn-confirm { flex: 1; padding: 14px; border: none; background: var(--primary); color: white; border-radius: 10px; font-weight: bold; cursor: pointer; text-align: center; }
+        .btn-danger { flex: 1; padding: 14px; border: none; background: var(--danger); color: white; border-radius: 10px; font-weight: bold; cursor: pointer; text-align: center; }
     </style>
 </head>
 <body class="show-ref">
@@ -163,13 +138,13 @@
 <script>
 // ==================== 型号数据库 ====================
 const FULL_MODEL_MAP = {
-    "OPPO": ["Reno12 Pro", "Reno12", "Reno11 Pro", "Reno11", "Find X7 Ultra", "Find X6 Pro", "A98", "A78"],
-    "vivo": ["iQOO 12 Pro", "iQOO 12", "X100 Pro", "X Fold3 Pro", "Y200"],
-    "华为": ["Mate 70 Pro", "Mate 60 Pro", "Pura 70 Ultra", "Nova 12 Pro"],
-    "荣耀": ["Magic6 Pro", "Honor 200 Pro", "Magic V3"],
-    "苹果": ["iPhone 16 Pro Max", "iPhone 16 Pro", "iPhone 15 Pro Max", "iPhone 14 Pro Max", "iPhone 14"],
-    "小米": ["小米15 Pro", "小米14 Ultra", "Redmi K80 Pro"],
-    "三星": ["Galaxy S25 Ultra", "Galaxy S24 Ultra", "Galaxy Z Fold6"]
+    "OPPO": ["Reno12 Pro","Reno12","Reno11 Pro","Find X7 Ultra","A98","A78"],
+    "vivo": ["iQOO 12 Pro","iQOO 12","X100 Pro","X Fold3 Pro","Y200"],
+    "华为": ["Mate 70 Pro","Mate 60 Pro","Pura 70 Ultra","Nova 12 Pro"],
+    "荣耀": ["Magic6 Pro","Honor 200 Pro","Magic V3"],
+    "苹果": ["iPhone 16 Pro Max","iPhone 16 Pro","iPhone 15 Pro Max","iPhone 14 Pro Max","iPhone 14"],
+    "小米": ["小米15 Pro","小米14 Ultra","Redmi K80 Pro"],
+    "三星": ["Galaxy S25 Ultra","Galaxy S24 Ultra","Galaxy Z Fold6"]
 };
 
 const app = {
@@ -177,6 +152,7 @@ const app = {
     statusList: ["废机整机", "开机屏坏", "开机屏好", "正常机"],
     cfgList: ["—", "高配", "中配", "低配"],
     brandOptions: ["OPPO", "vivo", "华为", "荣耀", "苹果", "小米", "红米", "三星", "一加", "魅族", "努比亚", "中兴", "联想", "锤子/坚果", "老年机", "杂牌机", "手动输入"],
+    isWechat: /MicroMessenger/i.test(navigator.userAgent),
 
     init() {
         const encrypted = localStorage.getItem("erp_v7_secure_data");
@@ -194,8 +170,7 @@ const app = {
 
     reset() {
         this.data = ["OPPO", "vivo", "华为", "荣耀", "苹果"].map(b => ({
-            brand: b,
-            items: this.generateEmptyRows(5)
+            brand: b, items: this.generateEmptyRows(5)
         }));
     },
 
@@ -219,36 +194,25 @@ const app = {
                 </div>
                 <div class="table-wrapper">
                     <table>
-                        <thead>
-                            <tr><th style="width:30%">型号</th><th style="width:30%">机况/规格</th><th style="width:15%">数量</th><th style="width:25%">成交价</th><th class="ref-column" style="width:25%">参考价</th><th style="width:30px"></th></tr>
-                        </thead>
+                        <thead><tr><th style="width:30%">型号</th><th style="width:30%">机况/规格</th><th style="width:15%">数量</th><th style="width:25%">成交价</th><th class="ref-column" style="width:25%">参考价</th><th style="width:30px"></th></tr></thead>
                         <tbody>
                             ${b.items.map((i, rIdx) => `
                                 <tr>
                                     <td>
                                         <div class="model-input-wrapper" id="model-wrapper-${bIdx}-${rIdx}">
-                                            <input type="text" class="cell-input" placeholder="型号" 
-                                                value="${this.escapeHtml(i.m || '')}"
-                                                oninput="app.update(${bIdx}, ${rIdx}, 'm', this.value)"
-                                                onfocus="app.showSuggestions(${bIdx}, ${rIdx}, this.value)"
-                                                onblur="app.hideSuggestionsDelayed(${bIdx}, ${rIdx})">
+                                            <input type="text" class="cell-input" placeholder="型号" value="${this.escapeHtml(i.m||'')}"
+                                                oninput="app.update(${bIdx},${rIdx},'m',this.value)"
+                                                onfocus="app.showSuggestions(${bIdx},${rIdx},this.value)"
+                                                onblur="app.hideSuggestionsDelayed(${bIdx},${rIdx})">
                                         </div>
                                     </td>
                                     <td>
                                         <div style="display:flex;flex-direction:column;gap:2px;">
-                                            <select class="cell-input" onchange="app.update(${bIdx},${rIdx},'s',this.value)">
-                                                ${this.statusList.map(s => `<option value="${s}" ${i.s===s?'selected':''}>${s}</option>`).join('')}
-                                            </select>
-                                            <select class="cell-input" style="color:var(--gray);font-size:11px" onchange="app.update(${bIdx},${rIdx},'c',this.value)">
-                                                ${this.cfgList.map(c => `<option value="${c}" ${i.c===c?'selected':''}>${c}</option>`).join('')}
-                                            </select>
+                                            <select class="cell-input" onchange="app.update(${bIdx},${rIdx},'s',this.value)">${this.statusList.map(s=>`<option value="${s}" ${i.s===s?'selected':''}>${s}</option>`).join('')}</select>
+                                            <select class="cell-input" style="color:var(--gray);font-size:11px" onchange="app.update(${bIdx},${rIdx},'c',this.value)">${this.cfgList.map(c=>`<option value="${c}" ${i.c===c?'selected':''}>${c}</option>`).join('')}</select>
                                         </div>
                                     </td>
-                                    <td><div class="qty-container">
-                                        <div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},-1)">-</div>
-                                        <div style="font-weight:bold">${i.q}</div>
-                                        <div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},1)">+</div>
-                                    </div></td>
+                                    <td><div class="qty-container"><div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},-1)">-</div><div style="font-weight:bold">${i.q}</div><div class="btn-qty" onclick="app.changeQty(${bIdx},${rIdx},1)">+</div></div></td>
                                     <td><input type="text" inputmode="decimal" class="cell-input" style="color:var(--primary);font-weight:bold" value="${i.p||''}" oninput="app.filterPriceInput(this,${bIdx},${rIdx},'p')"></td>
                                     <td class="ref-column"><input type="text" inputmode="decimal" class="cell-input" value="${i.r||''}" oninput="app.filterPriceInput(this,${bIdx},${rIdx},'r')"></td>
                                     <td><button onclick="app.delRow(${bIdx},${rIdx})" style="border:none;background:none;color:var(--gray)">✕</button></td>
@@ -263,28 +227,9 @@ const app = {
         this.updateStats();
     },
 
-    escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':m==='>'?'&gt;':m);
-    },
+    escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m=> m==='&'?'&amp;':m==='< '?'&lt;':m==='>'?'&gt;':m); },
 
-    // ==================== 新增：通用确认模态框 ====================
-    showConfirmDialog(options) {
-        const modal = document.getElementById('appModal');
-        const content = document.getElementById('modalContent');
-        
-        content.innerHTML = `
-            <div class="modal-title">${options.title || '提示'}</div>
-            <div class="modal-message">${options.message || ''}</div>
-            <div class="modal-footer">
-                <div class="btn-cancel" onclick="app.closeModal(); ${options.onCancel ? options.onCancel : ''}">取消</div>
-                <div class="btn-confirm-danger" onclick="app.closeModal(); ${options.onConfirm}">确认删除</div>
-            </div>
-        `;
-        modal.style.display = 'flex';
-    },
-
-    // ==================== 删除品牌（使用自定义模态框） ====================
+    // ====================== 删除品牌 - 自定义模态框 ======================
     delBrand(idx) {
         const brandName = this.data[idx].brand;
         this.showConfirmDialog({
@@ -300,7 +245,22 @@ const app = {
         this.save();
     },
 
-    // ==================== 其他功能保持不变 ====================
+    // ====================== 通用确认模态框 ======================
+    showConfirmDialog({title, message, onConfirm}) {
+        const modal = document.getElementById('appModal');
+        const content = document.getElementById('modalContent');
+        content.innerHTML = `
+            <div class="modal-title">${title}</div>
+            <div class="modal-message">${message}</div>
+            <div class="modal-footer">
+                <div class="btn-cancel" onclick="app.closeModal()">取消</div>
+                <div class="btn-danger" onclick="app.closeModal(); ${onConfirm}">确认删除</div>
+            </div>
+        `;
+        modal.style.display = 'flex';
+    },
+
+    // ====================== 其他功能（已全部修复） ======================
     update(bi, ri, k, v) {
         if (this.data[bi] && this.data[bi].items[ri]) {
             this.data[bi].items[ri][k] = v;
@@ -310,7 +270,7 @@ const app = {
 
     addRow(idx) {
         this.save();
-        this.data[idx].items.push({ m: "", s: "废机整机", c: "—", q: 1, p: "", r: "" });
+        this.data[idx].items.push({m:"", s:"废机整机", c:"—", q:1, p:"", r:""});
         this.render();
     },
 
@@ -326,36 +286,30 @@ const app = {
         let val = input.value.replace(/[^0-9.]/g, '');
         const parts = val.split('.');
         if (parts.length > 2) val = parts[0] + '.' + parts[1];
-        if (parts[1] && parts[1].length > 2) val = parts[0] + '.' + parts[1].slice(0, 2);
+        if (parts[1] && parts[1].length > 2) val = parts[0] + '.' + parts[1].slice(0,2);
         input.value = val;
         this.update(bIdx, rIdx, key, val);
     },
 
-    // 型号建议功能（简化版）
+    // 型号建议
     showSuggestions(bIdx, rIdx, val) { this.filterSuggestions(bIdx, rIdx, val); },
     filterSuggestions(bIdx, rIdx, keyword) {
         const wrapper = document.getElementById(`model-wrapper-${bIdx}-${rIdx}`);
         if (!wrapper) return;
         wrapper.querySelectorAll('.suggest-list').forEach(el => el.remove());
         if (!keyword || !keyword.trim()) return;
-
         const brand = this.data[bIdx].brand;
-        let list = FULL_MODEL_MAP[brand] || Object.values(FULL_MODEL_MAP).flat();
-        const matches = list.filter(m => m.toLowerCase().includes(keyword.toLowerCase())).slice(0, 8);
+        let modelList = FULL_MODEL_MAP[brand] || Object.values(FULL_MODEL_MAP).flat();
+        const matches = modelList.filter(m => m.toLowerCase().includes(keyword.toLowerCase())).slice(0,8);
         if (matches.length === 0) return;
-
-        const ul = document.createElement('ul');
-        ul.className = 'suggest-list';
-        matches.forEach(m => {
+        const ul = document.createElement('ul'); ul.className = 'suggest-list';
+        matches.forEach(model => {
             const li = document.createElement('li');
-            li.textContent = m;
+            li.textContent = model;
             li.onmousedown = (e) => {
                 e.preventDefault();
                 const input = wrapper.querySelector('input');
-                if (input) {
-                    input.value = m;
-                    this.update(bIdx, rIdx, 'm', m);
-                }
+                if (input) { input.value = model; this.update(bIdx, rIdx, 'm', model); }
                 this.hideSuggestions(bIdx, rIdx);
             };
             ul.appendChild(li);
@@ -370,6 +324,7 @@ const app = {
         setTimeout(() => this.hideSuggestions(bIdx, rIdx), 200);
     },
 
+    // ====================== 底部工具栏功能 ======================
     showAddBrandModal() {
         const m = document.getElementById('appModal');
         const c = document.getElementById('modalContent');
@@ -387,28 +342,145 @@ const app = {
     confirmAddBrand() {
         const select = document.getElementById('nbSelect');
         const manual = document.getElementById('manualBrandInput');
-        let brandName = select.value === "手动输入" ? manual.value.trim() : select.value;
-        if (!brandName) return;
+        let brandName = select.value === "手动输入" ? (manual.value.trim() || "自定义品牌") : select.value;
         this.data.push({ brand: brandName, items: this.generateEmptyRows(5) });
         this.render();
         this.save();
         this.closeModal();
     },
 
-    updateStats() {
-        let q = 0, p = 0, r = 0;
-        this.data.forEach(b => b.items.forEach(i => {
-            const n = parseInt(i.q)||0;
-            q += n; p += n*(parseFloat(i.p)||0); r += n*(parseFloat(i.r)||0);
-        }));
-        document.getElementById('totalQty').innerText = q;
-        document.getElementById('totalActual').innerText = '¥' + Math.round(p).toLocaleString();
-        document.getElementById('totalRef').innerText = '¥' + Math.round(r).toLocaleString();
-        const rate = r > 0 ? ((p - r) / r) * 100 : 0;
-        document.getElementById('profitRate').innerHTML = `${rate>=0?'📈 高':'📉 低'} ${Math.abs(rate).toFixed(1)}%`;
+    showExportConfirm() {
+        this.showConfirmDialog({
+            title: "导出清单",
+            message: "将为您生成高清长图，生成后请长按图片保存。",
+            onConfirm: "app.generateLongImage()"
+        });
     },
 
-    toggleDrawer(s) { document.getElementById('manageDrawer').classList.toggle('active', s); },
+    showCharts() {
+        const modal = document.getElementById('appModal');
+        const content = document.getElementById('modalContent');
+        content.innerHTML = `<canvas id="chartCanvas" style="width:100%;height:300px;"></canvas>
+            <div class="modal-footer"><div class="btn-cancel" style="flex:1" onclick="app.closeModal()">返回</div></div>`;
+        modal.style.display = 'flex';
+
+        setTimeout(() => {
+            const labels = [], values = [];
+            this.data.forEach(b => {
+                let sum = 0;
+                b.items.forEach(i => sum += (parseInt(i.q)||0) * (parseFloat(i.p)||0));
+                if (sum > 0) { labels.push(b.brand); values.push(sum); }
+            });
+            new Chart(document.getElementById('chartCanvas'), {
+                type: 'pie',
+                data: { labels: labels, datasets: [{ data: values, backgroundColor: ['#FF3B30','#34C759','#007AFF','#FF9500','#AF52DE'] }] }
+            });
+        }, 100);
+    },
+
+    async generateLongImage() {
+        this.closeModal();
+        const loadingModal = document.getElementById('appModal');
+        const loadingContent = document.getElementById('modalContent');
+        loadingContent.innerHTML = `<div style="text-align:center;padding:40px;">正在生成高清长图...</div>`;
+        loadingModal.style.display = 'flex';
+
+        try {
+            const area = document.getElementById('screenshot-area');
+            const canvas = await html2canvas(area, { scale: 2, useCORS: true, backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg') });
+            const imgData = canvas.toDataURL('image/png');
+
+            loadingContent.innerHTML = `
+                <div style="text-align:center">
+                    <img src="${imgData}" style="max-width:100%; border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+                    <p style="font-size:13px;color:var(--gray);margin:15px 0 10px;">长按图片保存到相册</p>
+                    <div class="modal-footer">
+                        <div class="btn-cancel" style="flex:1" onclick="app.closeModal()">返回编辑</div>
+                    </div>
+                </div>`;
+        } catch(e) {
+            loadingContent.innerHTML = `<div style="text-align:center;color:var(--danger);">生成失败，请重试</div>`;
+        }
+    },
+
+    printPage() {
+        this.toggleDrawer(false);
+        if (this.isWechat) {
+            alert("微信内建议使用「导出」功能生成图片后打印");
+        } else {
+            window.print();
+        }
+    },
+
+    // ====================== 备份与恢复 ======================
+    showBackupCode() {
+        this.toggleDrawer(false);
+        const dataStr = JSON.stringify(this.data);
+        const compressed = LZString.compressToBase64(dataStr);
+        const shareCode = `📱回收#${compressed}`;
+
+        const m = document.getElementById('appModal');
+        const c = document.getElementById('modalContent');
+        c.innerHTML = `
+            <div style="text-align:center">
+                <div style="font-weight:bold;margin-bottom:10px;">备份短码</div>
+                <div style="font-size:17px;word-break:break-all;line-height:1.5;background:#f8f8f8;padding:12px;border-radius:8px;margin:15px 0;">${shareCode}</div>
+                <div style="font-size:13px;color:var(--gray);">长按复制完整短码，可发给他人恢复</div>
+                <div class="modal-footer">
+                    <div class="btn-confirm" onclick="navigator.clipboard.writeText('${shareCode}').then(()=>{alert('已复制到剪贴板');app.closeModal();})">复制短码</div>
+                    <div class="btn-cancel" onclick="app.closeModal()">关闭</div>
+                </div>
+            </div>`;
+        m.style.display = 'flex';
+    },
+
+    showRecoverByCode() {
+        this.toggleDrawer(false);
+        const m = document.getElementById('appModal');
+        const c = document.getElementById('modalContent');
+        c.innerHTML = `
+            <div style="font-weight:bold;margin-bottom:15px;text-align:center;">恢复数据</div>
+            <input id="recoverCodeInput" class="brand-select-full" placeholder="粘贴以 📱回收# 开头的短码" style="margin:10px 0;">
+            <div class="modal-footer">
+                <div class="btn-cancel" onclick="app.closeModal()">取消</div>
+                <div class="btn-confirm" onclick="app.recoverWithCode()">恢复数据</div>
+            </div>`;
+        m.style.display = 'flex';
+    },
+
+    recoverWithCode() {
+        const code = document.getElementById('recoverCodeInput').value.trim();
+        if (!code || !code.startsWith('📱回收#')) {
+            alert("短码格式错误，必须以 📱回收# 开头");
+            return;
+        }
+        const compressed = code.split('#')[1];
+        let decompressed;
+        try {
+            decompressed = LZString.decompressFromBase64(compressed);
+        } catch(e) {
+            alert("短码解压失败");
+            return;
+        }
+        if (!decompressed) {
+            alert("无效或已损坏的短码");
+            return;
+        }
+        try {
+            this.data = JSON.parse(decompressed);
+            this.save();
+            this.render();
+            this.closeModal();
+            alert("数据恢复成功！");
+        } catch(e) {
+            alert("数据格式错误，无法恢复");
+        }
+    },
+
+    // ====================== 管理抽屉功能 ======================
+    toggleDrawer(s) {
+        document.getElementById('manageDrawer').classList.toggle('active', s);
+    },
     toggleTheme() {
         const d = document.body.classList.toggle('dark');
         localStorage.setItem('theme', d ? 'dark' : 'light');
@@ -418,54 +490,36 @@ const app = {
         document.body.classList.toggle('show-ref');
         this.toggleDrawer(false);
     },
+    resetToInitial() {
+        if (confirm("确定恢复初始状态吗？所有数据将被清空，此操作不可撤销！")) {
+            this.reset();
+            this.render();
+            this.save();
+            this.toggleDrawer(false);
+        }
+    },
+    showContact() {
+        alert("如有问题或合作意向，请联系作者：Egg77Egg88");
+    },
+
     closeModal() {
         document.getElementById('appModal').style.display = 'none';
     },
 
-    showExportConfirm() {
-        const m = document.getElementById('appModal');
-        const c = document.getElementById('modalContent');
-        c.innerHTML = `
-            <div style="font-weight:bold;margin-bottom:15px;text-align:center;">确认导出清单？</div>
-            <div style="font-size:14px;color:var(--gray);text-align:center;margin-bottom:20px;">将为您生成高清长图，长按保存即可</div>
-            <div class="modal-footer">
-                <div class="btn-cancel" onclick="app.closeModal()">取消</div>
-                <div class="btn-confirm" style="flex:1;background:var(--primary);" onclick="app.generateLongImage()">确认导出</div>
-            </div>
-        `;
-        m.style.display = 'flex';
-    },
-
-    async generateLongImage() {
-        this.toggleDrawer(false);
-        const m = document.getElementById('appModal');
-        const c = document.getElementById('modalContent');
-        c.innerHTML = "<div style='text-align:center;padding:30px;'>正在生成高清长图...</div>";
-        m.style.display = 'flex';
-
-        const area = document.getElementById('screenshot-area');
-        const canvas = await html2canvas(area, { scale: 2, useCORS: true, backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg') });
-        const imgData = canvas.toDataURL('image/png');
-
-        c.innerHTML = `
-            <div style="text-align:center">
-                <img src="${imgData}" style="max-width:100%;border-radius:8px;box-shadow:0 4px 15px rgba(0,0,0,0.2);">
-                <p style="font-size:12px;color:var(--gray);margin:12px 0;">长按图片保存到相册</p>
-                <div class="modal-footer">
-                    <div class="btn-cancel" style="flex:1" onclick="app.closeModal()">返回编辑</div>
-                </div>
-            </div>
-        `;
-    },
-
-    showBackupCode() { /* 保持原逻辑，省略以节省篇幅 */ 
-        alert("备份功能保持不变（可后续扩展）");
-    },
-
-    showRecoverByCode() { alert("恢复功能保持不变"); },
-    showCharts() { alert("统计图表功能保持不变"); },
-    printPage() { window.print(); },
-    showContact() { alert("如有问题或合作意向，请 📧 联系作者：Egg77Egg88"); }
+    updateStats() {
+        let q = 0, p = 0, r = 0;
+        this.data.forEach(b => b.items.forEach(i => {
+            const n = parseInt(i.q)||0;
+            q += n;
+            p += n * (parseFloat(i.p)||0);
+            r += n * (parseFloat(i.r)||0);
+        }));
+        document.getElementById('totalQty').innerText = q;
+        document.getElementById('totalActual').innerText = '¥' + Math.round(p).toLocaleString();
+        document.getElementById('totalRef').innerText = '¥' + Math.round(r).toLocaleString();
+        const rate = r > 0 ? ((p - r) / r) * 100 : 0;
+        document.getElementById('profitRate').innerHTML = `${rate >= 0 ? '📈 高' : '📉 低'} ${Math.abs(rate).toFixed(1)}%`;
+    }
 };
 
 app.init();
