@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>废机宝 - 专业回收工具</title>
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -12,7 +12,20 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         :root { --primary: #07c160; --danger: #fa5151; --warning: #ff9500; --info: #2782D7; --gray: #8e8e93; --bg: #f2f2f7; --card: #ffffff; --text: #1c1c1e; --border: #e5e5ea; }
         .dark { --bg: #000000; --card: #1c1c1e; --text: #f2f2f7; --border: #38383a; }
-        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 90px; transition: 0.3s; }
+        body { 
+            font-family: -apple-system, system-ui, sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
+            padding: 10px; 
+            padding-bottom: 90px; 
+            transition: 0.3s;
+            -webkit-text-size-adjust: 100% !important;
+            text-size-adjust: 100% !important;
+        }
+        input, textarea, select {
+            font-size: 16px;
+        }
         
         .ref-column { display: none; }
         body.show-ref .ref-column { display: table-cell; }
@@ -38,7 +51,6 @@
         .spec-col { display: flex; flex-direction: column; gap: 3px; }
         .spec-col select { width: 100%; font-size: 10px; padding: 3px 2px; }
         
-        /* 型号输入防抖专用 - 防止界面抖动 */
         .model-wrapper { position: relative; min-height: 28px; }
         .suggest-list { 
             position: absolute; top: 100%; left: 0; right: 0; z-index: 9999; 
@@ -49,17 +61,17 @@
         .suggest-list li { padding: 5px 6px; font-size: 10px; cursor: pointer; border-bottom: 1px solid var(--border); }
         .suggest-list li:active { background: var(--primary); color: white; }
         
-        /* 数量加减按钮 - 修复手机端显示 */
-        .qty-container { display: flex; align-items: center; justify-content: center; gap: 6px; }
-        .btn-qty { 
-            width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
-            border: 1px solid var(--border); background: var(--bg); color: var(--text);
-            border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold;
-            -webkit-appearance: none; appearance: none;
+        .qty-input { 
+            width: 55px; 
+            text-align: center; 
+            border: 1px solid var(--border); 
+            border-radius: 4px; 
+            background: var(--bg); 
+            color: var(--text); 
+            font-size: 12px; 
+            padding: 5px 0; 
         }
-        .qty-value { min-width: 30px; text-align: center; font-size: 12px; font-weight: 500; }
         
-        /* 数字输入框 - 手机键盘优化 */
         .price-input, .ref-input {
             width: 100%; padding: 4px 2px; border: 1px solid var(--border); border-radius: 4px;
             background: var(--bg); color: var(--text); font-size: 10px; text-align: center;
@@ -221,19 +233,16 @@ const app = {
         }
     },
 
-    updateQty(bIdx, rIdx, delta) {
-        let current = parseInt(this.data[bIdx].items[rIdx].q) || 1;
-        let newVal = current + delta;
-        if (newVal < 1) newVal = 1;
-        this.data[bIdx].items[rIdx].q = newVal;
+    updateQty(bIdx, rIdx, val) {
+        let v = parseInt(val) || 1;
+        if (v < 1) v = 1;
+        this.data[bIdx].items[rIdx].q = v;
         this.save();
-        this.render();
+        this.updateStats();
     },
 
-    // 过滤价格输入（只允许数字和小数点）
     filterPriceInput(input, bIdx, rIdx, key) {
-        let val = input.value;
-        val = val.replace(/[^\d.]/g, '');
+        let val = input.value.replace(/[^0-9.]/g, '');
         let parts = val.split('.');
         if (parts.length > 2) val = parts[0] + '.' + parts[1];
         if (parts[1] && parts[1].length > 2) val = parts[0] + '.' + parts[1].slice(0,2);
@@ -423,7 +432,6 @@ const app = {
 
     escape(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m]); },
 
-    // 防抖型号匹配（修复界面抖动）
     filterModels(bIdx, rIdx, inputEl) {
         const key = `${bIdx}_${rIdx}`;
         if (this.suggestTimeouts[key]) clearTimeout(this.suggestTimeouts[key]);
@@ -484,6 +492,7 @@ const app = {
             b.items.forEach((i, ri) => {
                 html += `<tr>
                     <td class="col-model"><div class="model-wrapper" id="mw-${bi}-${ri}"><input type="text" class="cell-input" value="${this.escape(i.m)}" placeholder="型号" 
+                        ontouchstart=""
                         onfocus="app.filterModels(${bi},${ri},this)" 
                         oninput="app.update(${bi},${ri},'m',this.value); app.filterModels(${bi},${ri},this)" 
                         onblur="app.hideModelsDelayed(${bi},${ri})"></div></td>
@@ -491,21 +500,19 @@ const app = {
                         <select class="cell-input" onchange="app.update(${bi},${ri},'s',this.value)">${STATUS_LIST.map(s => `<option ${i.s===s?'selected':''}>${s}</option>`).join('')}</select>
                         <select class="cell-input" onchange="app.update(${bi},${ri},'c',this.value)">${CONFIG_LIST.map(c => `<option ${i.c===c?'selected':''}>${c}</option>`).join('')}</select>
                     </div></td>
-                    <td class="col-qty"><div class="qty-container">
-                        <button class="btn-qty" onclick="app.updateQty(${bi},${ri},-1)">-</button>
-                        <span class="qty-value">${i.q}</span>
-                        <button class="btn-qty" onclick="app.updateQty(${bi},${ri},1)">+</button>
-                    </div></td>
+                    <td class="col-qty"><input type="number" class="qty-input" value="${i.q}" min="1" onchange="app.updateQty(${bi},${ri},this.value)" ontouchstart=""></td>
                     <td class="col-price"><input type="tel" inputmode="decimal" class="price-input" value="${i.p}" 
+                        ontouchstart=""
                         oninput="app.filterPriceInput(this,${bi},${ri},'p')" 
                         onchange="app.filterPriceInput(this,${bi},${ri},'p')" placeholder="成交价"></td>
                     <td class="ref-column col-ref"><input type="tel" inputmode="decimal" class="price-input" value="${i.r}" 
+                        ontouchstart=""
                         oninput="app.filterPriceInput(this,${bi},${ri},'r')" 
                         onchange="app.filterPriceInput(this,${bi},${ri},'r')" placeholder="参考价"></td>
                     <td class="col-del"><button class="del-row-btn" onclick="app.delRow(${bi},${ri})">✕</button></td>
                 </tr>`;
             });
-            html += `</tbody></table></div>
+            html += `</tbody></td></div>
                 <button class="add-row-btn" onclick="app.addRow(${bi})">➕ 继续添加一行</button>
             </div>`;
         });
