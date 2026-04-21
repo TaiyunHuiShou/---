@@ -224,7 +224,7 @@
 </div>
 
 <div id="screenshot-area" style="width:100%; overflow-x:visible;">
-    <!-- 对账栏：卖家标签、买家标签、日期（位于截图区域最顶部，打印时强制显示） -->
+    <!-- 对账栏：卖家标签、买家标签、日期 -->
     <div class="top-bill-info">
         <div class="bill-field">
             <span>卖家:</span>
@@ -352,12 +352,13 @@ const app = {
         }
     },
 
+    // 修复1: updateQty 方法增加 this.render() 调用
     updateQty(bIdx, rIdx, val) {
         let v = parseInt(val) || 1;
         if (v < 1) v = 1;
         this.data[bIdx].items[rIdx].q = v;
         this.save();
-        this.updateStats();
+        this.render();   // 触发重新渲染，确保总金额同步
     },
 
     filterPriceInput(input, bIdx, rIdx, key) {
@@ -567,7 +568,6 @@ const app = {
 
     printPage() {
         this.toggleDrawer(false);
-        // 关键：将当前输入的文字同步到 DOM 属性，否则打印机抓不到 input 里的动态内容
         document.querySelectorAll('.top-bill-info input').forEach(input => {
             input.setAttribute('value', input.value);
         });
@@ -599,9 +599,17 @@ const app = {
     closeModal() { document.getElementById('appModal').style.display = 'none'; },
     toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1500); },
 
+    // 修复2: updateStats 明确处理空字符串的价格
     updateStats() {
         let q = 0, p = 0, r = 0;
-        this.data.forEach(b => b.items.forEach(i => { const n = parseInt(i.q) || 0; q += n; p += n * (parseFloat(i.p) || 0); r += n * (parseFloat(i.r) || 0); }));
+        this.data.forEach(b => b.items.forEach(i => {
+            const n = parseInt(i.q) || 0;
+            q += n;
+            const price = i.p === "" ? 0 : (parseFloat(i.p) || 0);
+            const refPrice = i.r === "" ? 0 : (parseFloat(i.r) || 0);
+            p += n * price;
+            r += n * refPrice;
+        }));
         document.getElementById('totalQty').innerText = q;
         document.getElementById('totalActual').innerText = '¥' + Math.round(p).toLocaleString();
         document.getElementById('totalRef').innerText = '¥' + Math.round(r).toLocaleString();
@@ -686,8 +694,7 @@ const app = {
                     <td><select class="cell-input" onchange="app.update(${bi},${ri},'s',this.value)">${STATUS_LIST.map(s => `<option value="${s}" ${i.s === s ? 'selected' : ''}>${s}</option>`).join('')}</select></td>
                     <td><select class="cell-input" style="color:var(--gray); font-size:11px" onchange="app.update(${bi},${ri},'c',this.value)">${CONFIG_LIST.map(c => `<option value="${c}" ${i.c === c ? 'selected' : ''}>${c}</option>`).join('')}</select></td>
                     <td><input type="number" class="qty-number" value="${i.q}" min="1" step="1" 
-                        ontouchstart=""
-                        onchange="app.updateQty(${bi},${ri},this.value)"></td>
+                        oninput="app.updateQty(${bi},${ri},this.value)">   <!-- 修复: onchange 改为 oninput -->
                     <td><input type="tel" inputmode="decimal" class="price-input" value="${i.p}" 
                         ontouchstart=""
                         oninput="app.filterPriceInput(this,${bi},${ri},'p')" 
